@@ -4,24 +4,54 @@ import { getMatch, saveMatch } from "../storage/matchDB";
 import BottomSheetSelector from "../components/BottomSheetSelector";
 import EditMatchSheet from "../components/EditMatchSheet";
 import Scorecard from "../components/Scorecard";
+import { recreateMatch } from "../utils/recreateMatch";
+import {
+  formatOvers,
+  calcCRR,
+} from "../utils/calcutors";
+import {
+  updateLive,
+  endFirstInnings,
+  endMatch,
+  isInningsComplete,
+  isTargetAchieved,
+  evaluateMatchState,
+} from "../utils/matchStateHandlers";
+import { deepCopy } from "../utils/helpers";
+import {
+  retireBatsman,
+  pushSelectionHistory,
+  handleOverEnd,
+  applyRun,
+  startSecondInnings,
+} from "../utils/matchEvents";
+import { renderBatStats, renderBowlStats } from "../utils/renderStats";
+import { applyWicket } from "../utils/applyWicket";
+import { undoFromInningsPopup, undoFromMatchPopup, undoLast } from "../utils/undos";
+import {
+  deriveFieldingStats,
+  calculateManOfTheMatch,
+  calculatePlayerScore,
+  getWinningTeamPlayers,
+} from "../utils/statsCalculator";
+import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
 
 export default function LiveMatch() {
   const { matchId } = useParams();
 
   const navigate = useNavigate();
-  const API = import.meta.env.VITE_API_BASE_URL;
-  const [match, setMatch] = useState(null);
+
+  const [matchState, setMatchState] = useState(null); // derived state for quick access
   const [sheet, setSheet] = useState(null); // striker | nonStriker | bowler
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState("live");
-  const deepCopy = (obj) => JSON.parse(JSON.stringify(obj));
+  const [match, setMatch] = useState(null);
   const [extraMode, setExtraMode] = useState("NORMAL");
   const [ackSubmitting, setAckSubmitting] = useState(false);
   const [wicketUI, setWicketUI] = useState({
     open: false,
     type: null, // BOWLED | CAUGHT | RUN_OUT | STUMPED | ...
     helper: null, // fielder / keeper
-
     // Only used when type === "RUN_OUT"
     runOut: {
       outBatsman: null, // name of batsman
@@ -46,9 +76,6 @@ export default function LiveMatch() {
     };
   }, [match, navigate]);
 
-  const calcCRR = (runs, balls) =>
-    balls === 0 ? "0.00" : (runs / (balls / 6)).toFixed(2);
-
   useEffect(() => {
     const load = async () => {
       const m = await getMatch(matchId);
@@ -66,145 +93,6 @@ export default function LiveMatch() {
   const { teams, live } = match;
   const innings = match.innings[live.inningsIndex];
 
-  /* ---------------- HELPERS ---------------- */
-
-  const recreateMatch = async () => {
-    const newMatchId = `match_${Date.now()}`;
-
-    const newMatch = {
-      id: newMatchId,
-      seasonId: match.seasonId,
-
-      matchType: match.matchType,
-      totalOvers: match.totalOvers,
-      rules: match.rules,
-
-      teams: {
-        teamA: {
-          name: match.teams.teamA.name,
-          players: [...match.teams.teamA.players],
-        },
-        teamB: {
-          name: match.teams.teamB.name,
-          players: [...match.teams.teamB.players],
-        },
-      },
-
-      toss: null,
-      innings: [],
-      live: null,
-
-      status: "setup",
-
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    await saveMatch(newMatch);
-
-    navigate(`/season/${match.seasonId}/match/${newMatchId}/toss`);
-  };
-
-  const formatOvers = (balls) => `${Math.floor(balls / 6)}.${balls % 6}`;
-
-  const updateLive = (updates) => {
-    const updated = {
-      ...match,
-      live: { ...match.live, ...updates },
-      updatedAt: Date.now(),
-    };
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const isInningsComplete = (innings, battingPlayers, totalOvers) => {
-    if (innings.balls >= totalOvers * 6) return true;
-    if (innings.wickets >= battingPlayers.length - 1) return true;
-    return false;
-  };
-
-  const isTargetAchieved = (innings, target) => {
-    return innings.totalRuns >= target;
-  };
-
-  const evaluateMatchState = (updated) => {
-    const { live, innings, teams, totalOvers } = updated;
-    const currentInnings = updated.innings[live.inningsIndex];
-
-    const battingPlayers =
-      currentInnings.battingTeam === teams.teamA.name
-        ? teams.teamA.players
-        : teams.teamB.players;
-
-    /* ---------- SECOND INNINGS: TARGET CHASE ---------- */
-    if (live.inningsIndex === 1) {
-      const target = updated.innings[0].totalRuns + 1;
-
-      if (isTargetAchieved(currentInnings, target)) {
-        endMatch(updated, "CHASE");
-        return;
-      }
-    }
-
-    /* ---------- INNINGS COMPLETE ---------- */
-    if (isInningsComplete(currentInnings, battingPlayers, totalOvers)) {
-      if (live.inningsIndex === 0) {
-        endFirstInnings(updated);
-      } else {
-        endMatch(updated, "DEFEND");
-      }
-    }
-  };
-
-  const endFirstInnings = (updated) => {
-    updated.innings[0].completed = true;
-    updated.live.pendingNextInnings = true;
-
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const endMatch = (updated, type) => {
-    updated.status = "COMPLETED";
-
-    const i1 = updated.innings[0];
-    const i2 = updated.innings[1];
-
-    if (type === "CHASE") {
-      const battingPlayers =
-        i2.battingTeam === updated.teams.teamA.name
-          ? updated.teams.teamA.players
-          : updated.teams.teamB.players;
-
-      updated.result = {
-        winner: i2.battingTeam,
-        type: "WICKETS",
-        margin: battingPlayers.length - 1 - i2.wickets,
-      };
-    } else {
-      updated.result = {
-        winner: i1.battingTeam,
-        type: "RUNS",
-        margin: i1.totalRuns - i2.totalRuns,
-      };
-    }
-
-    updated.ui = {
-      ...(updated.ui || {}),
-      matchResultSeen: false,
-    };
-
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const selectable = (enabled) => ({
-    color: enabled ? "#4f46e5" : "#111827",
-    fontWeight: 600,
-    cursor: enabled ? "pointer" : "default",
-    opacity: enabled ? 1 : 0.5,
-  });
-
   /* ---------------- PLAYERS ---------------- */
 
   const battingPlayers =
@@ -221,120 +109,10 @@ export default function LiveMatch() {
     (p) =>
       !live.outBatsmen.includes(p) &&
       p !== live.striker &&
-      p !== live.nonStriker
+      p !== live.nonStriker,
   );
 
   const disabledBowlers = [live.lastOverBowler];
-
-  /* ---------------- HELPERS ---------------- */
-
-  const pushSelectionHistory = () => {
-    if (match.status === "COMPLETED") return;
-    const innings = match.innings[match.live.inningsIndex];
-
-    if (match.live.striker) {
-      innings.battingStats[match.live.striker] ||= {
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-        dismissal: null,
-      };
-    }
-
-    if (match.live.nonStriker) {
-      innings.battingStats[match.live.nonStriker] ||= {
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-        dismissal: null,
-      };
-    }
-
-    match.live.history.push({
-      type: "SELECTION",
-      prevState: {
-        striker: match.live.striker,
-        nonStriker: match.live.nonStriker,
-        bowler: match.live.bowler,
-        lastOverBowler: match.live.lastOverBowler,
-        balls: innings.balls,
-        totalRuns: innings.totalRuns,
-        wickets: innings.wickets,
-        battingStats: deepCopy(innings.battingStats),
-        bowlingStats: deepCopy(innings.bowlingStats),
-        outBatsmen: [...match.live.outBatsmen],
-        thisOver: deepCopy(innings.thisOver || []),
-        extraMode,
-      },
-    });
-  };
-
-  const handleOverEnd = (updated, live, innings) => {
-    if (innings.balls > 0 && innings.balls % 6 === 0) {
-      // ---- MAIDEN CHECK ----
-      let isMaiden = true;
-
-      for (let ball of innings.thisOver) {
-        if (
-          (ball.type === "RUN" && ball.runs > 0) ||
-          ball.type === "WIDE" ||
-          ball.type === "NO_BALL"
-        ) {
-          isMaiden = false;
-          break;
-        }
-      }
-
-      innings.bowlingStats[live.bowler] ||= {
-        balls: 0,
-        runs: 0,
-        wickets: 0,
-        maidens: 0,
-      };
-
-      if (isMaiden) {
-        innings.bowlingStats[live.bowler].maidens += 1;
-      }
-
-      // mark over end
-      live.lastOverBowler = live.bowler;
-      live.bowler = null;
-
-      // rotate strike
-      [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
-
-      // reset over
-      innings.thisOver = [];
-    }
-  };
-
-  /* ---------------- Update Runs ---------------- */
-
-  const renderBatStats = (innings, name) => {
-    const s = innings.battingStats[name] || {};
-    return (
-      <>
-        <span>{s.runs || 0}</span>
-        <span>{s.balls || 0}</span>
-        <span>{s.fours || 0}</span>
-        <span>{s.sixes || 0}</span>
-      </>
-    );
-  };
-
-  const renderBowlStats = (innings, name) => {
-    const s = innings.bowlingStats[name] || {};
-    return (
-      <>
-        <span>{`${Math.floor((s.balls || 0) / 6)}.${(s.balls || 0) % 6}`}</span>
-        <span>{s.maidens || 0}</span>
-        <span>{s.runs || 0}</span>
-        <span>{s.wickets || 0}</span>
-      </>
-    );
-  };
 
   const WICKET_TYPES = [
     "BOWLED",
@@ -346,689 +124,14 @@ export default function LiveMatch() {
     "SPECIAL",
   ];
 
-  const applyWicket = ({ wicketType, outBatsman, helper = null, runs = 0 }) => {
-    if (match.status === "COMPLETED") return;
-    const updated = deepCopy(match);
-    const live = updated.live;
-    const innings = updated.innings[live.inningsIndex];
-
-    const isExtra = extraMode === "NO_BALL" || extraMode === "WIDE";
-
-    /* ---------- UNDO ---------- */
-    live.history.push({
-      type: "WICKET",
-      prevState: {
-        striker: live.striker,
-        nonStriker: live.nonStriker,
-        bowler: live.bowler,
-        balls: innings.balls,
-        totalRuns: innings.totalRuns,
-        wickets: innings.wickets,
-        battingStats: deepCopy(innings.battingStats),
-        bowlingStats: deepCopy(innings.bowlingStats),
-        outBatsmen: [...live.outBatsmen],
-        thisOver: deepCopy(innings.thisOver || []),
-        extraMode,
-      },
-    });
-
-    innings.thisOver ||= [];
-
-    /* ---------- BALL COUNT ---------- */
-    const countsBall = extraMode === "NORMAL";
-
-    /* ---------- WICKET ---------- */
-    innings.wickets++;
-    live.outBatsmen.push(outBatsman);
-
-    innings.thisOver.push({
-      type: "WICKET",
-      wicketType,
-      outBatsman,
-      helper,
-      extra: extraMode,
-      runs: runs,
-    });
-
-    innings.battingStats[outBatsman] ||= {
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-      dismissal: null,
-    };
-
-    innings.totalRuns += runs;
-
-    if (extraMode === "NO_BALL" && match.rules?.noBall?.extraRun) {
-      innings.totalRuns += 1;
-    }
-    if (extraMode === "WIDE" && match.rules?.wide?.extraRun) {
-      innings.totalRuns += 1;
-    }
-
-    innings.battingStats[live.striker].runs += runs;
-
-    if (extraMode !== "WIDE") {
-      innings.battingStats[live.striker].balls += 1;
-    }
-
-    innings.battingStats[outBatsman].dismissal = {
-      type: wicketType,
-      bowler: live.bowler,
-      fielder: helper || null,
-    };
-
-    /* ---------- BOWLER CREDIT ---------- */
-    const bowlerGetsWicket =
-      ["BOWLED", "CAUGHT", "LBW", "STUMPED", "HIT_WICKET"].includes(
-        wicketType
-      ) && extraMode !== "NO_BALL";
-
-    if (bowlerGetsWicket) {
-      innings.bowlingStats[live.bowler] ||= {
-        balls: 0,
-        runs: 0,
-        wickets: 0,
-        maidens: 0,
-      };
-      innings.bowlingStats[live.bowler].wickets++;
-      innings.bowlingStats[live.bowler].runs += runs;
-      if (extraMode === "NO_BALL" && match.rules?.noBall?.extraRun) {
-        innings.bowlingStats[live.bowler].runs += 1;
-      }
-      if (extraMode === "WIDE" && match.rules?.wide?.extraRun) {
-        innings.bowlingStats[live.bowler].runs += 1;
-      }
-    }
-
-    innings.bowlingStats[live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-
-    // if (countsBall) {
-    //   innings.balls++;
-    //   innings.bowlingStats[live.bowler].balls++;
-    //   evaluateMatchState(updated);
-    // }
-
-    innings.dismissals ||= {};
-
-    innings.dismissals[outBatsman] = {
-      type: wicketType,
-      bowler: live.bowler,
-      fielder: helper || null,
-    };
-
-    /* ---------- NEXT BATSMAN ---------- */
-    // REMOVE BATSMAN REGARDLESS OF BALL COUNT
-    if (outBatsman === live.striker) {
-      live.striker = null;
-    } else if (outBatsman === live.nonStriker) {
-      live.nonStriker = null;
-    }
-
-    /* ---------- RESET EXTRA ---------- */
-    setExtraMode("NORMAL");
-
-    if (countsBall) {
-      innings.balls++;
-      innings.bowlingStats[live.bowler].balls++;
-
-      handleOverEnd(updated, live, innings);
-      evaluateMatchState(updated);
-    }
-
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const undoFromMatchPopup = () => {
-    const updated = deepCopy(match);
-
-    /* -------------------------------------------------
-     1️⃣ Re-open the match
-  --------------------------------------------------*/
-    updated.status = "LIVE";
-    updated.result = null;
-
-    updated.ui = {
-      ...(updated.ui || {}),
-      matchResultSeen: false,
-    };
-
-    /* -------------------------------------------------
-     2️⃣ Ensure innings transition flags are cleared
-  --------------------------------------------------*/
-    updated.live.pendingNextInnings = false;
-
-    /* -------------------------------------------------
-     3️⃣ Undo last history entry
-  --------------------------------------------------*/
-    const last = updated.live.history.pop();
-    if (!last) {
-      updated.updatedAt = Date.now();
-      saveMatch(updated);
-      setMatch(updated);
-      return;
-    }
-
-    const innings = updated.innings[updated.live.inningsIndex];
-    const p = last.prevState;
-
-    /* -------------------------------------------------
-     4️⃣ Restore LIVE state
-  --------------------------------------------------*/
-    updated.live.striker = p.striker ?? null;
-    updated.live.nonStriker = p.nonStriker ?? null;
-    updated.live.bowler = p.bowler ?? null;
-    updated.live.lastOverBowler = p.lastOverBowler ?? null;
-    updated.live.outBatsmen = [...(p.outBatsmen || [])];
-
-    /* -------------------------------------------------
-     5️⃣ Restore innings state
-  --------------------------------------------------*/
-    innings.balls = p.balls;
-    innings.totalRuns = p.totalRuns;
-    innings.wickets = p.wickets;
-    innings.battingStats = deepCopy(p.battingStats || {});
-    innings.bowlingStats = deepCopy(p.bowlingStats || {});
-    innings.thisOver = deepCopy(p.thisOver || []);
-
-    /* -------------------------------------------------
-     6️⃣ Restore extra mode
-  --------------------------------------------------*/
-    setExtraMode(p.extraMode || "NORMAL");
-
-    /* -------------------------------------------------
-     7️⃣ Commit
-  --------------------------------------------------*/
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  function deriveFieldingStats(match) {
-    const fielding = {};
-
-    for (const inn of match.innings) {
-      for (const d of Object.values(inn.dismissals || {})) {
-        if (!d.fielder) continue;
-
-        fielding[d.fielder] ||= { catches: 0, runOuts: 0 };
-
-        if (d.type === "CAUGHT") fielding[d.fielder].catches++;
-        if (d.type === "RUN_OUT") fielding[d.fielder].runOuts++;
-      }
-    }
-
-    return fielding;
-  }
-
-  function calculatePlayerScore(player, match, fieldingStats) {
-    let points = 0;
-
-    for (const inn of match.innings) {
-      // ---------- Batting ----------
-      const bat = inn.battingStats[player];
-      if (bat) {
-        points += bat.runs || 0;
-        points += (bat.fours || 0) * 1;
-        points += (bat.sixes || 0) * 2;
-
-        if (bat.balls > 0) {
-          const sr = (bat.runs / bat.balls) * 100;
-          if (sr >= 150) points += 8;
-          else if (sr >= 120) points += 4;
-        }
-
-        if (bat.runs >= 50) points += 8;
-        if (bat.runs >= 100) points += 15;
-        if (!bat.dismissal && bat.runs >= 20) points += 5;
-      }
-
-      // ---------- Bowling ----------
-      const bowl = inn.bowlingStats[player];
-      if (bowl) {
-        points += (bowl.wickets || 0) * 20;
-        points += (bowl.maidens || 0) * 8;
-
-        if (bowl.balls > 0) {
-          const overs = bowl.balls / 6;
-          const eco = bowl.runs / overs;
-          if (eco <= 6) points += 8;
-          else if (eco <= 8) points += 4;
-        }
-
-        if (bowl.wickets >= 4) points += 8;
-        if (bowl.wickets >= 5) points += 12;
-      }
-    }
-
-    // ---------- Fielding ----------
-    const f = fieldingStats[player];
-    if (f) {
-      points += (f.catches || 0) * 8;
-      points += (f.runOuts || 0) * 10;
-    }
-
-    return points;
-  }
-
-  function getWinningTeamPlayers(match) {
-    const winner = match.result.winner;
-
-    return winner === match.teams.teamA.name
-      ? match.teams.teamA.players
-      : match.teams.teamB.players;
-  }
-
-  function calculateManOfTheMatch(match, fieldingStats) {
-    const players = getWinningTeamPlayers(match);
-    // const fieldingStats = deriveFieldingStats(match);
-
-    let bestPlayer = null;
-    let bestScore = -Infinity;
-
-    for (const p of players) {
-      const score = calculatePlayerScore(p, match, fieldingStats);
-      if (score > bestScore) {
-        bestScore = score;
-        bestPlayer = p;
-      }
-    }
-
-    return bestPlayer;
-  }
-
-  const retireBatsman = (name) => {
-    if (!name || match.status === "COMPLETED") return;
-
-    const updated = deepCopy(match);
-    const live = updated.live;
-
-    // undo snapshot
-    live.history.push({
-      type: "RETIRED",
-      prevState: {
-        striker: live.striker,
-        nonStriker: live.nonStriker,
-        bowler: live.bowler,
-        lastOverBowler: live.lastOverBowler,
-        balls: innings.balls,
-        totalRuns: innings.totalRuns,
-        wickets: innings.wickets,
-        outBatsmen: [...live.outBatsmen],
-        battingStats: deepCopy(innings.battingStats),
-        bowlingStats: deepCopy(innings.bowlingStats),
-        thisOver: deepCopy(innings.thisOver || []),
-        extraMode,
-      },
-    });
-
-    // remove from crease
-    if (live.striker === name) live.striker = null;
-    if (live.nonStriker === name) live.nonStriker = null;
-
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const acknowledgeMatchResult = async () => {
-    if (ackSubmitting) return;
-
-    const fieldingStats = deriveFieldingStats(match);
-
-    const manOfTheMatch = calculateManOfTheMatch(match, fieldingStats);
-
-    const payload = {
-      seasonId: match.seasonId,
-
-      teams: match.teams, // teamA, teamB, players
-      toss: match.toss, // winner + decision
-      rules: match.rules, // wide/no-ball rules
-      totalOvers: match.totalOvers,
-
-      matchType: match.matchType,
-
-      innings: match.innings.map((inn) => ({
-        battingTeam: inn.battingTeam,
-        bowlingTeam: inn.bowlingTeam,
-
-        totalRuns: inn.totalRuns,
-        wickets: inn.wickets,
-        balls: inn.balls,
-
-        battingStats: inn.battingStats,
-        bowlingStats: inn.bowlingStats,
-
-        extras: inn.extras || { wides: 0, noBalls: 0 },
-        dismissals: inn.dismissals || {},
-        completed: true,
-      })),
-
-      result: {
-        winner: match.result.winner,
-        type: match.result.type, // RUNS | WICKETS
-        margin: match.result.margin,
-        manOfTheMatch: manOfTheMatch,
-      },
-
-      fieldingStats: fieldingStats,
-    };
-
-    // console.log("payload", payload);
-
-    await fetch(`${API}/api/matches/complete`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-    const updated = deepCopy(match);
-    updated.result.manOfTheMatch = manOfTheMatch;
-    updated.fieldingStats = fieldingStats;
-    updated.ui = {
-      ...(updated.ui || {}),
-      matchResultSeen: true,
-    };
-
-    saveMatch(updated); // local
-    setMatch(updated);
-    setAckSubmitting(true);
-  };
-
-  const undoFromInningsPopup = () => {
-    const updated = deepCopy(match);
-
-    // 1️⃣ Cancel innings completion
-    updated.live.pendingNextInnings = false;
-
-    // 2️⃣ Undo last history entry
-    const last = updated.live.history.pop();
-    if (!last) {
-      saveMatch(updated);
-      setMatch(updated);
-      return;
-    }
-
-    const innings = updated.innings[updated.live.inningsIndex];
-    const p = last.prevState;
-
-    // 3️⃣ Restore live state
-    updated.live.striker = p.striker;
-    updated.live.nonStriker = p.nonStriker;
-    updated.live.bowler = p.bowler;
-    updated.live.lastOverBowler = p.lastOverBowler ?? null;
-    updated.live.outBatsmen = [...(p.outBatsmen || [])];
-
-    // 4️⃣ Restore innings state
-    innings.balls = p.balls;
-    innings.totalRuns = p.totalRuns;
-    innings.wickets = p.wickets;
-    innings.battingStats = deepCopy(p.battingStats);
-    innings.bowlingStats = deepCopy(p.bowlingStats);
-    innings.thisOver = deepCopy(p.thisOver || []);
-
-    // 5️⃣ Restore extra mode
-    setExtraMode(p.extraMode || "NORMAL");
-
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const recordBall = ({ type, runs = 0 }) => {
-    if (match.status === "COMPLETED") return;
-    const updated = deepCopy(match);
-    const live = updated.live;
-    const innings = updated.innings[live.inningsIndex];
-
-    if (!live.striker || !live.nonStriker || !live.bowler) return;
-
-    // --- history (undo-safe) ---
-    live.history.push({
-      type,
-      prevState: {
-        striker: live.striker,
-        nonStriker: live.nonStriker,
-        bowler: live.bowler,
-        balls: innings.balls,
-        totalRuns: innings.totalRuns,
-        lastOverBowler: live.lastOverBowler,
-        outBatsmen: [...live.outBatsmen],
-        wickets: innings.wickets,
-        battingStats: deepCopy(innings.battingStats),
-        bowlingStats: deepCopy(innings.bowlingStats),
-        thisOver: [...innings.thisOver],
-        extraMode,
-      },
-    });
-
-    // ensure thisOver
-    innings.thisOver ||= [];
-
-    // ---------------- THIS OVER ----------------
-    innings.thisOver.push({ type, runs });
-
-    // ---------------- RUNS ----------------
-    if (runs > 0) {
-      innings.totalRuns += runs;
-
-      // batsman runs only if NORMAL or NO_BALL
-      if (type !== "WIDE") {
-        innings.battingStats[live.striker] ||= {
-          runs: 0,
-          balls: 0,
-          fours: 0,
-          sixes: 0,
-        };
-        const bat = innings.battingStats[live.striker];
-        bat.runs += runs;
-        if (runs === 4) bat.fours += 1;
-        if (runs === 6) bat.sixes += 1;
-      }
-
-      // bowler runs
-      innings.bowlingStats[live.bowler] ||= {
-        balls: 0,
-        runs: 0,
-        wickets: 0,
-        maidens: 0,
-      };
-      innings.bowlingStats[live.bowler].runs += runs;
-    }
-
-    // ---------------- BALL COUNT ----------------
-    // const consumesBall = type === "RUN";
-
-    // if (consumesBall) {
-    //   innings.balls += 1;
-    //   // ---------------- OVER END ----------------
-    //   handleOverEnd(updated, live, innings);
-    // }
-
-    // Batsman balls: only for RUN and NO_BALL if extraBall
-    if (
-      type === "RUN" ||
-      (type === "NO_BALL" && match.rules?.noBall?.extraBall)
-    ) {
-      innings.battingStats[live.striker] ||= {
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-      };
-      innings.battingStats[live.striker].balls += 1;
-    }
-
-    // Bowler balls: for RUN, NO_BALL, WIDE
-    // if (type === "RUN") {
-    //   innings.bowlingStats[live.bowler] ||= {
-    //     balls: 0,
-    //     runs: 0,
-    //     wickets: 0,
-    //     maidens: 0,
-    //   };
-    //   innings.bowlingStats[live.bowler].balls += 1;
-    // }
-
-    // ---------------- BALL COUNT (SINGLE SOURCE OF TRUTH) ----------------
-    const countsBall = type === "RUN";
-
-    if (type === "WIDE") {
-      innings.extras ||= { wides: 0, noBalls: 0 };
-      innings.extras.wides += 1;
-    }
-
-    if (type === "NO_BALL") {
-      innings.extras ||= { wides: 0, noBalls: 0 };
-      innings.extras.noBalls += 1;
-    }
-    if (countsBall) {
-      innings.balls++;
-
-      innings.bowlingStats[live.bowler] ||= {
-        balls: 0,
-        runs: 0,
-        wickets: 0,
-        maidens: 0,
-      };
-      innings.bowlingStats[live.bowler].balls++;
-
-      evaluateMatchState(updated);
-
-      handleOverEnd(updated, live, innings);
-
-      // evaluateMatchState(updated);
-    }
-
-    // ---------------- STRIKE ROTATION ----------------
-    if (
-      (runs % 2 === 1 && type === "RUN") ||
-      (type === "WIDE" && runs % 2 == 0 && match.rules?.wide?.extraRun) ||
-      (type === "NO_BALL" && runs % 2 == 0 && match.rules?.noBall?.extraRun) ||
-      (type === "WIDE" && runs % 2 == 1 && !match.rules?.wide?.extraRun) ||
-      (type === "NO_BALL" && runs % 2 == 1 && !match.rules?.noBall?.extraRun)
-    ) {
-      [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
-    }
-
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
   const invalidOnExtra = ["BOWLED", "LBW", "HIT_WICKET"];
 
   const isInvalidWicket =
     (extraMode === "NO_BALL" || extraMode === "WIDE") &&
     invalidOnExtra.includes(wicketUI.type);
 
-  const applyRun = (runs) => {
-    if (match.status === "COMPLETED") return;
-    if (extraMode === "NORMAL") {
-      recordBall({ type: "RUN", runs });
-      return;
-    }
-
-    if (extraMode === "WIDE") {
-      const extraRun = match.rules?.wide?.extraRun ? 1 : 0;
-      recordBall({ type: "WIDE", runs: runs + extraRun });
-      setExtraMode("NORMAL");
-      return;
-    }
-
-    if (extraMode === "NO_BALL") {
-      const extraRun = match.rules?.noBall?.extraRun ? 1 : 0;
-      recordBall({ type: "NO_BALL", runs: runs + extraRun });
-      setExtraMode("NORMAL");
-      return;
-    }
-  };
-
   const setExtraModeWithHistory = (mode) => {
     setExtraMode((prev) => (prev === mode ? "NORMAL" : mode));
-  };
-
-  const startSecondInnings = () => {
-    const updated = deepCopy(match);
-
-    updated.live.inningsIndex = 1;
-    updated.live.pendingNextInnings = false;
-
-    updated.innings[1] = {
-      battingTeam: match.innings[0].bowlingTeam,
-      bowlingTeam: match.innings[0].battingTeam,
-      totalRuns: 0,
-      balls: 0,
-      wickets: 0,
-      battingStats: {},
-      bowlingStats: {},
-      thisOver: [],
-      extras: {
-        wides: 0,
-        noBalls: 0,
-      },
-    };
-
-    updated.live = {
-      ...updated.live,
-      striker: null,
-      nonStriker: null,
-      bowler: null,
-      lastOverBowler: null,
-      outBatsmen: [],
-      history: [],
-    };
-
-    saveMatch(updated);
-    setMatch(updated);
-  };
-
-  const undoLast = () => {
-    if (match.status === "COMPLETED") return;
-    // console.log("match", match.status);
-    if (match.live.pendingNextInnings) return;
-    if (!match?.live?.history?.length) return;
-
-    const updated = deepCopy(match);
-    const last = updated.live.history.pop();
-    if (!last) return;
-
-    const innings = updated.innings[updated.live.inningsIndex];
-    const p = last.prevState;
-
-    // -------- RESTORE LIVE STATE --------
-    updated.live.striker = p.striker;
-    updated.live.nonStriker = p.nonStriker;
-    updated.live.bowler = p.bowler;
-    updated.live.lastOverBowler =
-      p.lastOverBowler ?? updated.live.lastOverBowler;
-    updated.live.outBatsmen = [...(p.outBatsmen || [])];
-
-    // -------- RESTORE INNINGS STATE --------
-    innings.balls = p.balls;
-    innings.totalRuns = p.totalRuns;
-    innings.wickets = p.wickets;
-    innings.battingStats = deepCopy(p.battingStats);
-    innings.bowlingStats = deepCopy(p.bowlingStats);
-    innings.thisOver = deepCopy(p.thisOver || []);
-
-    // -------- RESTORE EXTRA MODE --------
-    setExtraMode(p.extraMode || "NORMAL");
-
-    // -------- COMMIT --------
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
   };
 
   /* ---------------- UI ---------------- */
@@ -1053,7 +156,7 @@ export default function LiveMatch() {
             style={editBtn}
             onClick={() => {
               if (match.status === "COMPLETED") {
-                recreateMatch();
+                recreateMatch(match);
               } else {
                 setEditOpen(true);
               }
@@ -1130,11 +233,23 @@ export default function LiveMatch() {
             </p>
 
             <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-              <button style={secondaryBtn} onClick={undoFromInningsPopup}>
+              <button
+                style={secondaryBtn}
+                onClick={() =>
+                  undoFromInningsPopup({
+                    match,
+                    setMatch,
+                    setExtraMode,
+                  })
+                }
+              >
                 Undo Last Ball
               </button>
 
-              <button style={primaryBtn} onClick={startSecondInnings}>
+              <button
+                style={primaryBtn}
+                onClick={() => startSecondInnings({ match, setMatch })}
+              >
                 Start Second Innings
               </button>
             </div>
@@ -1153,11 +268,26 @@ export default function LiveMatch() {
             </p>
 
             <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-              <button style={secondaryBtn} onClick={undoFromMatchPopup}>
+              <button
+                style={secondaryBtn}
+                onClick={() =>
+                  undoFromMatchPopup(match, setMatch, setExtraMode)
+                }
+              >
                 Undo Last Ball
               </button>
 
-              <button style={primaryBtn} onClick={acknowledgeMatchResult}>
+              <button
+                style={primaryBtn}
+                onClick={() =>
+                  acknowledgeMatchResult(
+                    match,
+                    setMatch,
+                    setAckSubmitting,
+                    ackSubmitting,
+                  )
+                }
+              >
                 OK
               </button>
             </div>
@@ -1225,14 +355,14 @@ export default function LiveMatch() {
                   if (b.type === "WIDE") {
                     batRuns = Math.max(
                       0,
-                      b.runs - (match.rules?.wide?.extraRun ? 1 : 0)
+                      b.runs - (match.rules?.wide?.extraRun ? 1 : 0),
                     );
                   }
 
                   if (b.type === "NO_BALL") {
                     batRuns = Math.max(
                       0,
-                      b.runs - (match.rules?.noBall?.extraRun ? 1 : 0)
+                      b.runs - (match.rules?.noBall?.extraRun ? 1 : 0),
                     );
                   }
 
@@ -1258,7 +388,19 @@ export default function LiveMatch() {
 
           <div style={keypad}>
             {[0, 1, 2, 3, 4, 6].map((r) => (
-              <button key={r} style={keyBtn} onClick={() => applyRun(r)}>
+              <button
+                key={r}
+                style={keyBtn}
+                onClick={() =>
+                  applyRun({
+                    runs: r,
+                    match,
+                    setMatch,
+                    extraMode,
+                    setExtraMode,
+                  })
+                }
+              >
                 {r}
               </button>
             ))}
@@ -1291,7 +433,7 @@ export default function LiveMatch() {
 
             <button
               style={live.history.length === 0 ? keyUndoDisabled : keyUndo}
-              onClick={undoLast}
+              onClick={() => undoLast({ match, setMatch, setExtraMode })}
               disabled={live.history.length === 0}
             >
               ↺
@@ -1339,7 +481,7 @@ export default function LiveMatch() {
             <button
               style={keyBtn}
               disabled={!live.striker}
-              onClick={() => retireBatsman(live.striker)}
+              onClick={() => retireBatsman(live.striker, match, setMatch)}
             >
               Ret
             </button>
@@ -1355,8 +497,8 @@ export default function LiveMatch() {
         title="Select Striker"
         items={eligibleBatsmen}
         onSelect={(p) => {
-          pushSelectionHistory();
-          updateLive({ striker: p });
+          pushSelectionHistory(match, extraMode);
+          updateLive({ striker: p }, match, setMatch);
           setSheet(null);
         }}
         onClose={() => setSheet(null)}
@@ -1367,8 +509,8 @@ export default function LiveMatch() {
         title="Select Non-Striker"
         items={eligibleBatsmen}
         onSelect={(p) => {
-          pushSelectionHistory();
-          updateLive({ nonStriker: p });
+          pushSelectionHistory(match, extraMode);
+          updateLive({ nonStriker: p }, match, setMatch);
           setSheet(null);
         }}
         onClose={() => setSheet(null)}
@@ -1380,8 +522,8 @@ export default function LiveMatch() {
         items={bowlingPlayers}
         disabledItems={disabledBowlers}
         onSelect={(p) => {
-          pushSelectionHistory();
-          updateLive({ bowler: p });
+          pushSelectionHistory(match, extraMode);
+          updateLive({ bowler: p }, match, setMatch);
           setSheet(null);
         }}
         onClose={() => setSheet(null)}
@@ -1510,6 +652,10 @@ export default function LiveMatch() {
               outBatsman,
               helper: wicketUI.helper,
               runs: wicketUI.type === "RUN_OUT" ? wicketUI.runOut.runs : 0,
+              match,
+              setMatch,
+              extraMode,
+              setExtraMode,
             });
 
             setWicketUI({
@@ -1867,3 +1013,10 @@ const row = {
   gridTemplateColumns: "2fr repeat(4,1fr)",
   padding: "6px 0",
 };
+
+const selectable = (enabled) => ({
+  color: enabled ? "#4f46e5" : "#111827",
+  fontWeight: 600,
+  cursor: enabled ? "pointer" : "default",
+  opacity: enabled ? 1 : 0.5,
+});
