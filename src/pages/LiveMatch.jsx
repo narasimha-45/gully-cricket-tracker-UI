@@ -6,6 +6,51 @@ import EditMatchSheet from "../components/EditMatchSheet";
 import Scorecard from "../components/Scorecard";
 import { recreateMatch } from "../utils/recreateMatch";
 import {
+  primaryBtn,
+  secondaryBtn,
+  keyWide,
+  keyWideActive,
+  keypad,
+  keyBtn,
+  keyWicket,
+  keyWicketDisabled,
+  keyWideDisabled,
+  keyUndo,
+  grid2,
+  btn,
+  activeBtn,
+  listItem,
+  selectedListItem,
+  confirmBtn,
+  keyUndoActive,
+  keyUndoDisabled,
+  scoreBtn,
+  scoreBtnDisabled,
+  scoreRow,
+  crr,
+  infoRow,
+  tabs,
+  tabBtn,
+  activeTab,
+  headerCard,
+  headerTop,
+  editBtn,
+  scoreMain,
+  overs,
+  card,
+  tableHeader,
+  row,
+  selectable,
+  overBox,
+  overBalls,
+  ballChip,
+  popup,
+  popupCard,
+  popupActions,
+  popupUndoBtn,
+  popupPrimaryBtn,
+} from "./LiveMatch.styles";
+import {
   formatOvers,
   calcCRR,
 } from "../utils/calcutors";
@@ -693,330 +738,4 @@ function CompletedMatchSummary({ match, setTab }) {
   );
 }
 
-/* ---------------- STYLES ---------------- */
 
-const primaryBtn = {
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "none",
-  background: "#16a34a",
-  color: "#fff",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const secondaryBtn = {
-  padding: "12px 16px",
-  borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#f9fafb",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const keyWide = {
-  padding: "14px 0",
-  borderRadius: 12,
-  background: "#fde68a", // soft yellow (extra)
-  color: "#92400e",
-  fontSize: 16,
-  fontWeight: 700,
-  border: "none",
-  cursor: "pointer",
-  touchAction: "manipulation",
-};
-
-const overBox = {
-  padding: 12,
-  borderRadius: 10,
-  background: "#f3f4f6",
-  marginBottom: 12,
-};
-
-const overBalls = {
-  display: "flex",
-  flexWrap: "wrap",
-  gap: 8,
-  marginTop: 6,
-};
-
-const ballChip = {
-  minWidth: 28,
-  height: 28,
-  borderRadius: "50%",
-  background: "#4f46e5",
-  color: "#fff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontWeight: 600,
-};
-
-const popup = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(0,0,0,0.55)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  zIndex: 1000,
-};
-
-const popupCard = {
-  background: "#ffffff",
-  padding: "24px 28px",
-  borderRadius: 16,
-  width: 320,
-  boxShadow: "0 20px 40px rgba(0,0,0,0.2)",
-  textAlign: "center",
-};
-
-const popupActions = {
-  display: "flex",
-  gap: 12,
-};
-
-const popupUndoBtn = {
-  flex: 1,
-  padding: "12px 0",
-  borderRadius: 10,
-  background: "#f3f4f6",
-  border: "1px solid #e5e7eb",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const popupPrimaryBtn = {
-  flex: 1,
-  padding: "12px 0",
-  borderRadius: 10,
-  background: "#16a34a",
-  color: "#fff",
-  border: "none",
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const keyBtn = {
-  padding: "14px 0",
-  borderRadius: 12,
-  background: "#eef2ff",
-  fontSize: 18,
-  fontWeight: 700,
-  border: "none",
-  cursor: "pointer",
-  touchAction: "manipulation",
-};
-
-const keyWicket = {
-  ...keyBtn,
-  background: "#fecaca", // red
-  color: "#7f1d1d",
-  fontSize: 20,
-};
-
-const keyWicketDisabled = {
-  ...keyWicket,
-  opacity: 0.5,
-  cursor: "not-allowed",
-};
-
-const keyWideActive = {
-  ...keyWide,
-  outline: "2px solid #f59e0b",
-};
-
-const keypad = {
-  display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
-  gap: 10,
-  marginTop: 16,
-};
-
-const keyWideDisabled = {
-  ...keyWide,
-  opacity: 0.5,
-  cursor: "not-allowed",
-};
-
-const keyUndo = {
-  padding: "14px 0",
-  borderRadius: 12,
-  background: "#e5e7eb", // neutral gray
-  color: "#374151",
-  fontSize: 18,
-  fontWeight: 700,
-  border: "none",
-  cursor: "pointer",
-  touchAction: "manipulation",
-};
-
-const grid2 = {
-  display: "grid",
-  gridTemplateColumns: "1fr 1fr",
-  gap: 10,
-  marginBottom: 12,
-};
-
-const btn = {
-  padding: "10px",
-  borderRadius: 8,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const activeBtn = {
-  ...btn,
-  background: "#4f46e5",
-  color: "#fff",
-  border: "none",
-};
-
-const listItem = {
-  padding: "10px",
-  borderBottom: "1px solid #e5e7eb",
-  cursor: "pointer",
-};
-
-const selectedListItem = {
-  ...listItem,
-  background: "#4f46e5",
-  color: "#fff",
-};
-
-const confirmBtn = {
-  width: "100%",
-  padding: 12,
-  borderRadius: 10,
-  border: "none",
-  background: "#16a34a",
-  color: "#fff",
-  fontWeight: 700,
-  marginTop: 12,
-};
-
-const keyUndoActive = {
-  ...keyUndo,
-  background: "#d1d5db",
-};
-
-const keyUndoDisabled = {
-  ...keyUndo,
-  opacity: 0.5,
-  cursor: "not-allowed",
-};
-
-const scoreBtn = {
-  padding: "16px 0",
-  borderRadius: 12,
-  background: "#eef2ff",
-  border: "none",
-  fontSize: 18,
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const scoreBtnDisabled = {
-  ...scoreBtn,
-  opacity: 0.4,
-  cursor: "not-allowed",
-};
-
-const scoreRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "baseline",
-};
-
-const crr = {
-  fontSize: 13,
-  fontWeight: 600,
-  color: "#1e40af",
-};
-
-const infoRow = {
-  fontSize: 12,
-  textAlign: "center",
-  color: "#6b7280",
-  marginTop: 4,
-};
-
-const tabs = {
-  display: "flex",
-  gap: 8,
-  marginBottom: 16,
-};
-
-const tabBtn = {
-  flex: 1,
-  padding: 10,
-  borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-};
-
-const activeTab = {
-  ...tabBtn,
-  background: "#4f46e5",
-  color: "#fff",
-};
-
-const headerCard = {
-  background: "#eef2ff",
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 12,
-};
-
-const headerTop = {
-  display: "flex",
-  justifyContent: "space-between",
-  fontWeight: 600,
-};
-
-const editBtn = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  color: "#4f46e5",
-};
-
-const scoreMain = {
-  fontSize: 20,
-  fontWeight: 700,
-  marginTop: 6,
-};
-
-const overs = {
-  fontSize: 14,
-  color: "#6b7280",
-};
-
-const card = {
-  background: "#f9fafb",
-  padding: 12,
-  borderRadius: 12,
-  marginBottom: 16,
-};
-
-const tableHeader = {
-  display: "grid",
-  gridTemplateColumns: "2fr repeat(4,1fr)",
-  fontSize: 13,
-  color: "#6b7280",
-};
-
-const row = {
-  display: "grid",
-  gridTemplateColumns: "2fr repeat(4,1fr)",
-  padding: "6px 0",
-};
-
-const selectable = (enabled) => ({
-  color: enabled ? "#4f46e5" : "#111827",
-  fontWeight: 600,
-  cursor: enabled ? "pointer" : "default",
-  opacity: enabled ? 1 : 0.5,
-});
