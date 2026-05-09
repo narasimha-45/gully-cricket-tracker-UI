@@ -1,0 +1,42 @@
+.page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+}
+
+.app {
+  width: 100%;
+  max-width: 420px;
+  min-height: 100vh;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* HEADER */
+.header {
+  padding: 14px;
+  text-align: center;
+  font-weight: 600;
+  background-color: #4f46e5;
+  color: #ffffff;
+  flex-shrink: 0;
+}
+
+/* CONTENT */
+.content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  padding-bottom: 88px; /* 👈 must be >= footer height */
+}
+
+.footer {
+  position: sticky;
+  bottom: 0;
+  padding: 12px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #ffffff;
+  z-index: 10;          /* 👈 ensures it stays above visually */
+}

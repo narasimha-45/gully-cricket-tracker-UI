@@ -1,0 +1,52 @@
+.subHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.back {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #374151;
+}
+
+.seasonName {
+  font-weight: 600;
+  font-size: 18px;
+}
+
+
+.tabs {
+  display: flex;
+  width: 100%;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 16px;
+}
+
+.tab {
+  flex: 1;                 /* 👈 half width */
+  text-align: center;      /* 👈 centered */
+  padding: 10px 0;
+  font-size: 15px;
+  color: #6b7280;
+  text-decoration: none;
+}
+
+.activeTab {
+  flex: 1;                 /* 👈 half width */
+  text-align: center;
+  padding: 10px 0;
+  font-size: 15px;
+  color: #4f46e5;
+  border-bottom: 2px solid #4f46e5;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+
+.content {
+  padding-top: 8px;
+}
