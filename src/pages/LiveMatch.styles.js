@@ -133,7 +133,7 @@ export const keyWideActive = {
 
 export const keypad = {
   display: "grid",
-  gridTemplateColumns: "repeat(3, 1fr)",
+  gridTemplateColumns: "repeat(4, 1fr)",
   gap: 10,
   marginTop: 16,
 };
@@ -296,14 +296,15 @@ export const scoreMain = {
 
 export const overs = {
   fontSize: 14,
-  color: "#6b7280",
+  color: "#d4d4d4",
 };
 
 export const card = {
   background: "#f9fafb",
-  padding: 12,
+  padding: 4,
+  paddingLeft: 12,
   borderRadius: 12,
-  marginBottom: 16,
+  marginBottom: 6,
 };
 
 export const tableHeader = {
@@ -320,8 +321,8 @@ export const row = {
 };
 
 export const selectable = (enabled) => ({
-  color: enabled ? "#4f46e5" : "#111827",
+  color: enabled ? "#4f46e5" : "#030000af",
   fontWeight: 600,
   cursor: enabled ? "pointer" : "default",
-  opacity: enabled ? 1 : 0.5,
+  opacity: 1,
 });

@@ -86,11 +86,11 @@ export default function SeasonMatches() {
   /* ---------------- FILTERS ---------------- */
 
   const liveMatches = localMatches.filter(
-    (m) => m.status === "setup" || m.status === "LIVE"
+    (m) => m.status === "setup" || m.status === "LIVE",
   );
 
   const completedMatches = serverMatches.filter(
-    (m) => m.status === "COMPLETED"
+    (m) => m.status === "COMPLETED",
   );
 
   const formatDateTime = (dateStr) => {
@@ -107,10 +107,10 @@ export default function SeasonMatches() {
     });
   };
   const ballsToOvers = (balls = 0) => {
-  const overs = Math.floor(balls / 6);
-  const ballsPart = balls % 6;
-  return `${overs}.${ballsPart}`;
-};
+    const overs = Math.floor(balls / 6);
+    const ballsPart = balls % 6;
+    return `${overs}.${ballsPart}`;
+  };
 
   const getScoreLine = (inning) => {
     if (!inning) return "";
@@ -143,9 +143,24 @@ export default function SeasonMatches() {
       {tab === "LIVE" && (
         <>
           {localLoading ? (
-            <p style={muted}>Loading live matches…</p>
+            <div style={emptyState}>
+              <style>
+                {`
+                  @keyframes spin {
+                    to {
+                      transform: rotate(360deg);
+                    }
+                  }
+                `}
+              </style>
+              <div style={spinner}></div>
+              <p style={muted}>Loading live matches...</p>
+            </div>
           ) : liveMatches.length === 0 ? (
-            <p style={muted}>No live matches</p>
+            <div style={emptyState}>
+              <p style={emptyTitle}>No live matches</p>
+              <p style={muted}>Create a match to start scoring</p>
+            </div>
           ) : (
             <div style={list}>
               {liveMatches.map((match) => (
@@ -180,9 +195,24 @@ export default function SeasonMatches() {
       {tab === "COMPLETED" && (
         <>
           {serverLoading ? (
-            <p style={muted}>Loading completed matches…</p>
+            <div style={emptyState}>
+              <style>
+                {`
+                      @keyframes spin {
+                        to {
+                          transform: rotate(360deg);
+                        }
+                      }
+                    `}
+              </style>
+              <div style={spinner}></div>
+              <p style={muted}>Loading completed matches...</p>
+            </div>
           ) : completedMatches.length === 0 ? (
-            <p style={muted}>No completed matches</p>
+            <div style={emptyState}>
+              <p style={emptyTitle}>No completed matches</p>
+              <p style={muted}>Finished matches will appear here</p>
+            </div>
           ) : (
             <div style={list}>
               {completedMatches.map((match) => (
@@ -202,7 +232,7 @@ export default function SeasonMatches() {
                         ...teamLeft,
                         fontWeight: isWinner(
                           match.innings[0].battingTeam,
-                          match
+                          match,
                         )
                           ? 600
                           : 400,
@@ -217,7 +247,7 @@ export default function SeasonMatches() {
                         ...score,
                         fontWeight: isWinner(
                           match.innings[1].battingTeam,
-                          match
+                          match,
                         )
                           ? 600
                           : 400,
@@ -232,7 +262,10 @@ export default function SeasonMatches() {
                     <div
                       style={{
                         ...teamLeft,
-                        fontWeight: isWinner(match.innings[1].battingTeam, match)
+                        fontWeight: isWinner(
+                          match.innings[1].battingTeam,
+                          match,
+                        )
                           ? 600
                           : 400,
                       }}
@@ -269,6 +302,26 @@ export default function SeasonMatches() {
 }
 
 /* ---------------- STYLES ---------------- */
+const emptyState = {
+  padding: "40px 20px",
+  textAlign: "center",
+};
+
+const emptyTitle = {
+  fontSize: 18,
+  fontWeight: 600,
+  marginBottom: 6,
+};
+
+const spinner = {
+  width: 28,
+  height: 28,
+  border: "3px solid #e5e7eb",
+  borderTop: "3px solid #4f46e5",
+  borderRadius: "50%",
+  margin: "0 auto 14px",
+  animation: "spin 0.8s linear infinite",
+};
 
 const row = {
   display: "flex",

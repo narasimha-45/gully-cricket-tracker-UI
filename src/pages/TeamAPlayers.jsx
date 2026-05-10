@@ -130,7 +130,7 @@ export default function TeamAPlayers() {
         style={nextBtn}
         disabled={players.length === 0}
       >
-        Next → Team B
+        Next → {match.teams.teamB.name}
       </button>
     </div>
   );
@@ -184,7 +184,10 @@ const input = {
   flex: 1,
   padding: "10px",
   borderRadius: 10,
-  border: "1px solid #d1d5db",
+  border: "1px solid #a9ccff",
+  background: "#adcaff49",
+  fontSize: 16,
+  fontWeight: 500,
 };
 
 const addBtn = {
@@ -199,6 +202,7 @@ const addBtn = {
 const nextBtn = {
   width: "100%",
   padding: "14px",
+  fontSize: 16,
   borderRadius: 12,
   border: "none",
   background: "#4f46e5",

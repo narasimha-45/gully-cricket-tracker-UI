@@ -1,6 +1,8 @@
-export const recreateMatch = async (match) => {
-    const newMatchId = `match_${Date.now()}`;
+import { useNavigate } from "react-router-dom";
+import { saveMatch } from "../storage/matchDB";
 
+export const recreateMatch = async (match,navigate) => {
+    const newMatchId = `match_${Date.now()}`;
     const newMatch = {
       id: newMatchId,
       seasonId: match.seasonId,

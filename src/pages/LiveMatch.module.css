@@ -1,0 +1,161 @@
+.heroCard {
+  background: linear-gradient(135deg, #312e81, #4338ca);
+  border-radius: 22px;
+  padding: 6px 14px;
+  color: white;
+  margin-bottom: 8px;
+  margin-top: 2px;
+  box-shadow: 0 12px 30px rgba(67, 56, 202, 0.25);
+}
+
+.heroTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.liveBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #fce7f3;
+  margin: 0;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  background: rgba(239, 5, 5, 0.705);
+  animation: pulse 1.2s infinite;;
+}
+
+.matchTitle {
+  font-size: 20px;
+  font-weight: 800;
+  text-align: center;
+  margin: 0;
+  line-height: 1.1;
+}
+
+.mainScore {
+  margin-top: 10px;
+}
+
+.titleRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  gap: 10px;
+}
+
+.scoreNumber {
+  font-size: 32px;
+  font-weight: 800;
+  line-height: 1;
+  margin-top: 10px;
+}
+
+.wicket {
+  opacity: 0.8;
+}
+
+.overText {
+  margin-top: 10px;
+  font-size: 15px;
+  opacity: 0.85;
+}
+
+.bottomInfo {
+  margin-top: 22px;
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.editBtn {
+  border: none;
+  background: rgba(255,255,255,0.15);
+  backdrop-filter: blur(10px);
+  color: white;
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+@keyframes pulse {
+  0% {
+    opacity: 0.4;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.4;
+  }
+}
+
+.finishBtn {
+  width: 100%;
+  border: none;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #16a34a, #15803d);
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.loaderRow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.spinner {
+  width: 18px;
+  height: 18px;
+  border: 3px solid rgba(255,255,255,0.35);
+  border-top: 3px solid white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.ballChip {
+  min-width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: white;
+  font-size: 14px;
+}
+
+.normalBall {
+  background: #2563eb;
+}
+
+.fourBall {
+  background: #16a34a;
+}
+
+.sixBall {
+  background: #7c3aed;
+}
+
+.wicketBall {
+  background: #dc2626;
+}

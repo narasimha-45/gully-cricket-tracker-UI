@@ -171,11 +171,15 @@ const addRow = {
   marginBottom: 24,
 };
 
+
 const input = {
   flex: 1,
   padding: "10px",
   borderRadius: 10,
-  border: "1px solid #d1d5db",
+  border: "1px solid #a9ccff",
+  background: "#adcaff49",
+  fontSize: 16,
+  fontWeight: 500,
 };
 
 const addBtn = {

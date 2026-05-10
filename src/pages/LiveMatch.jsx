@@ -50,10 +50,7 @@ import {
   popupUndoBtn,
   popupPrimaryBtn,
 } from "./LiveMatch.styles";
-import {
-  formatOvers,
-  calcCRR,
-} from "../utils/calcutors";
+import { formatOvers, calcCRR } from "../utils/calcutors";
 import {
   updateLive,
   endFirstInnings,
@@ -72,7 +69,11 @@ import {
 } from "../utils/matchEvents";
 import { renderBatStats, renderBowlStats } from "../utils/renderStats";
 import { applyWicket } from "../utils/applyWicket";
-import { undoFromInningsPopup, undoFromMatchPopup, undoLast } from "../utils/undos";
+import {
+  undoFromInningsPopup,
+  undoFromMatchPopup,
+  undoLast,
+} from "../utils/undos";
 import {
   deriveFieldingStats,
   calculateManOfTheMatch,
@@ -80,6 +81,8 @@ import {
   getWinningTeamPlayers,
 } from "../utils/statsCalculator";
 import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
+import styles from "./LiveMatch.module.css";
+import { takeSnapshot } from "../utils/snapShot";
 
 export default function LiveMatch() {
   const { matchId } = useParams();
@@ -192,16 +195,23 @@ export default function LiveMatch() {
       />
 
       {/* HEADER */}
-      <div style={headerCard}>
-        <div style={headerTop}>
-          <span>
-            {teams.teamA.name} vs {teams.teamB.name}
-          </span>
+      <div className={styles.heroCard}>
+        <div className={styles.heroTop}>
+          <div className={styles.titleRow}>
+            <p className={styles.liveBadge}>
+              ● {match.status === "COMPLETED" ? "END" : "LIVE"}
+            </p>
+
+            <h2 className={styles.matchTitle}>
+              {teams.teamA.name} vs {teams.teamB.name}
+            </h2>
+          </div>
+
           <button
-            style={editBtn}
+            className={styles.editBtn}
             onClick={() => {
               if (match.status === "COMPLETED") {
-                recreateMatch(match);
+                recreateMatch(match, navigate);
               } else {
                 setEditOpen(true);
               }
@@ -211,33 +221,122 @@ export default function LiveMatch() {
           </button>
         </div>
 
-        <div style={scoreRow}>
-          <span style={scoreMain}>
-            {innings.battingTeam} {innings.totalRuns}-{innings.wickets}
-            <span style={overs}>
-              {" "}
-              ({formatOvers(innings.balls)}) / {match.totalOvers}
-            </span>
-          </span>
+        <div
+          style={{
+            marginTop: 6,
+            display: "flex",
+            flexDirection: "column",
+            gap: 6,
+          }}
+        >
+          {[0, 1].map((idx) => {
+            const inn = match.innings[idx];
 
-          <span style={crr}>
-            CRR {calcCRR(innings.totalRuns, innings.balls)}
-          </span>
+            const isCurrent =
+              idx === live.inningsIndex && match.status !== "COMPLETED";
+
+            const teamName = idx === 0 ? teams.teamA.name : teams.teamB.name;
+
+            return (
+              <div
+                key={idx}
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+
+                  opacity: inn ? 1 : 0.7,
+
+                  fontWeight: isCurrent ? 700 : 500,
+
+                  fontSize: 16,
+                }}
+              >
+                <span>{teamName}</span>
+
+                <span>
+                  {inn ? (
+                    <>
+                      {inn.totalRuns}-{inn.wickets} ({formatOvers(inn.balls)})
+                    </>
+                  ) : (
+                    "Yet to bat"
+                  )}
+                </span>
+              </div>
+            );
+          })}
         </div>
 
-        <div style={infoRow}>
+        <div
+          style={{
+            marginTop: 6,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
           {match.status === "COMPLETED" ? (
-            <strong>
+            <div
+              style={{
+                textAlign: "center",
+                fontSize: 15,
+                fontWeight: 700,
+              }}
+            >
               {match.result.winner} won by {match.result.margin}{" "}
               {match.result.type === "WICKETS" ? "wickets" : "runs"}
-            </strong>
+            </div>
           ) : live.inningsIndex === 0 ? (
-            `${match.toss.winner} opted to ${match.toss.decision}`
+            <div style={{ textAlign: "center" }}>
+              CRR: {calcCRR(innings.totalRuns, innings.balls)}
+            </div>
           ) : (
-            `Need ${match.innings[0].totalRuns + 1 - innings.totalRuns} runs`
+            <>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                }}
+              >
+                <span>CRR: {calcCRR(innings.totalRuns, innings.balls)}</span>
+
+                <span>
+                  RRR:{" "}
+                  {innings.balls < match.totalOvers * 6
+                    ? (
+                        (match.innings[0].totalRuns + 1 - innings.totalRuns) /
+                        ((match.totalOvers * 6 - innings.balls) / 6)
+                      ).toFixed(2)
+                    : "∞"}
+                </span>
+              </div>
+
+              <div
+                style={{
+                  textAlign: "center",
+                  marginTop: 1,
+                }}
+              >
+                Need {match.innings[0].totalRuns + 1 - innings.totalRuns} in{" "}
+                {match.totalOvers * 6 - innings.balls} balls
+              </div>
+            </>
           )}
         </div>
+
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            marginTop: 8,
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          
+        </div>
       </div>
+
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
         <div style={card}>
           <strong>🏆 Man of the Match</strong>
@@ -250,7 +349,7 @@ export default function LiveMatch() {
           style={tab === "live" ? activeTab : tabBtn}
           onClick={() => setTab("live")}
         >
-          Live
+          {match.status === "COMPLETED" ? "END" : "Live"}
         </button>
 
         <button
@@ -323,7 +422,8 @@ export default function LiveMatch() {
               </button>
 
               <button
-                style={primaryBtn}
+                className={styles.finishBtn}
+                disabled={ackSubmitting}
                 onClick={() =>
                   acknowledgeMatchResult(
                     match,
@@ -333,7 +433,14 @@ export default function LiveMatch() {
                   )
                 }
               >
-                OK
+                {ackSubmitting ? (
+                  <div className={styles.loaderRow}>
+                    <div className={styles.spinner}></div>
+                    Finalizing Match...
+                  </div>
+                ) : (
+                  "Finish Match"
+                )}
               </button>
             </div>
           </div>
@@ -412,7 +519,18 @@ export default function LiveMatch() {
                   }
 
                   return (
-                    <span key={i} style={ballChip}>
+                    <span
+                      key={i}
+                      className={`${styles.ballChip} ${
+                        b.type === "WICKET"
+                          ? styles.wicketBall
+                          : b.runs === 4
+                            ? styles.fourBall
+                            : b.runs === 6
+                              ? styles.sixBall
+                              : styles.normalBall
+                      }`}
+                    >
                       {b.type === "RUN" && b.runs}
 
                       {b.type === "WIDE" &&
@@ -432,7 +550,7 @@ export default function LiveMatch() {
           {/* )} */}
 
           <div style={keypad}>
-            {[0, 1, 2, 3, 4, 6].map((r) => (
+            {[1, 2, 3, 4, 6, 0].map((r) => (
               <button
                 key={r}
                 style={keyBtn}
@@ -488,27 +606,11 @@ export default function LiveMatch() {
               style={keyBtn}
               onClick={() => {
                 const updated = deepCopy(match);
-                const live = updated.live;
-                const innings = updated.innings[live.inningsIndex];
 
-                // FULL history snapshot (same as others)
-                live.history.push({
-                  type: "STRIKE_CHANGE",
-                  prevState: {
-                    striker: live.striker,
-                    nonStriker: live.nonStriker,
-                    bowler: live.bowler,
-                    lastOverBowler: live.lastOverBowler,
-                    balls: innings.balls,
-                    totalRuns: innings.totalRuns,
-                    wickets: innings.wickets,
-                    battingStats: deepCopy(innings.battingStats),
-                    bowlingStats: deepCopy(innings.bowlingStats),
-                    outBatsmen: [...live.outBatsmen],
-                    thisOver: deepCopy(innings.thisOver || []),
-                    extraMode,
-                  },
-                });
+                // proper snapshot
+                takeSnapshot(updated, "STRIKE_CHANGE", extraMode);
+
+                const live = updated.live;
 
                 // swap strike
                 [live.striker, live.nonStriker] = [
@@ -517,7 +619,9 @@ export default function LiveMatch() {
                 ];
 
                 updated.updatedAt = Date.now();
+
                 saveMatch(updated);
+
                 setMatch(updated);
               }}
             >
@@ -737,5 +841,3 @@ function CompletedMatchSummary({ match, setTab }) {
     </>
   );
 }
-
-

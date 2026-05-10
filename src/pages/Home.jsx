@@ -10,16 +10,12 @@ export default function Home({ open, onClose }) {
 
   const API = import.meta.env.VITE_API_BASE_URL;
 
-  // console.log(API)
-
   const loadSeasons = async () => {
     try {
       setLoading(true);
       const res = await fetch(`${API}/api/seasons`);
       if (!res.ok) throw new Error("Failed to fetch seasons");
-
       const data = await res.json();
-      // console.log("seasons:",data)
       setSeasons(data || []);
     } catch (err) {
       console.error(err);
@@ -35,37 +31,52 @@ export default function Home({ open, onClose }) {
 
   return (
     <>
-      {loading && <p className={styles.muted}>Loading…</p>}
-
-      {!loading && seasons.length === 0 && (
-        <div className={styles.empty}>
-          <p>No seasons yet</p>
-          <p className={styles.muted}>Create a season to start playing</p>
+      {/* 🔵 LOADING (Skeleton instead of text) */}
+      {loading && (
+        <div className={styles.skeletonWrapper}>
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className={styles.skeletonCard}></div>
+          ))}
         </div>
       )}
 
-      <div className={styles.list}>
-        {seasons.map((season) => (
-          <div
-            key={season._id}
-            className={styles.card}
-            onClick={() => {
-              const stored = JSON.parse(
-                sessionStorage.getItem("seasons") || "{}"
-              );
+      {/* 🟡 EMPTY STATE */}
+      {!loading && seasons.length === 0 && (
+        <div className={styles.empty}>
+          <h3>No seasons yet</h3>
+          <p>Create your first season and start tracking matches</p>
+        </div>
+      )}
 
-              stored[season._id] = season.seasonName;
+      {/* 🟢 SEASONS LIST */}
+      {!loading && seasons.length > 0 && (
+        <div className={styles.list}>
+          {seasons.map((season) => (
+            <div
+              key={season._id}
+              className={styles.card}
+              onClick={() => {
+                const stored = JSON.parse(
+                  sessionStorage.getItem("seasons") || "{}",
+                );
 
-              sessionStorage.setItem("seasons", JSON.stringify(stored));
+                stored[season._id] = season.seasonName;
+                sessionStorage.setItem("seasons", JSON.stringify(stored));
 
-              navigate(`/season/${season._id}`);
-            }}
-          >
-            <div className={styles.name}>{season.seasonName}</div>
-            <div className={styles.meta}>{season.matchCount || 0} matches</div>
-          </div>
-        ))}
-      </div>
+                navigate(`/season/${season._id}`);
+              }}
+            >
+              <div className={styles.cardTop}>
+                <span className={styles.name}>{season.seasonName}</span>
+              </div>
+
+              <div className={styles.meta}>
+                {season.matchCount || 0} matches
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <CreateSeasonModal
         open={open}

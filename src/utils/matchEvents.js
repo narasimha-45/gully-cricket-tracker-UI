@@ -208,7 +208,7 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
     };
     innings.bowlingStats[live.bowler].balls++;
 
-    evaluateMatchState(updated,setMatch);
+    evaluateMatchState(updated, setMatch);
 
     handleOverEnd(updated, live, innings);
   }
@@ -232,18 +232,29 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
 export const startSecondInnings = ({ match, setMatch }) => {
   const updated = deepCopy(match);
 
+  takeSnapshot(updated, "START_SECOND_INNINGS");
+
   updated.live.inningsIndex = 1;
+
   updated.live.pendingNextInnings = false;
 
   updated.innings[1] = {
     battingTeam: match.innings[0].bowlingTeam,
+
     bowlingTeam: match.innings[0].battingTeam,
+
     totalRuns: 0,
+
     balls: 0,
+
     wickets: 0,
+
     battingStats: {},
+
     bowlingStats: {},
+
     thisOver: [],
+
     extras: {
       wides: 0,
       noBalls: 0,
@@ -252,14 +263,19 @@ export const startSecondInnings = ({ match, setMatch }) => {
 
   updated.live = {
     ...updated.live,
+
     striker: null,
+
     nonStriker: null,
+
     bowler: null,
+
     lastOverBowler: null,
+
     outBatsmen: [],
-    history: [],
   };
 
   saveMatch(updated);
+
   setMatch(updated);
 };
