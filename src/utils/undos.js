@@ -2,6 +2,7 @@ import { deepCopy } from "./helpers";
 import { takeSnapshot } from "./snapShot";
 import { handleOverEnd } from "./matchEvents";
 import { saveMatch } from "../storage/matchDB";
+import { isInningsComplete } from "./matchStateHandlers";
 
 export const undoFromMatchPopup = (match, setMatch, setExtraMode) => {
   const updated = deepCopy(match);
@@ -70,42 +71,80 @@ export const undoFromMatchPopup = (match, setMatch, setExtraMode) => {
 
 export const undoLast = ({ match, setMatch, setExtraMode }) => {
   if (match.status === "COMPLETED") return;
-  // console.log("match", match.status);
+
   if (match.live.pendingNextInnings) return;
+
   if (!match?.live?.history?.length) return;
 
   const updated = deepCopy(match);
+
   const last = updated.live.history.pop();
+
   if (!last) return;
 
-  const innings = updated.innings[updated.live.inningsIndex];
   const p = last.prevState;
+
+  // restore innings index first
+  updated.live.inningsIndex = p.inningsIndex;
+
+  const innings = updated.innings[updated.live.inningsIndex];
 
   // -------- RESTORE LIVE STATE --------
   updated.live.striker = p.striker;
+
   updated.live.nonStriker = p.nonStriker;
+
   updated.live.bowler = p.bowler;
+
   updated.live.lastOverBowler = p.lastOverBowler ?? updated.live.lastOverBowler;
+
   updated.live.outBatsmen = [...(p.outBatsmen || [])];
 
   // -------- RESTORE INNINGS STATE --------
   innings.balls = p.balls;
+
   innings.totalRuns = p.totalRuns;
+
   innings.wickets = p.wickets;
+
   innings.battingStats = deepCopy(p.battingStats);
+
   innings.bowlingStats = deepCopy(p.bowlingStats);
+
   innings.thisOver = deepCopy(p.thisOver || []);
+
+  innings.extras = deepCopy(
+    p.extras || {
+      wides: 0,
+      noBalls: 0,
+    },
+  );
 
   // -------- RESTORE EXTRA MODE --------
   setExtraMode(p.extraMode || "NORMAL");
 
   // -------- COMMIT --------
   updated.updatedAt = Date.now();
+
   saveMatch(updated);
+
   setMatch(updated);
+  // Reopen innings-end popup if first innings
+  // was already completed
+  const battingPlayers =
+    innings.battingTeam === updated.teams.teamA.name
+      ? updated.teams.teamA.players
+      : updated.teams.teamB.players;
+
+  if (
+    updated.live.inningsIndex === 0 &&
+    isInningsComplete(innings, battingPlayers, updated.totalOvers)
+  ) {
+    updated.live.pendingNextInnings = true;
+  }
 };
 
-export const undoFromInningsPopup = ({match,setMatch,setExtraMode}) => {
+export const undoFromInningsPopup = ({ match, setMatch, setExtraMode }) => {
   const updated = deepCopy(match);
 
   // 1️⃣ Cancel innings completion

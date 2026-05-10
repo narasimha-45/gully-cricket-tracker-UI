@@ -85,40 +85,51 @@ export default function CreateMatch() {
 
     await saveMatch(match);
 
-    navigate(`/season/${seasonId}/match/${matchId}/setup/team-a`,{ replace: true });
+    navigate(`/season/${seasonId}/match/${matchId}/setup/team-a`, {
+      replace: true,
+    });
   };
 
   return (
-    <div>
+    <div style={container}>
       {/* Header */}
-      <div style={header}>
-        <button onClick={() => navigate(-1)} style={backBtn}>
-          ←
-        </button>
-        <h2>Create Match</h2>
-        <div style={{ width: 24 }} />
+      <div style={heroBox}>
+        <div style={heroTop}>
+          <button onClick={() => navigate(-1)} style={backBtn}>
+            ←
+          </button>
+          <div style={{ width: 28 }} />
+          <div>
+            <div style={heroTitle}>Create Match</div>
+
+            {/* <div style={heroSub}>Setup teams and match format</div> */}
+          </div>
+        </div>
       </div>
 
       {/* ---------------- TEAM A ---------------- */}
       <div style={section}>
         <label style={label}>Team A</label>
 
-        <select
-          value={teamAId}
-          onChange={(e) => {
-            setTeamAId(e.target.value);
-            setTeamAName("");
-          }}
-          style={input}
-        >
-          <option value="">Select existing team</option>
-          {teams.map((team) => (
-            <option key={team._id} value={team._id}>
-              {team.name}
-            </option>
-          ))}
-        </select>
-
+        <div style={selectWrap}>
+          <select
+            value={teamAId}
+            onChange={(e) => {
+              setTeamAId(e.target.value);
+              setTeamAName("");
+            }}
+            style={input}
+          >
+            <option value="">Select existing team</option>
+            {teams.map((team) => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
+          <span style={selectArrow}></span>
+        </div>
+        <div style={{ height: 8 }} />
         <input
           placeholder="Or create new team"
           value={teamAName}
@@ -135,23 +146,27 @@ export default function CreateMatch() {
       <div style={section}>
         <label style={label}>Team B</label>
 
-        <select
-          value={teamBId}
-          onChange={(e) => {
-            setTeamBId(e.target.value);
-            setTeamBName("");
-          }}
-          style={input}
-        >
-          <option value="">Select existing team</option>
-          {teams.map((team) => (
-            <option key={team._id} value={team._id}>
-              {team.name}
-            </option>
-          ))}
-        </select>
+        <div style={selectWrap}>
+          <select
+            value={teamBId}
+            onChange={(e) => {
+              setTeamBId(e.target.value);
+              setTeamBName("");
+            }}
+            style={input}
+          >
+            <option value="">Select existing team</option>
+            {teams.map((team) => (
+              <option key={team._id} value={team._id}>
+                {team.name}
+              </option>
+            ))}
+          </select>
 
-        <input
+          <span style={selectArrow}></span>
+        </div>
+        <div style={{ height: 8 }} />
+        <input 
           placeholder="Or create new team"
           value={teamBName}
           onChange={(e) => {
@@ -198,7 +213,11 @@ export default function CreateMatch() {
       <button
         disabled={!canCreate}
         onClick={handleCreate}
-        style={{ ...primaryBtn, opacity: canCreate ? 1 : 0.5 }}
+        style={{
+          ...primaryBtn,
+          opacity: canCreate ? 1 : 0.5,
+          background: canCreate ? "#4f46e5" : "#c7d2fe",
+        }}
       >
         Create Match
       </button>
@@ -207,52 +226,168 @@ export default function CreateMatch() {
 }
 
 /* ---------------- styles ---------------- */
-
-const header = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "12px 16px",
-  background: "#eef2ff",
-  borderRadius: 12,
-  marginBottom: 24,
+const container = {
+  padding: 16,
+  maxWidth: 520,
+  margin: "0 auto",
 };
 
-const backBtn = {
-  background: "none",
-  border: "none",
-  fontSize: 18,
-  cursor: "pointer",
+const section = {
+  marginBottom: 26,
 };
 
-const section = { marginBottom: 24 };
-const label = { fontWeight: 600, marginBottom: 6, display: "block" };
+const label = {
+  fontWeight: 600,
+  marginBottom: 10,
+  display: "block",
+  fontSize: 14,
+};
 
 const input = {
   width: "100%",
-  padding: 10,
-  borderRadius: 8,
-  border: "1px solid #d1d5db",
-  marginBottom: 10,
+  padding: "14px 16px",
+  borderRadius: 12,
+  border: "1px solid #e5e7eb",
+  background: "#0d15f019",
+  fontSize: 15,
+  outline: "none",
+  appearance: "none",
+  WebkitAppearance: "none",
+  MozAppearance: "none",
+  boxSizing: "border-box",
+};
+
+const selectWrap = {
+  position: "relative",
+};
+
+const selectArrow = {
+  position: "absolute",
+  right: 16,
+  top: "50%",
+  transform: "translateY(-50%)",
+  pointerEvents: "none",
+  color: "#6b7280",
 };
 
 const row = { display: "flex", gap: 8, marginBottom: 12 };
 
 const pill = (active) => ({
-  padding: "8px 14px",
-  borderRadius: 999,
+  flex: 1,
+  height: 46,
+  borderRadius: 12,
   border: "none",
   cursor: "pointer",
-  background: active ? "#4f46e5" : "#eef2ff",
-  color: active ? "#fff" : "#1e1b4b",
+  fontWeight: 600,
+  transition: "0.2s ease",
+  background: active ? "#4f46e5" : "#f3f4f6",
+  color: active ? "#fff" : "#111827",
 });
 
 const primaryBtn = {
   width: "100%",
-  padding: 14,
-  borderRadius: 12,
+  padding: 16,
+  borderRadius: 14,
   border: "none",
   background: "#4f46e5",
   color: "#fff",
-  fontWeight: 600,
+  fontWeight: 700,
+  fontSize: 15,
+  marginTop: 10,
+  cursor: "pointer",
+};
+
+const topTitle = {
+  fontSize: 20,
+  fontWeight: 700,
+};
+
+const topBar = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+  marginBottom: 26,
+};
+
+const iconBtn = {
+  width: 38,
+  height: 38,
+  borderRadius: 10,
+  border: "1px solid #e5e7eb",
+  background: "#fff",
+  fontSize: 18,
+  cursor: "pointer",
+  flexShrink: 0,
+};
+
+const navBar = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 22,
+};
+
+const navTitle = {
+  fontSize: 18,
+  fontWeight: 700,
+  color: "#111827",
+};
+
+const topSub = {
+  fontSize: 13,
+  color: "#6b7280",
+  marginTop: 2,
+};
+
+const header = {
+  display: "flex",
+  alignItems: "center",
+  gap: 18,
+  padding: "20px 24px",
+  borderRadius: 24,
+  background: "#f5f3ff",
+  marginBottom: 28,
+};
+
+const title = {
+  fontSize: 24,
+  fontWeight: 800,
+  color: "#111827",
+  padding: "20px",
+};
+
+const heroBox = {
+  background: "#031cfc31",
+  borderRadius: 18,
+  padding: "10px 20px",
+  marginBottom: 28,
+};
+
+const heroTop = {
+  display: "flex",
+  alignItems: "center",
+  gap: 12,
+};
+
+const heroTitle = {
+  fontSize: 25,
+  fontWeight: 700,
+  color: "#1e1b4b",
+};
+
+const heroSub = {
+  marginTop: 4,
+  fontSize: 14,
+  color: "#6b7280",
+};
+
+const backBtn = {
+  width: 35,
+  height: 35,
+  borderRadius: 14,
+  border: "none",
+  background: "#ffffff",
+  fontSize: 18,
+  cursor: "pointer",
+  flexShrink: 0,
 };
