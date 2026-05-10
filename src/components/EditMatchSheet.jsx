@@ -5,15 +5,15 @@ import { saveMatch } from "../storage/matchDB";
 export default function EditMatchSheet({ open, onClose, match, onSave }) {
   const { live } = match;
 
-  const [openTeam, setOpenTeam] = useState(null); // teamA | teamB
+  const [openTeam, setOpenTeam] = useState(null);
   const [newPlayer, setNewPlayer] = useState("");
   const [overs, setOvers] = useState(match.totalOvers || 0);
 
-  /* ---------------- SAFETY CHECK ---------------- */
+  const innings = match.innings[live.inningsIndex];
+
+  /* ---------------- PLAYER LOCK ---------------- */
 
   const isPlayerLocked = (player) => {
-    const innings = match.innings[live.inningsIndex];
-
     return (
       live.striker === player ||
       live.nonStriker === player ||
@@ -22,6 +22,41 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
       innings.battingStats[player] ||
       innings.bowlingStats[player]
     );
+  };
+
+  /* ---------------- SAVE ---------------- */
+
+  const save = (updated) => {
+    saveMatch(updated);
+    onSave(updated);
+  };
+
+  /* ---------------- OVERS ---------------- */
+
+  const minOversNeeded = Math.ceil(innings.balls / 6);
+
+  const updateOvers = (delta) => {
+    const next = overs + delta;
+
+    // prevent invalid values
+    if (next < minOversNeeded) return;
+
+    // optional hard cap
+    if (next > 50) return;
+
+    setOvers(next);
+  };
+
+  const applyOvers = () => {
+    if (overs < minOversNeeded) return;
+
+    const updated = {
+      ...match,
+      totalOvers: overs,
+      updatedAt: Date.now(),
+    };
+
+    save(updated);
   };
 
   /* ---------------- TEAM OPS ---------------- */
@@ -42,6 +77,7 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
     };
 
     save(updated);
+
     setNewPlayer("");
   };
 
@@ -63,34 +99,17 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
     save(updated);
   };
 
-  /* ---------------- OVERS ---------------- */
+  /* ---------------- RULES ---------------- */
 
-  const updateOvers = (delta) => {
-    const next = overs + delta;
-    if (next < Math.ceil(match.innings[live.inningsIndex].balls / 6)) return;
-
-    setOvers(next);
-  };
-
-  /* ---------------- SAVE ---------------- */
-
-  const save = (updated) => {
-    saveMatch(updated);
-    onSave(updated);
-  };
-
-  const applyOvers = () => {
-    const updated = {
-      ...match,
-      totalOvers: overs,
-      updatedAt: Date.now(),
-    };
-    save(updated);
-  };
-
-    const rules = match.rules || {
-    wide: { extraRun: false, extraBall: true },
-    noBall: { extraRun: true, extraBall: true },
+  const rules = match.rules || {
+    wide: {
+      extraRun: false,
+      extraBall: true,
+    },
+    noBall: {
+      extraRun: true,
+      extraBall: true,
+    },
   };
 
   const updateRules = (partial) => {
@@ -103,54 +122,98 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
       updatedAt: Date.now(),
     };
 
-    saveMatch(updated);
-    onSave(updated);
+    save(updated);
   };
 
   /* ---------------- UI ---------------- */
 
   return (
-    <BottomSheet open={open} title="Edit Match" onClose={onClose}>
+    <BottomSheet open={open} title="Match Settings" onClose={onClose}>
       {/* OVERS */}
-      <div style={section}>
-        <p style={label}>Overs</p>
-        <div style={oversRow}>
-          <button onClick={() => updateOvers(-1)}>-</button>
-          <span style={oversValue}>{overs}</span>
-          <button onClick={() => updateOvers(1)}>+</button>
+      <div style={sectionCard}>
+        <div style={sectionTitleRow}>
+          <h3 style={sectionTitle}>Overs</h3>
+
+          <span style={helperText}>Minimum: {minOversNeeded}</span>
         </div>
 
-        <button style={saveBtn} onClick={applyOvers}>
+        <div style={oversContainer}>
+          <button style={circleBtn} onClick={() => updateOvers(-1)}>
+            −
+          </button>
+
+          <div style={oversBox}>
+            <span style={oversValue}>{overs}</span>
+            <span style={oversLabel}>Overs</span>
+          </div>
+
+          <button style={circleBtn} onClick={() => updateOvers(1)}>
+            +
+          </button>
+        </div>
+
+        <button style={primaryBtn} onClick={applyOvers}>
           Update Overs
         </button>
       </div>
 
-      <h4>Extras Rules</h4>
+      {/* RULES */}
+      <div style={sectionCard}>
+        <h3 style={sectionTitle}>Extras Rules</h3>
 
-      <div style={settingsRow}>
-        <span>Wide gives run</span>
-        <input
-          type="checkbox"
-          checked={rules.wide.extraRun}
-          onChange={(e) =>
-            updateRules({
-              wide: { ...rules.wide, extraRun: e.target.checked },
-            })
-          }
-        />
-      </div>
+        <div style={settingsRow}>
+          <div>
+            <div style={settingTitle}>Wide gives run</div>
+            <div style={settingDesc}>Add automatic extra run on wide</div>
+          </div>
 
-      <div style={settingsRow}>
-        <span>No Ball gives run</span>
-        <input
-          type="checkbox"
-          checked={rules.noBall.extraRun}
-          onChange={(e) =>
-            updateRules({
-              noBall: { ...rules.noBall, extraRun: e.target.checked },
-            })
-          }
-        />
+          <input
+            type="checkbox"
+            style={{
+              width: 20,
+              height: 20,
+              accentColor: "#4f46e5",
+              cursor: "pointer",
+            }}
+            checked={rules.wide.extraRun}
+            onChange={(e) =>
+              updateRules({
+                wide: {
+                  ...rules.wide,
+                  extraRun: e.target.checked,
+                },
+              })
+            }
+          />
+        </div>
+
+        <div style={divider}></div>
+
+        <div style={settingsRow}>
+          <div>
+            <div style={settingTitle}>No Ball gives run</div>
+            <div style={settingDesc}>Add automatic extra run on no ball</div>
+          </div>
+
+          <input
+            type="checkbox"
+            style={{
+              width: 20,
+              height: 20,
+              accentColor: "#4f46e5",
+              cursor: "pointer",
+            }}
+            checked={rules.noBall.extraRun}
+            onChange={(e) =>
+              updateRules({
+                noBall: {
+                  ...rules.noBall,
+                  extraRun: e.target.checked,
+                },
+              })
+            }
+          />
+        </div>
       </div>
 
       {/* TEAM A */}
@@ -182,14 +245,6 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
   );
 }
 
-const settingsRow = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  padding: "10px 0",
-  touchAction: "manipulation",
-};
-
 /* ---------------- TEAM EDITOR ---------------- */
 
 function TeamEditor({
@@ -205,47 +260,72 @@ function TeamEditor({
 }) {
   const team = match.teams[teamKey];
 
-
+  const isOpen = openTeam === teamKey;
 
   return (
-    <div style={section}>
+    <div style={sectionCard}>
       <div
         style={teamHeader}
-        onClick={() => setOpenTeam(openTeam === teamKey ? null : teamKey)}
+        onClick={() => setOpenTeam(isOpen ? null : teamKey)}
       >
-        <strong>{team.name}</strong>
-        <span>{openTeam === teamKey ? "▲" : "▼"}</span>
+        <div>
+          <div style={teamTitle}>{team.name}</div>
+
+          <div style={teamSubText}>{team.players.length} players</div>
+        </div>
+
+        <span style={arrow}>{isOpen ? "▲" : "▼"}</span>
       </div>
 
-      {openTeam === teamKey && (
+      {isOpen && (
         <>
-          {team.players.map((p) => {
-            const locked = isPlayerLocked(p);
+          <div style={{ marginTop: 12 }}>
+            {team.players.map((p) => {
+              const locked = isPlayerLocked(p);
 
-            return (
-              <div key={p} style={playerRow}>
-                <span style={{ opacity: locked ? 0.5 : 1 }}>{p}</span>
-                {locked ? (
-                  <span style={lock}>🔒</span>
-                ) : (
-                  <button
-                    style={removeBtn}
-                    onClick={() => removePlayer(teamKey, p)}
-                  >
-                    Remove
-                  </button>
-                )}
-              </div>
-            );
-          })}
+              return (
+                <div key={p} style={playerRow}>
+                  <div>
+                    <div
+                      style={{
+                        fontWeight: 600,
+                        opacity: locked ? 0.6 : 1,
+                      }}
+                    >
+                      {p}
+                    </div>
+
+                    {locked && (
+                      <div style={lockedText}>Currently used in match</div>
+                    )}
+                  </div>
+
+                  {locked ? (
+                    <span style={lockBadge}>🔒 Locked</span>
+                  ) : (
+                    <button
+                      style={removeBtn}
+                      onClick={() => removePlayer(teamKey, p)}
+                    >
+                      Remove
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
           <div style={addRow}>
             <input
-              placeholder="New player"
+              style={input}
+              placeholder="Add new player"
               value={newPlayer}
               onChange={(e) => setNewPlayer(e.target.value)}
             />
-            <button onClick={() => addPlayer(teamKey)}>Add</button>
+
+            <button style={addBtn} onClick={() => addPlayer(teamKey)}>
+              Add
+            </button>
           </div>
         </>
       )}
@@ -255,55 +335,187 @@ function TeamEditor({
 
 /* ---------------- STYLES ---------------- */
 
-const section = { marginBottom: 16 };
-
-const label = { fontWeight: 600, marginBottom: 6 };
-
-const oversRow = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  marginBottom: 8,
+const sectionCard = {
+  background: "#f8fafc",
+  borderRadius: 18,
+  padding: 12,
+  marginBottom: 14,
+  border: "1px solid #e5e7eb",
 };
 
+const sectionTitleRow = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: 12,
+};
 
+const sectionTitle = {
+  margin: 0,
+  fontSize: 17,
+  fontWeight: 700,
+};
 
-const oversValue = { fontWeight: 700, fontSize: 18 };
+const helperText = {
+  fontSize: 12,
+  color: "#6b7280",
+};
 
-const saveBtn = {
-  width: "100%",
-  padding: 10,
-  borderRadius: 10,
+const oversContainer = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: 16,
+  marginBottom: 16,
+};
+
+const circleBtn = {
+  width: 44,
+  height: 44,
+  borderRadius: "50%",
   border: "none",
   background: "#4f46e5",
   color: "#fff",
+  fontSize: 24,
+  fontWeight: 700,
+  cursor: "pointer",
+};
+
+const oversBox = {
+  minWidth: 90,
+  padding: "10px 14px",
+  borderRadius: 16,
+  background: "#eef2ff",
+  textAlign: "center",
+};
+
+const oversValue = {
+  fontSize: 24,
+  fontWeight: 800,
+  color: "#312e81",
+  lineHeight: 1,
+};
+
+const oversLabel = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 4,
+};
+
+const primaryBtn = {
+  maxWidth: "100%",
+  margin: "0 auto",
+  width: "100%",
+  padding: "10px 14px",
+  borderRadius: 14,
+  border: "none",
+  background: "linear-gradient(135deg, #4f46e5, #4338ca)",
+  color: "#fff",
+  fontWeight: 700,
+  fontSize: 15,
+  cursor: "pointer",
+};
+
+const settingsRow = {
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: 12,
+  padding: "6px 0",
+};
+
+const settingTitle = {
   fontWeight: 600,
+  fontSize: 14,
+};
+
+const settingDesc = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 2,
+};
+
+const divider = {
+  height: 1,
+  background: "#e5e7eb",
+  margin: "10px 0",
 };
 
 const teamHeader = {
   display: "flex",
   justifyContent: "space-between",
+  alignItems: "center",
   cursor: "pointer",
-  fontWeight: 600,
+};
+
+const teamTitle = {
+  fontSize: 16,
+  fontWeight: 700,
+};
+
+const teamSubText = {
+  fontSize: 12,
+  color: "#6b7280",
+  marginTop: 2,
+};
+
+const arrow = {
+  fontSize: 14,
+  color: "#6b7280",
 };
 
 const playerRow = {
   display: "flex",
   justifyContent: "space-between",
-  padding: "6px 0",
+  alignItems: "center",
+  padding: "10px 0",
+  borderBottom: "1px solid #e5e7eb",
+};
+
+const lockedText = {
+  fontSize: 11,
+  color: "#ef4444",
+  marginTop: 2,
+};
+
+const lockBadge = {
+  fontSize: 12,
+  fontWeight: 600,
+  color: "#6b7280",
 };
 
 const removeBtn = {
-  background: "none",
   border: "none",
-  color: "#dc2626",
+  background: "#fee2e2",
+  color: "#b91c1c",
+  padding: "7px 12px",
+  borderRadius: 10,
+  fontWeight: 600,
   cursor: "pointer",
 };
 
 const addRow = {
   display: "flex",
-  gap: 8,
-  marginTop: 8,
+  gap: 10,
+  marginTop: 14,
 };
 
-const lock = { fontSize: 14 };
+const input = {
+  flex: 1,
+  padding: "12px 14px",
+  borderRadius: 12,
+  border: "1px solid #d1d5db",
+  outline: "none",
+  fontSize: 14,
+  background: "#fff",
+};
+
+const addBtn = {
+  border: "none",
+  background: "#4f46e5",
+  color: "#fff",
+  borderRadius: 12,
+  padding: "0 18px",
+  fontWeight: 700,
+  cursor: "pointer",
+};
