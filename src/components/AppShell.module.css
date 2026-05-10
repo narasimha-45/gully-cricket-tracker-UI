@@ -14,6 +14,10 @@
   position: relative;
 }
 
+:root {
+  --app-width: 420px;
+}
+
 /* HEADER */
 .header {
   padding: 14px;

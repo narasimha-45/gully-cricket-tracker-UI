@@ -83,6 +83,7 @@ import {
 import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
 import styles from "./LiveMatch.module.css";
 import { takeSnapshot } from "../utils/snapShot";
+import WicketSheet from "../components/WicketSheet";
 
 export default function LiveMatch() {
   const { matchId } = useParams();
@@ -332,9 +333,7 @@ export default function LiveMatch() {
             fontSize: 13,
             fontWeight: 600,
           }}
-        >
-          
-        </div>
+        ></div>
       </div>
 
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
@@ -678,146 +677,17 @@ export default function LiveMatch() {
         onClose={() => setSheet(null)}
       />
 
-      <BottomSheetSelector
+      <WicketSheet
         open={wicketUI.open}
-        title="Wicket"
-        onClose={() => setWicketUI({ open: false })}
-      >
-        {/* WICKET TYPE */}
-        <h4>Wicket Type</h4>
-        <div style={grid2}>
-          {WICKET_TYPES.map((t) => (
-            <button
-              key={t}
-              style={wicketUI.type === t ? activeBtn : btn}
-              onClick={() => setWicketUI({ ...wicketUI, type: t })}
-            >
-              {t.replace("_", " ")}
-            </button>
-          ))}
-        </div>
-
-        {/* RUN OUT: WHO IS OUT */}
-        {wicketUI.type === "RUN_OUT" && (
-          <>
-            {/* WHO GOT RUN OUT */}
-            <h4>Who got run out?</h4>
-            {[live.striker, live.nonStriker].map((p) => (
-              <div
-                key={p}
-                style={
-                  wicketUI.runOut.outBatsman === p ? selectedListItem : listItem
-                }
-                onClick={() =>
-                  setWicketUI({
-                    ...wicketUI,
-                    runOut: {
-                      ...wicketUI.runOut,
-                      outBatsman: p,
-                    },
-                  })
-                }
-              >
-                {p}
-              </div>
-            ))}
-
-            {/* RUNS COMPLETED */}
-            <h4 style={{ marginTop: 12 }}>Runs completed</h4>
-            <div style={grid2}>
-              {[0, 1, 2, 3, 4].map((r) => (
-                <button
-                  key={r}
-                  style={wicketUI.runOut.runs === r ? activeBtn : btn}
-                  onClick={() =>
-                    setWicketUI({
-                      ...wicketUI,
-                      runOut: {
-                        ...wicketUI.runOut,
-                        runs: r,
-                      },
-                    })
-                  }
-                >
-                  {r}
-                </button>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* FIELDER / CATCHER */}
-        {["CAUGHT", "RUN_OUT", "STUMPED"].includes(wicketUI.type) && (
-          <>
-            <h4>Fielder</h4>
-            {bowlingPlayers.map((p) => (
-              <div
-                key={p}
-                style={wicketUI.helper === p ? selectedListItem : listItem}
-                onClick={() => setWicketUI({ ...wicketUI, helper: p })}
-              >
-                {p}
-              </div>
-            ))}
-          </>
-        )}
-
-        {/* ERROR */}
-        {isInvalidWicket && (
-          <p style={{ color: "red" }}>
-            This wicket is not allowed on {extraMode}
-          </p>
-        )}
-
-        {/* ERROR */}
-        {isInvalidWicket && (
-          <p style={{ color: "red" }}>
-            This wicket is not allowed on {extraMode}
-          </p>
-        )}
-
-        {["CAUGHT", "RUN_OUT", "STUMPED"].includes(wicketUI.type) &&
-          !wicketUI.helper && (
-            <p style={{ color: "red" }}>Please select a fielder</p>
-          )}
-
-        {/* CONFIRM */}
-        <button
-          style={confirmBtn}
-          disabled={
-            !wicketUI.type ||
-            (wicketUI.type === "RUN_OUT" && !wicketUI.runOut.outBatsman)
-          }
-          onClick={() => {
-            const outBatsman =
-              wicketUI.type === "RUN_OUT"
-                ? wicketUI.runOut.outBatsman
-                : live.striker;
-
-            // console.log("Wicket", wicketUI);
-
-            applyWicket({
-              wicketType: wicketUI.type,
-              outBatsman,
-              helper: wicketUI.helper,
-              runs: wicketUI.type === "RUN_OUT" ? wicketUI.runOut.runs : 0,
-              match,
-              setMatch,
-              extraMode,
-              setExtraMode,
-            });
-
-            setWicketUI({
-              open: false,
-              type: null,
-              helper: null,
-              runOut: { outBatsman: null, runs: 0 },
-            });
-          }}
-        >
-          Confirm Wicket
-        </button>
-      </BottomSheetSelector>
+        wicketUI={wicketUI}
+        setWicketUI={setWicketUI}
+        live={live}
+        bowlingPlayers={bowlingPlayers}
+        match={match}
+        setMatch={setMatch}
+        extraMode={extraMode}
+        setExtraMode={setExtraMode}
+      />
     </div>
   );
 }
