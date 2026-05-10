@@ -1,181 +1,105 @@
 // components/Scorecard.jsx
+
 export default function Scorecard({ match }) {
-  const { innings, teams, totalOvers } = match;
+  const { innings, teams } = match;
 
   const hasStarted = innings?.some(
     (inn) =>
       inn.balls > 0 ||
-      Object.keys(inn.battingStats || {}).length > 0 ||
-      Object.keys(inn.bowlingStats || {}).length > 0
+      Object.keys(inn.battingStats || {}).length > 0
   );
 
   if (!hasStarted) {
-  return (
-    <div style={emptyState}>
-      <h3 style={{ marginBottom: 6, color: "#111827" }}>
-        Match not yet started
-      </h3>
-      <p>The scorecard will appear once the first ball is bowled.</p>
-    </div>
-  );
-}
+    return (
+      <div style={emptyWrapStyle}>
+        <h3 style={emptyTitleStyle}>
+          Match not started
+        </h3>
+
+        <p style={emptySubStyle}>
+          Scorecard will appear after the first ball.
+        </p>
+      </div>
+    );
+  }
 
   return (
-    <div>
+    <div style={pageStyle}>
       {innings.map((inn, idx) => (
         <InningsCard
           key={idx}
           innings={inn}
           teams={teams}
-          totalOvers={totalOvers}
+          inningNumber={idx + 1}
         />
       ))}
     </div>
   );
 }
 
-const emptyState = {
-  padding: "40px 16px",
-  textAlign: "center",
-  color: "#6b7280",
-  background: "#f9fafb",
-  borderRadius: 14,
-  border: "1px dashed #e5e7eb",
-};
+function InningsCard({
+  innings,
+  teams,
+  inningNumber,
+}) {
+  if (!innings || innings.balls === 0)
+    return null;
 
-
-
-function getAllBattedPlayers(innings, battingTeamPlayers, live) {
-  const set = new Set();
-
-  // Faced a ball
-  Object.keys(innings.battingStats || {}).forEach((p) => {
-    if (battingTeamPlayers.includes(p)) set.add(p);
-  });
-
-  // Got out
-  (innings.outBatsmen || []).forEach((p) => {
-    if (battingTeamPlayers.includes(p)) set.add(p);
-  });
-
-  // Only include live players if they belong to batting team
-  if (live?.striker && battingTeamPlayers.includes(live.striker)) {
-    set.add(live.striker);
-  }
-
-  if (live?.nonStriker && battingTeamPlayers.includes(live.nonStriker)) {
-    set.add(live.nonStriker);
-  }
-
-  return Array.from(set);
-}
-
-function getDismissalText(player, innings) {
-  const d = innings.dismissals?.[player];
-
-  if (!d) return "not out";
-
-  switch (d.type) {
-    case "BOWLED":
-      return `b ${d.bowler}`;
-
-    case "CAUGHT":
-      return `c ${d.fielder} b ${d.bowler}`;
-
-    case "LBW":
-      return `lbw b ${d.bowler}`;
-
-    case "STUMPED":
-      return `st ${d.fielder} b ${d.bowler}`;
-
-    case "RUN_OUT":
-      return d.fielder ? `run out (${d.fielder})` : "run out";
-
-    case "HIT_WICKET":
-      return `hit wicket b ${d.bowler}`;
-
-    default:
-      return d.type.toLowerCase();
-  }
-}
-
-function InningsCard({ innings, index, teams, totalOvers, live, matchStatus }) {
-  if (!innings || innings.balls === 0) return null;
-
-  const battingTeamPlayers =
-    innings.battingTeam === teams.teamA.name
+  const battingPlayers =
+    innings.battingTeam ===
+    teams.teamA.name
       ? teams.teamA.players
       : teams.teamB.players;
 
-  const battedPlayers = Object.keys(innings.battingStats || []);
+  const battedPlayers = Object.keys(
+    innings.battingStats || {}
+  );
 
-  const didNotBat = battingTeamPlayers.filter(
+  const didNotBat = battingPlayers.filter(
     (p) => !battedPlayers.includes(p)
   );
 
-  const overs = `${Math.floor(innings.balls / 6)}.${innings.balls % 6}`;
+  const overs = `${Math.floor(
+    innings.balls / 6
+  )}.${innings.balls % 6}`;
 
   const rr =
     innings.balls === 0
       ? "0.00"
-      : (innings.totalRuns / (innings.balls / 6)).toFixed(2);
+      : (
+          innings.totalRuns /
+          (innings.balls / 6)
+        ).toFixed(2);
 
   return (
-    <div style={card}>
-      <h3 style={{ marginBottom: 6 }}>
-        {innings.battingTeam} – {innings.totalRuns}/{innings.wickets}
-      </h3>
-
-      <p style={sub}>
-        Overs: {overs} / {totalOvers} &nbsp; | &nbsp; RR: {rr}
-      </p>
-
-      <BattingTable innings={innings} battedPlayers={battedPlayers} />
-      {didNotBat.length > 0 && (
-        <div style={{ marginTop: 10, fontSize: 13, color: "#6b7280" }}>
-          <strong>Did not bat:</strong> {didNotBat.join(", ")}
+    <div style={inningsCardStyle}>
+      {/* HEADER */}
+      <div style={headerStyle}>
+        <div style={headerLeftStyle}>
+          {innings.battingTeam}
         </div>
-      )}
 
-      <ExtrasRow innings={innings} />
+        <div style={headerRightStyle}>
+          {innings.totalRuns}-
+          {innings.wickets}
 
-      <BowlingTable innings={innings} />
-    </div>
-  );
-}
+          <span style={oversStyle}>
+            {" "}
+            ({overs} Ov)
+          </span>
+        </div>
+      </div>
 
-function formatDismissal(d) {
-  if (!d) return "not out";
+      {/* BATTING HEADER */}
+      <div style={tableHeaderStyle}>
+        <span
+          style={{
+            textAlign: "left",
+          }}
+        >
+          Batter
+        </span>
 
-  switch (d.type) {
-    case "CAUGHT":
-      return `c ${d.fielder} b ${d.bowler}`;
-    case "BOWLED":
-      return `b ${d.bowler}`;
-    case "LBW":
-      return `lbw b ${d.bowler}`;
-    case "STUMPED":
-      return `st ${d.fielder} b ${d.bowler}`;
-    case "RUN_OUT":
-      return d.fielder ? `run out (${d.fielder})` : "run out";
-    case "HIT_WICKET":
-      return `hit wicket b ${d.bowler}`;
-    default:
-      return d.type.toLowerCase();
-  }
-}
-
-function BattingTable({ innings }) {
-  const players = Object.keys(innings.battingStats || {}).filter(
-    (p) => p !== "null" && p !== "undefined"
-  );
-
-  return (
-    <>
-      <h4>Batting</h4>
-
-      <div style={tableHeader}>
-        <span>Batter</span>
         <span>R</span>
         <span>B</span>
         <span>4s</span>
@@ -183,67 +107,134 @@ function BattingTable({ innings }) {
         <span>SR</span>
       </div>
 
-      {players.map((p) => {
-        const s = innings.battingStats[p] || {
-          runs: 0,
-          balls: 0,
-          fours: 0,
-          sixes: 0,
-        };
+      {/* BATTING ROWS */}
+      {Object.keys(
+        innings.battingStats || {}
+      ).map((p) => {
+        const s =
+          innings.battingStats[p];
 
         const sr =
-          s.balls === 0 ? "0.00" : ((s.runs / s.balls) * 100).toFixed(1);
-
-        // const dismissal = getDismissalText(p, innings);
+          s.balls === 0
+            ? "0.00"
+            : (
+                (s.runs / s.balls) *
+                100
+              ).toFixed(2);
 
         return (
-          <div key={p} style={row}>
-            <span>
-              <div style={{ fontWeight: 600 }}>{p}</div>
+          <div
+            key={p}
+            style={rowStyle}
+          >
+            {/* PLAYER */}
+            <div>
               <div
-                style={{
-                  fontSize: 12,
-                  color: s.dismissal ? "#6b7280" : "#16a34a",
-                }}
+                style={playerStyle}
               >
-                {s.dismissal ? formatDismissal(s.dismissal) : "not out"}
+                {p}
               </div>
+
+              <div
+                style={dismissalStyle}
+              >
+                {s.dismissal
+                  ? formatDismissal(
+                      s.dismissal
+                    )
+                  : "batting"}
+              </div>
+            </div>
+
+            {/* STATS */}
+            <span style={runsStyle}>
+              {s.runs}
             </span>
 
-            <span>{s.runs}</span>
             <span>{s.balls}</span>
+
             <span>{s.fours}</span>
+
             <span>{s.sixes}</span>
+
             <span>{sr}</span>
           </div>
         );
       })}
-    </>
-  );
-}
 
-function ExtrasRow({ innings }) {
-  const { wides = 0, noBalls = 0 } = innings.extras || {};
-  const extras = wides + noBalls;
+      {/* EXTRAS */}
+      <div style={infoRowStyle}>
+        <span
+          style={infoLabelStyle}
+        >
+          Extras
+        </span>
 
-  //   const extras = wides + noBalls;
+        <span>
+          {(innings.extras?.wides ||
+            0) +
+            (innings.extras
+              ?.noBalls || 0)}{" "}
+          (Wd{" "}
+          {innings.extras?.wides ||
+            0}
+          , Nb{" "}
+          {innings.extras
+            ?.noBalls || 0}
+          )
+        </span>
+      </div>
 
-  return (
-    <div style={{ marginTop: 8, fontWeight: 600 }}>
-      Extras: {extras} (Wd {wides}, Nb {noBalls})
-    </div>
-  );
-}
+      {/* TOTAL */}
+      <div style={infoRowStyle}>
+        <span
+          style={infoLabelStyle}
+        >
+          Total
+        </span>
 
-function BowlingTable({ innings }) {
-  const bowlers = Object.keys(innings.bowlingStats || {});
+        <span
+          style={{
+            fontWeight: 700,
+          }}
+        >
+          {innings.totalRuns}-
+          {innings.wickets} (
+          {overs} Overs, RR: {rr})
+        </span>
+      </div>
 
-  return (
-    <>
-      <h4 style={{ marginTop: 12 }}>Bowling</h4>
+      {/* YET TO BAT */}
+      {didNotBat.length > 0 && (
+        <div style={infoRowStyle}>
+          <span
+            style={infoLabelStyle}
+          >
+            Yet to Bat
+          </span>
 
-      <div style={tableHeader}>
-        <span>Bowler</span>
+          <span
+            style={yetToBatStyle}
+          >
+            {didNotBat.join(", ")}
+          </span>
+        </div>
+      )}
+
+      {/* BOWLING */}
+      <div style={bowlingTitleStyle}>
+        Bowling
+      </div>
+
+      <div style={tableHeaderStyle}>
+        <span
+          style={{
+            textAlign: "left",
+          }}
+        >
+          Bowler
+        </span>
+
         <span>O</span>
         <span>M</span>
         <span>R</span>
@@ -251,56 +242,288 @@ function BowlingTable({ innings }) {
         <span>Eco</span>
       </div>
 
-      {bowlers.map((b) => {
-        const s = innings.bowlingStats[b];
-        const overs = `${Math.floor(s.balls / 6)}.${s.balls % 6}`;
+      {Object.keys(
+        innings.bowlingStats || {}
+      ).map((b) => {
+        const s =
+          innings.bowlingStats[b];
+
+        const bowlerOvers = `${Math.floor(
+          s.balls / 6
+        )}.${s.balls % 6}`;
+
         const eco =
-          s.balls === 0 ? "0.00" : (s.runs / (s.balls / 6)).toFixed(2);
+          s.balls === 0
+            ? "0.00"
+            : (
+                s.runs /
+                (s.balls / 6)
+              ).toFixed(2);
 
         return (
-          <div key={b} style={row}>
-            <span>{b}</span>
-            <span>{overs}</span>
-            <span>{s.maidens}</span>
+          <div
+            key={b}
+            style={rowStyle}
+          >
+            <span
+              style={playerStyle}
+            >
+              {b}
+            </span>
+
+            <span>
+              {bowlerOvers}
+            </span>
+
+            <span>
+              {s.maidens}
+            </span>
+
             <span>{s.runs}</span>
-            <span>{s.wickets}</span>
+
+            <span>
+              {s.wickets}
+            </span>
+
             <span>{eco}</span>
           </div>
         );
       })}
-    </>
+    </div>
   );
+}
+
+function formatDismissal(d) {
+  if (!d) return "batting";
+
+  switch (d.type) {
+    case "CAUGHT":
+      return `c ${d.fielder} b ${d.bowler}`;
+
+    case "BOWLED":
+      return `b ${d.bowler}`;
+
+    case "LBW":
+      return `lbw b ${d.bowler}`;
+
+    case "STUMPED":
+      return `st ${d.fielder} b ${d.bowler}`;
+
+    case "RUN_OUT":
+      return d.fielder
+        ? `run out (${d.fielder})`
+        : "run out";
+
+    case "HIT_WICKET":
+      return `hit wicket b ${d.bowler}`;
+
+    default:
+      return d.type.toLowerCase();
+  }
 }
 
 /* ---------------- STYLES ---------------- */
 
-const card = {
-  background: "#f9fafb",
-  padding: 14,
+const pageStyle = {
+  display: "flex",
+  flexDirection: "column",
+  gap: 18,
+};
+
+const inningsCardStyle = {
+  background: "#ffffff",
+
   borderRadius: 14,
-  marginBottom: 20,
+
+  overflow: "hidden",
+
+  border:
+    "1px solid #e5e7eb",
+
+  boxShadow:
+    "0 2px 10px rgba(15,23,42,0.04)",
 };
 
-const tableHeader = {
-  display: "grid",
-  gridTemplateColumns: "2fr repeat(5,1fr)",
-  fontSize: 13,
-  color: "#6b7280",
+const headerStyle = {
+  background:
+    "linear-gradient(135deg,#4f46e5,#4338ca)",
+
+  color: "#fff",
+
+  padding: "14px 16px",
+
+  display: "flex",
+
+  justifyContent:
+    "space-between",
+
+  alignItems: "center",
+};
+
+const headerLeftStyle = {
+  fontSize: 19,
+
+  fontWeight: 700,
+
+  letterSpacing: -0.3,
+};
+
+const headerRightStyle = {
+  fontSize: 28,
+
+  fontWeight: 800,
+
+  letterSpacing: -1,
+};
+
+const oversStyle = {
+  fontSize: 15,
+
   fontWeight: 600,
-  paddingBottom: 6,
-  borderBottom: "1px solid #e5e7eb",
+
+  opacity: 0.9,
 };
 
-const row = {
+const bowlingTitleStyle = {
+  padding:
+    "18px 14px 10px",
+
+  fontSize: 16,
+
+  fontWeight: 700,
+
+  color: "#111827",
+};
+
+const tableHeaderStyle = {
   display: "grid",
-  gridTemplateColumns: "2fr repeat(5,1fr)",
-  padding: "8px 0",
-  borderBottom: "1px solid #f1f5f9",
-  fontSize: 14,
+
+  gridTemplateColumns:
+    "2.8fr repeat(5,1fr)",
+
+  alignItems: "center",
+
+  background: "#eef2ff",
+
+  padding: "12px 14px",
+
+  fontSize: 12,
+
+  fontWeight: 700,
+
+  color: "#4338ca",
+
+  borderBottom:
+    "1px solid #e0e7ff",
 };
 
-const sub = {
-  fontSize: 13,
+const rowStyle = {
+  display: "grid",
+
+  gridTemplateColumns:
+    "2.8fr repeat(5,1fr)",
+
+  alignItems: "center",
+
+  padding: "14px",
+
+  fontSize: 14,
+
+  color: "#111827",
+
+  borderBottom:
+    "1px solid #f3f4f6",
+
+  background: "#fff",
+};
+
+const playerStyle = {
+  fontSize: 16,
+
+  fontWeight: 500,
+
+  color: "#312e81",
+
+  lineHeight: 1.4,
+};
+
+const dismissalStyle = {
+  marginTop: 3,
+
+  fontSize: 12,
+
   color: "#6b7280",
-  marginBottom: 10,
+
+  lineHeight: 1.5,
+};
+
+const runsStyle = {
+  fontWeight: 800,
+
+  color: "#111827",
+};
+
+const infoRowStyle = {
+  display: "flex",
+
+  justifyContent:
+    "space-between",
+
+  gap: 14,
+
+  padding: "14px",
+
+  borderBottom:
+    "1px solid #f3f4f6",
+
+  fontSize: 14,
+
+  color: "#111827",
+
+  background: "#fafafa",
+};
+
+const infoLabelStyle = {
+  fontWeight: 700,
+
+  minWidth: 90,
+
+  color: "#111827",
+};
+
+const yetToBatStyle = {
+  color: "#4338ca",
+
+  lineHeight: 1.6,
+
+  fontWeight: 500,
+};
+
+const emptyWrapStyle = {
+  background: "#fff",
+
+  borderRadius: 14,
+
+  padding: "50px 24px",
+
+  textAlign: "center",
+
+  border:
+    "1px solid #e5e7eb",
+};
+
+const emptyTitleStyle = {
+  marginBottom: 8,
+
+  fontSize: 20,
+
+  fontWeight: 700,
+
+  color: "#111827",
+};
+
+const emptySubStyle = {
+  fontSize: 14,
+
+  color: "#64748b",
 };

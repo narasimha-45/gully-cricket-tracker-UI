@@ -1,6 +1,6 @@
 import { useState } from "react";
-import BottomSheet from "./BottomSheet";
 import { saveMatch } from "../storage/matchDB";
+import BottomSheetSelector from "./BottomSheetSelector";
 
 export default function EditMatchSheet({ open, onClose, match, onSave }) {
   const { live } = match;
@@ -128,7 +128,7 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
   /* ---------------- UI ---------------- */
 
   return (
-    <BottomSheet open={open} title="Match Settings" onClose={onClose}>
+    <BottomSheetSelector open={open} title="Match Settings" onClose={onClose}>
       {/* OVERS */}
       <div style={sectionCard}>
         <div style={sectionTitleRow}>
@@ -144,7 +144,7 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
 
           <div style={oversBox}>
             <span style={oversValue}>{overs}</span>
-            <span style={oversLabel}>Overs</span>
+            {/* <span style={oversLabel}>Overs</span> */}
           </div>
 
           <button style={circleBtn} onClick={() => updateOvers(1)}>
@@ -241,7 +241,7 @@ export default function EditMatchSheet({ open, onClose, match, onSave }) {
         newPlayer={newPlayer}
         setNewPlayer={setNewPlayer}
       />
-    </BottomSheet>
+    </BottomSheetSelector>
   );
 }
 
@@ -370,8 +370,8 @@ const oversContainer = {
 };
 
 const circleBtn = {
-  width: 44,
-  height: 44,
+  width: 30,
+  height: 30,
   borderRadius: "50%",
   border: "none",
   background: "#4f46e5",
@@ -382,7 +382,7 @@ const circleBtn = {
 };
 
 const oversBox = {
-  minWidth: 90,
+  minWidth: 40,
   padding: "10px 14px",
   borderRadius: 16,
   background: "#eef2ff",
@@ -390,29 +390,40 @@ const oversBox = {
 };
 
 const oversValue = {
-  fontSize: 24,
+  fontSize: 18,
   fontWeight: 800,
   color: "#312e81",
   lineHeight: 1,
 };
 
 const oversLabel = {
-  fontSize: 12,
+  fontSize: 10,
   color: "#6b7280",
   marginTop: 4,
 };
 
 const primaryBtn = {
-  maxWidth: "100%",
+  display: "block",
+
+  width: "85%",
+
   margin: "0 auto",
-  width: "100%",
-  padding: "10px 14px",
-  borderRadius: 14,
+
+  padding: "8px 12px",
+
+  borderRadius: 12,
+
   border: "none",
-  background: "linear-gradient(135deg, #4f46e5, #4338ca)",
+
+  background:
+    "linear-gradient(135deg, #4f46e5, #4338ca)",
+
   color: "#fff",
-  fontWeight: 700,
-  fontSize: 15,
+
+  fontWeight: 500,
+
+  fontSize: 14,
+
   cursor: "pointer",
 };
 
