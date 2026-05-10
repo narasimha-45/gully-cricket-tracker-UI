@@ -84,6 +84,7 @@ import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
 import styles from "./LiveMatch.module.css";
 import { takeSnapshot } from "../utils/snapShot";
 import WicketSheet from "../components/WicketSheet";
+import MatchPopup from "../components/MatchPopup";
 
 export default function LiveMatch() {
   const { matchId } = useParams();
@@ -365,86 +366,49 @@ export default function LiveMatch() {
         <CompletedMatchSummary match={match} setTab={setTab} />
       )}
 
-      {match.live.pendingNextInnings && (
-        <div style={popup}>
-          <div style={popupCard}>
-            <h2>Innings Complete</h2>
-
-            <p style={{ marginTop: 8 }}>
-              {match.innings[0].battingTeam} scored {match.innings[0].totalRuns}{" "}
-              runs
-            </p>
-
-            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-              <button
-                style={secondaryBtn}
-                onClick={() =>
-                  undoFromInningsPopup({
-                    match,
-                    setMatch,
-                    setExtraMode,
-                  })
-                }
-              >
-                Undo Last Ball
-              </button>
-
-              <button
-                style={primaryBtn}
-                onClick={() => startSecondInnings({ match, setMatch })}
-              >
-                Start Second Innings
-              </button>
-            </div>
-          </div>
-        </div>
+      {match.status === "COMPLETED" && match.result && (
+        <MatchPopup
+          open={!match.ui?.matchResultSeen}
+          title={`🏆 ${match.result.winner} Won`}
+          subtitle={`by ${match.result.margin} ${
+            match.result.type === "WICKETS" ? "wickets" : "runs"
+          }`}
+          primaryText="Finish Match"
+          primaryLoadingText="Finalizing Match..."
+          loading={ackSubmitting}
+          onPrimary={() =>
+            acknowledgeMatchResult(
+              match,
+              setMatch,
+              setAckSubmitting,
+              ackSubmitting,
+            )
+          }
+          secondaryText="Undo Last Ball"
+          onSecondary={() => undoFromMatchPopup(match, setMatch, setExtraMode)}
+        />
       )}
 
-      {match.status === "COMPLETED" && !match.ui?.matchResultSeen && (
-        <div style={popup}>
-          <div style={popupCard}>
-            <h2>{match.result.winner} Won</h2>
-
-            <p style={{ marginTop: 8 }}>
-              by {match.result.margin}{" "}
-              {match.result.type === "WICKETS" ? "wickets" : "runs"}
-            </p>
-
-            <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
-              <button
-                style={secondaryBtn}
-                onClick={() =>
-                  undoFromMatchPopup(match, setMatch, setExtraMode)
-                }
-              >
-                Undo Last Ball
-              </button>
-
-              <button
-                className={styles.finishBtn}
-                disabled={ackSubmitting}
-                onClick={() =>
-                  acknowledgeMatchResult(
-                    match,
-                    setMatch,
-                    setAckSubmitting,
-                    ackSubmitting,
-                  )
-                }
-              >
-                {ackSubmitting ? (
-                  <div className={styles.loaderRow}>
-                    <div className={styles.spinner}></div>
-                    Finalizing Match...
-                  </div>
-                ) : (
-                  "Finish Match"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <MatchPopup
+        open={match.live.pendingNextInnings}
+        title="Innings Complete"
+        subtitle={`${match.innings[0].battingTeam} scored ${match.innings[0].totalRuns} runs`}
+        primaryText="Start Second Innings"
+        onPrimary={() =>
+          startSecondInnings({
+            match,
+            setMatch,
+          })
+        }
+        secondaryText="Undo Last Ball"
+        onSecondary={() =>
+          undoFromInningsPopup({
+            match,
+            setMatch,
+            setExtraMode,
+          })
+        }
+      />
 
       {tab === "live" && match.status === "LIVE" && (
         <>
