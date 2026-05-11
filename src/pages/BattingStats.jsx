@@ -2,63 +2,37 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
 
-export default function BattingStats({
-  isOverall = false,
-}) {
+export default function BattingStats({ isOverall = false }) {
   const { seasonId } = useParams();
 
-  const API =
-    import.meta.env.VITE_API_BASE_URL;
+  const API = import.meta.env.VITE_API_BASE_URL;
 
-  const context =
-    useSeasonStats();
+  const context = useSeasonStats();
 
   /* ---------------- CONTEXT ---------------- */
 
-  const battingStats =
-    !isOverall
-      ? context?.battingStats
-      : null;
+  const battingStats = !isOverall ? context?.battingStats : null;
 
-  const setBattingStats =
-    !isOverall
-      ? context?.setBattingStats
-      : null;
+  const setBattingStats = !isOverall ? context?.setBattingStats : null;
 
-  /* ---------------- LOCAL STATE FOR OVERALL ---------------- */
+  /* ---------------- LOCAL STATE ---------------- */
 
-  const [
-    overallStats,
-    setOverallStats,
-  ] = useState(null);
+  const [overallStats, setOverallStats] = useState(null);
 
-  const players = isOverall
-    ? overallStats || []
-    : battingStats || [];
+  const players = isOverall ? overallStats || [] : battingStats || [];
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [sortKey, setSortKey] =
-    useState("runs");
+  const [sortKey, setSortKey] = useState("runs");
 
-  const [sortDir, setSortDir] =
-    useState("desc");
+  const [sortDir, setSortDir] = useState("desc");
 
   /* ---------------- LOAD ONLY ONCE ---------------- */
 
   useEffect(() => {
-    if (
-      isOverall &&
-      overallStats
-    )
-      return;
+    if (isOverall && overallStats) return;
 
-    if (
-      !isOverall &&
-      battingStats
-    )
-      return;
+    if (!isOverall && battingStats) return;
 
     loadStats();
   }, [seasonId, isOverall]);
@@ -69,26 +43,18 @@ export default function BattingStats({
     try {
       setLoading(true);
 
-      const endpoint =
-        isOverall
-          ? `${API}/api/stats/overall/batting`
-          : `${API}/api/stats/season/${seasonId}/batting`;
+      const endpoint = isOverall
+        ? `${API}/api/stats/leaderboard/batting`
+        : `${API}/api/stats/leaderboard/batting/${seasonId}`;
 
-      const res = await fetch(
-        endpoint
-      );
+      const res = await fetch(endpoint);
 
-      const json =
-        await res.json();
+      const json = await res.json();
 
       if (isOverall) {
-        setOverallStats(
-          json.data || []
-        );
+        setOverallStats(json.data || []);
       } else {
-        setBattingStats(
-          json.data || []
-        );
+        setBattingStats(json.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -97,73 +63,50 @@ export default function BattingStats({
     }
   };
 
-  /* ---------------- HELPERS ---------------- */
-
-  const getSR = (p) =>
-    p.balls
-      ? (p.runs / p.balls) *
-        100
-      : 0;
-
-  const getAvg = (p) => {
-    const outs =
-      p.innings -
-      (p.notOuts || 0);
-
-    if (outs <= 0) return 0;
-
-    return p.runs / outs;
-  };
-
-  const calcSR = (
-    runs,
-    balls
-  ) => {
-    if (!balls) return "0.00";
-
-    return (
-      (runs / balls) *
-      100
-    ).toFixed(2);
-  };
-
   /* ---------------- SORT ---------------- */
 
-  const sortedPlayers = [
-    ...players,
-  ].sort((a, b) => {
+  const sortedPlayers = [...players].sort((a, b) => {
     let av = 0;
     let bv = 0;
 
     switch (sortKey) {
+      case "innings":
+        av = a.innings || 0;
+        bv = b.innings || 0;
+        break;
+
       case "runs":
-        av = a.runs;
-        bv = b.runs;
+        av = a.runs || 0;
+        bv = b.runs || 0;
+        break;
+
+      case "hs":
+        av = a.highestScore || 0;
+        bv = b.highestScore || 0;
         break;
 
       case "sr":
-        av = getSR(a);
-        bv = getSR(b);
+        av = Number(a.derived?.strikeRate || 0);
+
+        bv = Number(b.derived?.strikeRate || 0);
+
         break;
 
       case "avg":
-        av = getAvg(a);
-        bv = getAvg(b);
+        av = Number(a.derived?.battingAverage || 0);
+
+        bv = Number(b.derived?.battingAverage || 0);
+
         break;
 
       case "fours":
-        av = a.fours;
-        bv = b.fours;
+        av = a.fours || 0;
+        bv = b.fours || 0;
         break;
 
       case "ducks":
-        av = a.ducks;
-        bv = b.ducks;
-        break;
-
-      case "innings":
-        av = a.innings;
-        bv = b.innings;
+        av = a.ducks || 0;
+        bv = b.ducks || 0;
         break;
 
       default:
@@ -171,148 +114,102 @@ export default function BattingStats({
         bv = 0;
     }
 
-    return sortDir === "asc"
-      ? av - bv
-      : bv - av;
+    return sortDir === "asc" ? av - bv : bv - av;
   });
-
-  /* ---------------- LOADING ---------------- */
-
-  if (
-    loading &&
-    players.length === 0
-  ) {
-    return (
-      <div style={loadingWrap}>
-        <div style={spinner}></div>
-
-        <p style={loadingText}>
-          Loading batting stats...
-        </p>
-      </div>
-    );
-  }
 
   /* ---------------- SORT HEADER ---------------- */
 
-  const SortHeader = ({
-    label,
-    col,
-  }) => (
+  const SortHeader = ({ label, col }) => (
     <span
       style={sortableHeader}
       onClick={() => {
         if (sortKey === col) {
-          setSortDir(
-            sortDir === "asc"
-              ? "desc"
-              : "asc"
-          );
+          setSortDir(sortDir === "asc" ? "desc" : "asc");
         } else {
           setSortKey(col);
+
           setSortDir("desc");
         }
       }}
     >
       {label}
 
-      {sortKey === col &&
-        (sortDir === "asc"
-          ? " ▲"
-          : " ▼")}
+      {sortKey === col && (sortDir === "asc" ? " ▲" : " ▼")}
     </span>
   );
+
+  /* ---------------- LOADING ---------------- */
+
+  if (loading && players.length === 0) {
+    return (
+      <div style={loadingWrap}>
+        <div style={spinner}></div>
+
+        <p style={loadingText}>Loading batting stats...</p>
+      </div>
+    );
+  }
 
   /* ---------------- UI ---------------- */
 
   return (
     <div style={page}>
       {/* HEADER */}
+
       <div
         style={{
           ...rowBase,
           ...headerRow,
         }}
       >
-        <span style={playerHeader}>
-          Player
-        </span>
+        <span style={playerHeader}>Player</span>
 
-        <SortHeader
-          label="I"
-          col="innings"
-        />
+        <SortHeader label="I" col="innings" />
 
-        <SortHeader
-          label="R"
-          col="runs"
-        />
+        <SortHeader label="R" col="runs" />
 
-        <SortHeader
-          label="SR"
-          col="sr"
-        />
+        <SortHeader label="HS" col="hs" />
 
-        <SortHeader
-          label="4s"
-          col="fours"
-        />
+        <SortHeader label="SR" col="sr" />
 
-        <SortHeader
-          label="0s"
-          col="ducks"
-        />
+        <SortHeader label="4s" col="fours" />
+
+        <SortHeader label="0s" col="ducks" />
       </div>
 
       {/* ROWS */}
+
       {sortedPlayers.map((p) => (
         <div
-          key={p._id}
+          key={p.name}
           style={{
             ...rowBase,
             ...dataRow,
           }}
         >
-          <span style={playerCell}>
-            {p.name}
-          </span>
+          <span style={playerCell}>{p.name}</span>
 
-          <span style={center}>
-            {p.innings}
-          </span>
+          <span style={center}>{p.innings || 0}</span>
 
-          <span style={runs}>
-            {p.runs}
-          </span>
+          <span style={runs}>{p.runs || 0}</span>
 
-          <span style={sr}>
-            {calcSR(
-              p.runs,
-              p.balls
-            )}
-          </span>
+          <span style={hs}>{p.highestScore || 0}</span>
 
-          <span style={center}>
-            {p.fours}
-          </span>
+          <span style={sr}>{p.derived?.strikeRate || "0.00"}</span>
 
-          <span style={center}>
-            {p.ducks}
-          </span>
+          <span style={center}>{p.fours || 0}</span>
+
+          <span style={center}>{p.ducks || 0}</span>
         </div>
       ))}
 
       {/* EMPTY */}
+
       {players.length === 0 && (
         <div style={emptyWrap}>
-          <p style={emptyTitle}>
-            No batting stats
-          </p>
+          <p style={emptyTitle}>No batting stats</p>
 
-          <p style={emptySub}>
-            Completed matches
-            will appear here
-          </p>
+          <p style={emptySub}>Completed matches will appear here</p>
         </div>
       )}
     </div>
@@ -332,8 +229,7 @@ const page = {
 const rowBase = {
   display: "grid",
 
-  gridTemplateColumns:
-    "2.6fr repeat(5,1fr)",
+  gridTemplateColumns: "2.6fr repeat(6,1fr)",
 
   alignItems: "center",
 };
@@ -355,11 +251,9 @@ const dataRow = {
 
   borderRadius: 18,
 
-  boxShadow:
-    "0 2px 10px rgba(15,23,42,0.05)",
+  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
 
-  border:
-    "1px solid #eef2ff",
+  border: "1px solid #eef2ff",
 
   fontSize: 14,
 };
@@ -402,6 +296,14 @@ const runs = {
   color: "#4338ca",
 };
 
+const hs = {
+  textAlign: "center",
+
+  fontWeight: 800,
+
+  color: "#ea580c",
+};
+
 const sr = {
   textAlign: "center",
 
@@ -435,16 +337,13 @@ const spinner = {
 
   height: 28,
 
-  border:
-    "3px solid #e0e7ff",
+  border: "3px solid #e0e7ff",
 
-  borderTop:
-    "3px solid #4338ca",
+  borderTop: "3px solid #4338ca",
 
   borderRadius: "50%",
 
-  animation:
-    "spin 0.8s linear infinite",
+  animation: "spin 0.8s linear infinite",
 };
 
 const emptyWrap = {

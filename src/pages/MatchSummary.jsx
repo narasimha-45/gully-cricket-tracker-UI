@@ -15,20 +15,20 @@ export default function MatchSummary() {
 
     const newMatch = {
       id: newMatchId,
-      seasonId: match.seasonId,
+      seasonId: match.matchInfo.seasonId,
 
-      matchType: match.matchType,
-      totalOvers: match.totalOvers,
-      rules: match.rules,
+      matchType: match.matchInfo.matchType,
+      totalOvers: match.matchInfo.totalOvers,
+      rules: match.matchInfo.rules,
 
       teams: {
         teamA: {
-          name: match.teams.teamA.name,
-          players: [...match.teams.teamA.players],
+          name: match.matchInfo.teams.teamA.name,
+          players: [...match.matchInfo.teams.teamA.players],
         },
         teamB: {
-          name: match.teams.teamB.name,
-          players: [...match.teams.teamB.players],
+          name: match.matchInfo.teams.teamB.name,
+          players: [...match.matchInfo.teams.teamB.players],
         },
       },
 
@@ -45,7 +45,7 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(`/season/${match.seasonId}/match/${newMatchId}/toss`);
+    navigate(`/season/${match.matchInfo.seasonId}/matches`);
   };
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function MatchSummary() {
       try {
         const res = await fetch(`${API}/api/matches/${matchId}`);
         const data = await res.json();
-        setMatch(data);
+        setMatch(data.data);
       } catch (err) {
         console.error("Failed to load match", err);
       } finally {
@@ -72,13 +72,12 @@ export default function MatchSummary() {
     return <p style={{ color: "#dc2626" }}>Match not found</p>;
   }
 
-  const { teams, toss, result, innings, totalOvers } = match;
-  // console.log("Match",result,match)
+  const { matchInfo, innings, manOfTheMatch } = match;
 
-  const manOfTheMatch = result?.manOfTheMatch;
+  const { teams, toss, result, totalOvers, seasonId } = matchInfo;
 
   const goBackToSeason = () => {
-    navigate(`/season/${match.seasonId}/matches`);
+    navigate(`/season/${match.matchInfo.seasonId}/matches`);
   };
 
   return (
@@ -112,7 +111,12 @@ export default function MatchSummary() {
       </div>
 
       {/* SCORECARD */}
-      <Scorecard match={match} />
+      <Scorecard
+        match={{
+          ...match.matchInfo,
+          innings,
+        }}
+      />
     </div>
   );
 }

@@ -34,6 +34,7 @@ export default function SeasonMatches() {
     try {
       const res = await fetch(`${API}/api/matches/season/${seasonId}`);
       const json = await res.json();
+      console.log("Fetched matches from server:", json.data);
       setServerMatches(json.data || []);
     } catch (e) {
       setServerMatches([]);
@@ -60,7 +61,7 @@ export default function SeasonMatches() {
   const handleMatchClick = (match, source) => {
     // COMPLETED (server)
     if (source === "SERVER") {
-      navigate(`/season/${seasonId}/match/${match._id}`);
+      navigate(`/season/${seasonId}/match/${match.id}`);
       return;
     }
 
@@ -192,19 +193,18 @@ export default function SeasonMatches() {
       )}
 
       {/* COMPLETED TAB */}
-      {/* COMPLETED TAB */}
       {tab === "COMPLETED" && (
         <>
           {serverLoading ? (
             <div style={emptyState}>
               <style>
                 {`
-            @keyframes spin {
-              to {
-                transform: rotate(360deg);
-              }
-            }
-          `}
+                  @keyframes spin {
+                    to {
+                      transform: rotate(360deg);
+                    }
+                  }
+                `}
               </style>
 
               <div style={spinner}></div>
@@ -328,11 +328,9 @@ const completedCard = {
 
   padding: 16,
 
-  border:
-    "1px solid #eef2ff",
+  border: "1px solid #eef2ff",
 
-  boxShadow:
-    "0 2px 10px rgba(15,23,42,0.05)",
+  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
 
   transition: "0.18s ease",
 
@@ -342,8 +340,7 @@ const completedCard = {
 const matchRow = {
   display: "flex",
 
-  justifyContent:
-    "space-between",
+  justifyContent: "space-between",
 
   alignItems: "center",
 
@@ -363,8 +360,7 @@ const resultLine = {
 
   paddingTop: 12,
 
-  borderTop:
-    "1px solid #f3f4f6",
+  borderTop: "1px solid #f3f4f6",
 
   fontSize: 13,
 
@@ -416,13 +412,11 @@ const score = {
   fontSize: 14,
 };
 
-
 const dateText = {
   fontSize: 12,
   color: "#6b7280",
   marginBottom: 6,
 };
-
 
 const tabs = {
   display: "flex",

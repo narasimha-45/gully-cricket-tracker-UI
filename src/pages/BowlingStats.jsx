@@ -2,89 +2,63 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
 
-export default function BowlingStats({
-  isOverall = false,
-}) {
+export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
 
-  const context =
-    useSeasonStats();
+  const context = useSeasonStats();
 
-  const bowlingStats =
-    !isOverall
-      ? context?.bowlingStats
-      : null;
+  const bowlingStats = !isOverall ? context?.bowlingStats : null;
 
-  const setBowlingStats =
-    !isOverall
-      ? context?.setBowlingStats
-      : null;
+  const setBowlingStats = !isOverall ? context?.setBowlingStats : null;
 
-  const API =
-    import.meta.env.VITE_API_BASE_URL;
+  const API = import.meta.env.VITE_API_BASE_URL;
 
-  /* OVERALL LOCAL STATE */
+  /* =====================================
+     OVERALL LOCAL STATE
+  ===================================== */
 
-  const [
-    overallStats,
-    setOverallStats,
-  ] = useState(null);
+  const [overallStats, setOverallStats] = useState(null);
 
-  const players = isOverall
-    ? overallStats || []
-    : bowlingStats || [];
+  const players = isOverall ? overallStats || [] : bowlingStats || [];
 
-  const [loading, setLoading] =
-    useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const [sortKey, setSortKey] =
-    useState("wickets");
+  const [sortKey, setSortKey] = useState("wickets");
 
-  const [sortDir, setSortDir] =
-    useState("desc");
+  const [sortDir, setSortDir] = useState("desc");
 
-  /* LOAD ONLY ONCE */
+  /* =====================================
+     LOAD ONLY ONCE
+  ===================================== */
 
   useEffect(() => {
-    if (
-      isOverall &&
-      overallStats
-    )
-      return;
+    if (isOverall && overallStats) return;
 
-    if (
-      !isOverall &&
-      bowlingStats
-    )
-      return;
+    if (!isOverall && bowlingStats) return;
 
     loadStats();
   }, [seasonId, isOverall]);
+
+  /* =====================================
+     FETCH
+  ===================================== */
 
   const loadStats = async () => {
     try {
       setLoading(true);
 
-      const endpoint =
-        isOverall
-          ? `${API}/api/stats/overall/bowling`
-          : `${API}/api/stats/season/${seasonId}/bowling`;
+      const endpoint = isOverall
+        ? `${API}/api/stats/leaderboard/bowling`
+        : `${API}/api/stats/leaderboard/bowling/${seasonId}`;
 
-      const res = await fetch(
-        endpoint
-      );
+      const res = await fetch(endpoint);
 
-      const json =
-        await res.json();
+      const json = await res.json();
 
       if (isOverall) {
-        setOverallStats(
-          json.data || []
-        );
+        setOverallStats(json.data || []);
       } else {
-        setBowlingStats(
-          json.data || []
-        );
+        setBowlingStats(json.data || []);
       }
     } catch (err) {
       console.error(err);
@@ -93,93 +67,60 @@ export default function BowlingStats({
     }
   };
 
-  const ballsToOvers = (
-    balls = 0
-  ) => {
-    const overs = Math.floor(
-      balls / 6
-    );
+  /* =====================================
+     HELPERS
+  ===================================== */
+
+  const ballsToOvers = (balls = 0) => {
+    const overs = Math.floor(balls / 6);
 
     const rem = balls % 6;
 
     return `${overs}.${rem}`;
   };
 
-  const calcEco = (
-    runs,
-    balls
-  ) => {
-    if (!balls) return "0.00";
+  /* =====================================
+     SORT
+  ===================================== */
 
-    return (
-      runs /
-      (balls / 6)
-    ).toFixed(2);
-  };
-
-  const calcAvg = (
-    runs,
-    wickets
-  ) => {
-    if (!wickets) return "–";
-
-    return (
-      runs / wickets
-    ).toFixed(2);
-  };
-
-  const getEco = (p) => {
-    if (!p.balls) return 0;
-
-    return (
-      p.runs /
-      (p.balls / 6)
-    );
-  };
-
-  const getAvg = (p) => {
-    if (!p.wickets) return 0;
-
-    return p.runs / p.wickets;
-  };
-
-  /* SORT */
-
-  const sortedPlayers = [
-    ...players,
-  ].sort((a, b) => {
+  const sortedPlayers = [...players].sort((a, b) => {
     let av = 0;
     let bv = 0;
 
     switch (sortKey) {
+      case "best":
+        av = (a.bestBowling?.wickets || 0) * 1000 - (a.bestBowling?.runs || 0);
+
+        bv = (b.bestBowling?.wickets || 0) * 1000 - (b.bestBowling?.runs || 0);
+
+        break;
       case "innings":
-        av = a.innings;
-        bv = b.innings;
+        av = a.innings || 0;
+        bv = b.innings || 0;
         break;
 
       case "wickets":
-        av = a.wickets;
-        bv = b.wickets;
+        av = a.wickets || 0;
+        bv = b.wickets || 0;
         break;
 
-      case "runs":
-        av = a.runs;
-        bv = b.runs;
-        break;
-
-      case "overs":
-        av = a.balls;
-        bv = b.balls;
+      case "balls":
+        av = a.balls || 0;
+        bv = b.balls || 0;
         break;
 
       case "eco":
-        av = getEco(a);
-        bv = getEco(b);
+        av = Number(a.derived?.economy || 0);
+
+        bv = Number(b.derived?.economy || 0);
+
         break;
 
       case "avg":
-        av = getAvg(a);
-        bv = getAvg(b);
+        av = Number(a.derived?.bowlingAverage || 0);
+
+        bv = Number(b.derived?.bowlingAverage || 0);
+
         break;
 
       default:
@@ -187,160 +128,119 @@ export default function BowlingStats({
         bv = 0;
     }
 
-    return sortDir === "asc"
-      ? av - bv
-      : bv - av;
+    return sortDir === "asc" ? av - bv : bv - av;
   });
 
-  const SortHeader = ({
-    label,
-    col,
-  }) => (
+  /* =====================================
+     SORT HEADER
+  ===================================== */
+
+  const SortHeader = ({ label, col }) => (
     <span
       style={sortableHeader}
       onClick={() => {
         if (sortKey === col) {
-          setSortDir(
-            sortDir === "asc"
-              ? "desc"
-              : "asc"
-          );
+          setSortDir(sortDir === "asc" ? "desc" : "asc");
         } else {
           setSortKey(col);
+
           setSortDir("desc");
         }
       }}
     >
       {label}
 
-      {sortKey === col &&
-        (sortDir === "asc"
-          ? " ▲"
-          : " ▼")}
+      {sortKey === col && (sortDir === "asc" ? " ▲" : " ▼")}
     </span>
   );
 
-  if (
-    loading &&
-    players.length === 0
-  ) {
+  /* =====================================
+     LOADING
+  ===================================== */
+
+  if (loading && players.length === 0) {
     return (
       <div style={loadingWrap}>
         <div style={spinner}></div>
 
-        <p style={loadingText}>
-          Loading bowling stats...
-        </p>
+        <p style={loadingText}>Loading bowling stats...</p>
       </div>
     );
   }
 
+  /* =====================================
+     UI
+  ===================================== */
+
   return (
     <div style={page}>
+      {/* HEADER */}
+
       <div
         style={{
           ...rowBase,
           ...headerRow,
         }}
       >
-        <span style={playerHeader}>
-          Player
-        </span>
+        <span style={playerHeader}>Player</span>
 
-        <SortHeader
-          label="I"
-          col="innings"
-        />
+        <SortHeader label="I" col="innings" />
 
-        <SortHeader
-          label="W"
-          col="wickets"
-        />
+        <SortHeader label="W" col="wickets" />
 
-        <SortHeader
-          label="R"
-          col="runs"
-        />
+        <SortHeader label="O" col="balls" />
 
-        <SortHeader
-          label="O"
-          col="overs"
-        />
+        <SortHeader label="Eco" col="eco" />
 
-        <SortHeader
-          label="Eco"
-          col="eco"
-        />
+        <SortHeader label="Avg" col="avg" />
 
-        <SortHeader
-          label="Avg"
-          col="avg"
-        />
+        <SortHeader label="Best" col="best" />
       </div>
+
+      {/* ROWS */}
 
       {sortedPlayers.map((p) => (
         <div
-          key={p._id}
+          key={p.name}
           style={{
             ...rowBase,
             ...dataRow,
           }}
         >
-          <span style={playerCell}>
-            {p.name}
-          </span>
+          <span style={playerCell}>{p.name}</span>
 
-          <span style={center}>
-            {p.innings}
-          </span>
+          <span style={center}>{p.innings || 0}</span>
 
-          <span style={wickets}>
-            {p.wickets}
-          </span>
+          <span style={wickets}>{p.wickets}</span>
 
-          <span style={center}>
-            {p.runs}
-          </span>
+          <span style={center}>{ballsToOvers(p.balls)}</span>
 
-          <span style={center}>
-            {ballsToOvers(
-              p.balls
-            )}
-          </span>
+          <span style={eco}>{p.derived?.economy || "0.00"}</span>
 
-          <span style={eco}>
-            {calcEco(
-              p.runs,
-              p.balls
-            )}
-          </span>
+          <span style={avg}>{p.derived?.bowlingAverage || "0.00"}</span>
 
-          <span style={avg}>
-            {calcAvg(
-              p.runs,
-              p.wickets
-            )}
+          <span style={best}>
+            {p.bestBowling?.wickets || 0}/{p.bestBowling?.runs || 0}
           </span>
         </div>
       ))}
 
+      {/* EMPTY */}
+
       {players.length === 0 && (
         <div style={emptyWrap}>
-          <p style={emptyTitle}>
-            No bowling stats
-          </p>
+          <p style={emptyTitle}>No bowling stats</p>
 
-          <p style={emptySub}>
-            Completed matches will
-            appear here
-          </p>
+          <p style={emptySub}>Completed matches will appear here</p>
         </div>
       )}
     </div>
   );
 }
 
-/* ================= STYLES ================= */
+/* =========================================
+   STYLES
+========================================= */
 
 const page = {
   display: "flex",
@@ -353,7 +253,7 @@ const page = {
 const rowBase = {
   display: "grid",
 
-  gridTemplateColumns: "2.6fr repeat(6,1fr)",
+  gridTemplateColumns: "2.8fr repeat(6,1fr)",
 
   alignItems: "center",
 };
@@ -434,6 +334,14 @@ const avg = {
   fontWeight: 700,
 
   color: "#059669",
+};
+
+const best = {
+  textAlign: "center",
+
+  fontWeight: 800,
+
+  color: "#7c3aed",
 };
 
 const loadingWrap = {
