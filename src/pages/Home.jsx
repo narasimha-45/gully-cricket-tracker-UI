@@ -22,9 +22,11 @@ export default function Home({ open, onClose }) {
         throw new Error("Failed to fetch seasons");
       }
 
-      const data = await res.json();
+      const result = await res.json();
 
-      setSeasons(data || []);
+      console.log("Fetched seasons:", result);
+
+      setSeasons(result.data || []);
     } catch (err) {
       console.error(err);
       setSeasons([]);
@@ -140,7 +142,7 @@ export default function Home({ open, onClose }) {
                   </div>
 
                   <div className={styles.meta}>
-                    {season.matchCount || 0} matches
+                    {season.matchesCount || 0} matches
                   </div>
                 </div>
               ))}
