@@ -1,31 +1,32 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-
-
+import { useState } from "react";
 import AppShell from "../components/AppShell";
 import Home from "../pages/Home";
 import styles from "../pages/Home.module.css";
+import SeasonShell from "../pages/SeasonShell";
 import SeasonLayout from "../pages/SeasonLayout";
 import SeasonMatches from "../pages/SeasonMatches";
 import SeasonStats from "../pages/SeasonStats";
+import BattingStats from "../pages/BattingStats";
+import BowlingStats from "../pages/BowlingStats";
+import MiscStats from "../pages/MiscStats";
+import { SeasonStatsProvider } from "../context/SeasonStatsContext";
+import Leaderboards from "../pages/Leaderboards";
 import CreateMatchType from "../pages/CreateMatch";
-import { useState } from "react";
-import SeasonShell from "../pages/SeasonShell";
 import TeamAPlayers from "../pages/TeamAPlayers";
 import TeamBPlayers from "../pages/TeamBPlayers";
 import TossPage from "../pages/TossPage";
 import LiveMatch from "../pages/LiveMatch";
-import SelectStriker from "../pages/SelectStriker";
-import SeasonBattingStats from "../pages/SeasonBattingStats";
-import SeasonBowlingStats from "../pages/SeasonBowlingStats";
 import MatchSummary from "../pages/MatchSummary";
-import SeasonMiscStats from "../pages/SeasonMiscStats";
 
 export default function AppRoutes() {
   const [openCreateSeason, setOpenCreateSeason] = useState(false);
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* Home */}
+        {/* ================= HOME ================= */}
+
         <Route
           path="/"
           element={
@@ -48,89 +49,118 @@ export default function AppRoutes() {
           }
         />
 
-        {/* Season (Matches / Stats) */}
+        {/* ================= LEADERBOARDS ================= */}
+
+        <Route
+          path="/leaderboards"
+          element={
+            <SeasonStatsProvider>
+              <AppShell title="Gully Cricket">
+                <Leaderboards />
+              </AppShell>
+            </SeasonStatsProvider>
+          }
+        >
+          <Route index element={<Navigate to="batting" replace />} />
+
+          <Route path="batting" element={<BattingStats isOverall />} />
+
+          <Route path="bowling" element={<BowlingStats isOverall />} />
+
+          <Route path="misc" element={<MiscStats isOverall />} />
+        </Route>
+
+        {/* ================= SEASON ================= */}
+
         <Route path="/season/:seasonId" element={<SeasonShell />}>
           <Route index element={<Navigate to="matches" replace />} />
 
           <Route path="" element={<SeasonLayout />}>
+            {/* MATCHES */}
             <Route path="matches" element={<SeasonMatches />} />
-            <Route path="stats" element={<SeasonStats />}>
+
+            {/* STATS */}
+            <Route
+              path="stats"
+              element={
+                <SeasonStatsProvider>
+                  <SeasonStats />
+                </SeasonStatsProvider>
+              }
+            >
               <Route index element={<Navigate to="batting" replace />} />
-              <Route path="batting" element={<SeasonBattingStats />} />
-              <Route path="bowling" element={<SeasonBowlingStats />} />
-              <Route path="misc" element={<SeasonMiscStats />} /> {/* ✅ */}
+
+              <Route path="batting" element={<BattingStats />} />
+
+              <Route path="bowling" element={<BowlingStats />} />
+
+              <Route path="misc" element={<MiscStats />} />
             </Route>
           </Route>
         </Route>
 
-        {/* Create Match Flow */}
+        {/* ================= CREATE MATCH ================= */}
+
         <Route
           path="/season/:seasonId/create-match"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <CreateMatchType />
             </AppShell>
           }
         />
 
-        {/* MATCH SETUP FLOW */}
-        {/* <Route
-          path="/season/:seasonId/match/:matchId/setup"
-          element={
-            <AppShell title="Gully Cricket">
-              <Navigate to="team-a" replace />
-            </AppShell>
-          }
-        /> */}
+        {/* ================= MATCH SUMMARY ================= */}
+
         <Route
           path="/season/:seasonId/match/:matchId"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <MatchSummary />
             </AppShell>
           }
         />
+
+        {/* ================= TEAM A ================= */}
+
         <Route
           path="/season/:seasonId/match/:matchId/setup/team-a"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <TeamAPlayers />
             </AppShell>
           }
         />
 
+        {/* ================= TEAM B ================= */}
+
         <Route
           path="/season/:seasonId/match/:matchId/setup/team-b"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <TeamBPlayers />
             </AppShell>
           }
         />
 
+        {/* ================= TOSS ================= */}
+
         <Route
           path="/season/:seasonId/match/:matchId/toss"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <TossPage />
             </AppShell>
           }
         />
 
+        {/* ================= LIVE MATCH ================= */}
+
         <Route
           path="/season/:seasonId/match/:matchId/live"
           element={
-            <AppShell title="Gully Cricket">
+            <AppShell title="Cricora">
               <LiveMatch />
-            </AppShell>
-          }
-        />
-
-        <Route
-          path="/season/:seasonId/match/:matchId/live/select-striker"
-          element={
-            <AppShell title="Select Striker">
-              <SelectStriker />
             </AppShell>
           }
         />

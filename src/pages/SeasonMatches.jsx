@@ -192,107 +192,126 @@ export default function SeasonMatches() {
       )}
 
       {/* COMPLETED TAB */}
+      {/* COMPLETED TAB */}
       {tab === "COMPLETED" && (
         <>
           {serverLoading ? (
             <div style={emptyState}>
               <style>
                 {`
-                      @keyframes spin {
-                        to {
-                          transform: rotate(360deg);
-                        }
-                      }
-                    `}
+            @keyframes spin {
+              to {
+                transform: rotate(360deg);
+              }
+            }
+          `}
               </style>
+
               <div style={spinner}></div>
+
               <p style={muted}>Loading completed matches...</p>
             </div>
           ) : completedMatches.length === 0 ? (
             <div style={emptyState}>
               <p style={emptyTitle}>No completed matches</p>
+
               <p style={muted}>Finished matches will appear here</p>
             </div>
           ) : (
             <div style={list}>
-              {completedMatches.map((match) => (
-                <div
-                  key={match._id}
-                  style={card}
-                  onClick={() => handleMatchClick(match, "SERVER")}
-                >
-                  {/* DATE & TIME */}
-                  <div style={dateText}>
-                    {formatDateTime(match.startTime || match.createdAt)}
-                  </div>
-                  {/* TEAM A */}
-                  <div style={row}>
-                    <div
-                      style={{
-                        ...teamLeft,
-                        fontWeight: isWinner(
-                          match.innings[0].battingTeam,
-                          match,
-                        )
-                          ? 600
-                          : 400,
-                      }}
-                    >
-                      {/* <span style={flag}></span> */}
-                      {match.innings[0].battingTeam}
+              {completedMatches.map((match) => {
+                const innings1 = match.innings?.[0];
+
+                const innings2 = match.innings?.[1];
+
+                return (
+                  <div
+                    key={match._id}
+                    style={completedCard}
+                    onClick={() => handleMatchClick(match, "SERVER")}
+                  >
+                    {/* DATE */}
+                    <div style={dateText}>
+                      {formatDateTime(match.startTime || match.createdAt)}
                     </div>
 
-                    <div
-                      style={{
-                        ...score,
-                        fontWeight: isWinner(
-                          match.innings[1].battingTeam,
-                          match,
-                        )
-                          ? 600
-                          : 400,
-                      }}
-                    >
-                      {getScoreLine(match.innings?.[0])}
+                    {/* TEAM 1 */}
+                    <div style={matchRow}>
+                      <div
+                        style={{
+                          ...teamLeft,
+                          fontWeight: isWinner(innings1?.battingTeam, match)
+                            ? 700
+                            : 500,
+
+                          color: isWinner(innings1?.battingTeam, match)
+                            ? "#111827"
+                            : "#6b7280",
+                        }}
+                      >
+                        {innings1?.battingTeam}
+                      </div>
+
+                      <div
+                        style={{
+                          ...scoreText,
+                          fontWeight: isWinner(innings1?.battingTeam, match)
+                            ? 700
+                            : 500,
+
+                          color: isWinner(innings1?.battingTeam, match)
+                            ? "#111827"
+                            : "#6b7280",
+                        }}
+                      >
+                        {innings1 ? getScoreLine(innings1) : "-"}
+                      </div>
+                    </div>
+
+                    {/* TEAM 2 */}
+                    <div style={matchRow}>
+                      <div
+                        style={{
+                          ...teamLeft,
+                          fontWeight: isWinner(innings2?.battingTeam, match)
+                            ? 700
+                            : 500,
+
+                          color: isWinner(innings2?.battingTeam, match)
+                            ? "#111827"
+                            : "#6b7280",
+                        }}
+                      >
+                        {innings2?.battingTeam}
+                      </div>
+
+                      <div
+                        style={{
+                          ...scoreText,
+                          fontWeight: isWinner(innings2?.battingTeam, match)
+                            ? 700
+                            : 500,
+
+                          color: isWinner(innings2?.battingTeam, match)
+                            ? "#111827"
+                            : "#6b7280",
+                        }}
+                      >
+                        {innings2 ? getScoreLine(innings2) : "-"}
+                      </div>
+                    </div>
+
+                    {/* RESULT */}
+                    <div style={resultLine}>
+                      {match.result?.type === "TIE"
+                        ? "Match Tied"
+                        : `${match.result?.winner} won by ${
+                            match.result?.margin
+                          } ${match.result?.type === "RUNS" ? "runs" : "wkts"}`}
                     </div>
                   </div>
-
-                  {/* TEAM B */}
-                  <div style={row}>
-                    <div
-                      style={{
-                        ...teamLeft,
-                        fontWeight: isWinner(
-                          match.innings[1].battingTeam,
-                          match,
-                        )
-                          ? 600
-                          : 400,
-                      }}
-                    >
-                      {/* <span style={flag}>🇮🇳</span> */}
-                      {match.innings[1].battingTeam}
-                    </div>
-
-                    <div
-                      style={{
-                        ...score,
-                        fontWeight: isWinner(match.teams.teamB.name, match)
-                          ? 600
-                          : 400,
-                      }}
-                    >
-                      {getScoreLine(match.innings?.[1])}
-                    </div>
-                  </div>
-
-                  {/* RESULT */}
-                  <div style={resultLine}>
-                    {match.result.winner} won by {match.result.margin}{" "}
-                    {match.result.type === "RUNS" ? "runs" : "wkts"}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </>
@@ -302,6 +321,58 @@ export default function SeasonMatches() {
 }
 
 /* ---------------- STYLES ---------------- */
+const completedCard = {
+  background: "#fff",
+
+  borderRadius: 18,
+
+  padding: 16,
+
+  border:
+    "1px solid #eef2ff",
+
+  boxShadow:
+    "0 2px 10px rgba(15,23,42,0.05)",
+
+  transition: "0.18s ease",
+
+  cursor: "pointer",
+};
+
+const matchRow = {
+  display: "flex",
+
+  justifyContent:
+    "space-between",
+
+  alignItems: "center",
+
+  marginTop: 10,
+};
+
+const scoreText = {
+  fontSize: 15,
+
+  fontWeight: 600,
+
+  letterSpacing: -0.2,
+};
+
+const resultLine = {
+  marginTop: 14,
+
+  paddingTop: 12,
+
+  borderTop:
+    "1px solid #f3f4f6",
+
+  fontSize: 13,
+
+  fontWeight: 600,
+
+  color: "#4338ca",
+};
+
 const emptyState = {
   padding: "40px 20px",
   textAlign: "center",
@@ -345,11 +416,6 @@ const score = {
   fontSize: 14,
 };
 
-const resultLine = {
-  marginTop: 6,
-  fontSize: 13,
-  color: "#2563eb", // blue like screenshot
-};
 
 const dateText = {
   fontSize: 12,
@@ -357,11 +423,6 @@ const dateText = {
   marginBottom: 6,
 };
 
-const scoreText = {
-  fontSize: 13,
-  marginTop: 4,
-  fontWeight: 500,
-};
 
 const tabs = {
   display: "flex",
