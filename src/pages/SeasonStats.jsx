@@ -4,7 +4,7 @@ import styles from "./SeasonStats.module.css";
 export default function SeasonStats() {
   return (
     <div>
-      {/* Sub-tabs */}
+      {/* SUB TABS */}
       <div className={styles.subTabs}>
         <NavLink
           to="batting"
@@ -32,9 +32,8 @@ export default function SeasonStats() {
         >
           Misc
         </NavLink>
-      </div>
-
-      {/* Stats content */}
+      </div>{" "}
+      {/* CONTENT */}
       <div className={styles.content}>
         <Outlet />
       </div>

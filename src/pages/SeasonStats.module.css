@@ -1,26 +1,66 @@
 .subTabs {
   display: flex;
-  gap: 24px;
-  margin-bottom: 16px;
-  border-bottom: 1px solid #e5e7eb;
+
+  gap: 10px;
+
+  margin-bottom: 18px;
+
+  overflow-x: auto;
+
+  scrollbar-width: none;
+}
+
+.subTabs::-webkit-scrollbar {
+  display: none;
 }
 
 .tab {
-  padding-bottom: 8px;
-  font-size: 15px;        /* increased */
-  color: #6b7280;
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
   text-decoration: none;
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  color: #64748b;
+
+  background: #f8fafc;
+
+  white-space: nowrap;
+
+  transition: 0.18s ease;
+
+  border: 1px solid #eef2ff;
 }
 
+
 .activeTab {
-  padding-bottom: 8px;
-  font-size: 15px;        /* increased */
-  color: #4f46e5;
-  border-bottom: 2px solid #4f46e5;
-  font-weight: 600;
+  padding: 10px 16px;
+
+  border-radius: 999px;
+
   text-decoration: none;
+
+  font-size: 14px;
+
+  font-weight: 700;
+
+  color: #fff;
+
+  white-space: nowrap;
+
+  background: linear-gradient(
+    135deg,
+    #4f46e5,
+    #4338ca
+  );
+
+  box-shadow: 0 4px 12px rgba(67, 56, 202, 0.18);
 }
 
 .content {
-  padding-top: 12px;
+  min-height: 300px;
 }
