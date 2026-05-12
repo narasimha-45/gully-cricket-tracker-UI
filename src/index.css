@@ -9,3 +9,13 @@ html, body {
   background-color: #f5f7fb;
   color: #1f2937;
 }
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
