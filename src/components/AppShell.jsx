@@ -1,11 +1,28 @@
-
 import styles from "./AppShell.module.css";
 
-export default function AppShell({ title, children, bottomAction }) {
+import logo from "../../public/gull-cricket-logo/favicon.svg";
+
+export default function AppShell({
+  title,
+  children,
+  bottomAction,
+}) {
   return (
     <div className={styles.page}>
       <div className={styles.app}>
-        <header className={styles.header}>{title}</header>
+        <header className={styles.header}>
+          <div className={styles.brand}>
+            <img
+              src={logo}
+              alt="Gully Cricket"
+              className={styles.logo}
+            />
+
+            <span className={styles.title}>
+              Gully Cricket
+            </span>
+          </div>
+        </header>
 
         <main className={styles.content}>
           {children}

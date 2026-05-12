@@ -80,8 +80,7 @@ function InningsCard({
         </div>
 
         <div style={headerRightStyle}>
-          {innings.totalRuns} - 
-          {innings.wickets}
+          {innings.totalRuns} / {innings.wickets}
 
           <span style={oversStyle}>
             {" "}
@@ -198,7 +197,7 @@ function InningsCard({
             fontWeight: 700,
           }}
         >
-          {innings.totalRuns} - 
+          {innings.totalRuns}-  
           {innings.wickets} (
           {overs} Overs, RR: {rr})
         </span>

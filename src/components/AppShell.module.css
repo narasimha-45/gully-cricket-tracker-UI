@@ -6,11 +6,9 @@
   justify-content: center;
 
   background:
-    linear-gradient(
-      180deg,
+    linear-gradient(180deg,
       #e0e7ff 0%,
-      #f8fafc 22%
-    );
+      #f8fafc 22%);
 }
 
 .app {
@@ -49,11 +47,9 @@
   z-index: 100;
 
   background:
-    linear-gradient(
-      135deg,
+    linear-gradient(135deg,
       #312e81,
-      #4338ca
-    );
+      #4338ca);
 
   color: white;
 
@@ -64,8 +60,7 @@
   letter-spacing: -1px;
 
   box-shadow:
-    0 10px 30px
-    rgba(67,56,202,0.24);
+    0 10px 30px rgba(67, 56, 202, 0.24);
 }
 
 /* CONTENT */
@@ -89,16 +84,32 @@
     14px 18px 24px;
 
   background:
-    linear-gradient(
-      to top,
-      rgba(248,250,252,0.98),
-      rgba(248,250,252,0.78),
-      transparent
-    );
+    linear-gradient(to top,
+      rgba(248, 250, 252, 0.98),
+      rgba(248, 250, 252, 0.78),
+      transparent);
 
   backdrop-filter: blur(12px);
 
   z-index: 50;
 
   box-sizing: border-box;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  /* gap: px; */
+}
+
+.logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
 }
