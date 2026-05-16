@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import CreateSeasonModal from "../components/CreateSeasonModal";
+import GlobalSearch from "../components/GlobalSearch";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
 
@@ -57,6 +58,9 @@ export default function Home({ open, onClose }) {
           </p>
         </div>
 
+        {/* GLOBAL SEARCH */}
+        <GlobalSearch />
+
         {/* DASHBOARD CARDS */}
         <div className={styles.dashboardGrid}>
           {/* SEASONS */}
@@ -77,17 +81,17 @@ export default function Home({ open, onClose }) {
             </div>
           </div>
 
-          {/* LEADERBOARDS */}
+          {/* INSIGHTS HUB */}
           <div
             className={styles.leaderboardCard}
-            onClick={() => navigate("/leaderboards")}
+            onClick={() => navigate("/insights")}
           >
             <div className={styles.cardIcon}>📊</div>
 
             <div>
-              <h3>Leaderboards</h3>
+              <h3>Global Stats & Matchups</h3>
 
-              <p>Overall player rankings & stats</p>
+              <p>Overall rankings & analytics</p>
             </div>
           </div>
         </div>

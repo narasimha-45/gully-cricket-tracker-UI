@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
 
 export default function MiscStats({ isOverall = false }) {
   const { seasonId } = useParams();
+  const navigate = useNavigate();
+
+  const outletContext = useOutletContext();
+  const globalFilter = isOverall ? (outletContext?.globalFilter || "all") : null;
 
   const context = useSeasonStats();
 
@@ -32,12 +36,10 @@ export default function MiscStats({ isOverall = false }) {
   ===================================== */
 
   useEffect(() => {
-    if (isOverall && overallStats) return;
-
     if (!isOverall && miscStats) return;
 
     loadStats();
-  }, [seasonId, isOverall]);
+  }, [seasonId, isOverall, globalFilter]);
 
   /* =====================================
      FETCH
@@ -47,9 +49,14 @@ export default function MiscStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      const endpoint = isOverall
-        ? `${API}/api/stats/leaderboard/fielding`
-        : `${API}/api/stats/leaderboard/fielding/${seasonId}`;
+      let endpoint;
+      if (isOverall) {
+        endpoint = globalFilter === "all" 
+          ? `${API}/api/stats/leaderboard/fielding`
+          : `${API}/api/stats/leaderboard/fielding/${globalFilter}`;
+      } else {
+        endpoint = `${API}/api/stats/leaderboard/fielding/${seasonId}`;
+      }
 
       const res = await fetch(endpoint);
 
@@ -179,7 +186,12 @@ export default function MiscStats({ isOverall = false }) {
             ...dataRow,
           }}
         >
-          <span style={playerCell}>{p.name}</span>
+          <span 
+            style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
+            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+          >
+            {p.name}
+          </span>
 
           <span style={center}>{p.catches || 0}</span>
 

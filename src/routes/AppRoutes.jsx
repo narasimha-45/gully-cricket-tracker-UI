@@ -11,13 +11,18 @@ import BattingStats from "../pages/BattingStats";
 import BowlingStats from "../pages/BowlingStats";
 import MiscStats from "../pages/MiscStats";
 import { SeasonStatsProvider } from "../context/SeasonStatsContext";
-import Leaderboards from "../pages/Leaderboards";
+import InsightsHub from "../pages/InsightsHub";
+import TeamStats from "../pages/TeamStats";
+import MatchupsPlaceholder from "../pages/MatchupsPlaceholder";
+import PlayerProfilePlaceholder from "../pages/PlayerProfilePlaceholder";
+import TeamProfilePlaceholder from "../pages/TeamProfilePlaceholder";
 import CreateMatchType from "../pages/CreateMatch";
 import TeamAPlayers from "../pages/TeamAPlayers";
 import TeamBPlayers from "../pages/TeamBPlayers";
 import TossPage from "../pages/TossPage";
 import LiveMatch from "../pages/LiveMatch";
 import MatchSummary from "../pages/MatchSummary";
+import AnalyticsOverview from "../pages/AnalyticsOverview";
 
 export default function AppRoutes() {
   const [openCreateSeason, setOpenCreateSeason] = useState(false);
@@ -49,26 +54,52 @@ export default function AppRoutes() {
           }
         />
 
-        {/* ================= LEADERBOARDS ================= */}
+        {/* ================= GLOBAL INSIGHTS HUB ================= */}
 
         <Route
-          path="/leaderboards"
+          path="/insights"
           element={
             <SeasonStatsProvider>
               <AppShell title="Gully Cricket">
-                <Leaderboards />
+                <InsightsHub />
               </AppShell>
             </SeasonStatsProvider>
           }
         >
-          <Route index element={<Navigate to="batting" replace />} />
+          <Route index element={<Navigate to="overview" replace />} />
+
+          <Route path="overview" element={<AnalyticsOverview />} />
 
           <Route path="batting" element={<BattingStats isOverall />} />
 
           <Route path="bowling" element={<BowlingStats isOverall />} />
 
+          <Route path="teams" element={<TeamStats />} />
+
           <Route path="misc" element={<MiscStats isOverall />} />
+
+          <Route path="matchups" element={<MatchupsPlaceholder />} />
         </Route>
+
+        {/* ================= PROFILES ================= */}
+        
+        <Route
+          path="/player/:id"
+          element={
+            <AppShell title="Gully Cricket">
+              <PlayerProfilePlaceholder />
+            </AppShell>
+          }
+        />
+
+        <Route
+          path="/team/:id"
+          element={
+            <AppShell title="Gully Cricket">
+              <TeamProfilePlaceholder />
+            </AppShell>
+          }
+        />
 
         {/* ================= SEASON ================= */}
 
@@ -88,13 +119,17 @@ export default function AppRoutes() {
                 </SeasonStatsProvider>
               }
             >
-              <Route index element={<Navigate to="batting" replace />} />
+              <Route index element={<Navigate to="overview" replace />} />
+
+              <Route path="overview" element={<AnalyticsOverview />} />
 
               <Route path="batting" element={<BattingStats />} />
 
               <Route path="bowling" element={<BowlingStats />} />
 
               <Route path="misc" element={<MiscStats />} />
+
+              <Route path="matchups" element={<MatchupsPlaceholder />} />
             </Route>
           </Route>
         </Route>
