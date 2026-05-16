@@ -1,3 +1,14 @@
+.stickyHeader {
+  position: sticky;
+  top: 68px;
+  z-index: 90;
+  margin: 0 -18px 2px -18px;
+  padding: 10px 18px 0 18px;
+  background: rgba(248, 250, 252, 0.96);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid #e5e7eb;
+}
+
 .subHeader {
   display: flex;
   align-items: center;
@@ -18,17 +29,14 @@
   font-size: 18px;
 }
 
-
 .tabs {
   display: flex;
   width: 100%;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 16px;
 }
 
 .tab {
-  flex: 1;                 /* 👈 half width */
-  text-align: center;      /* 👈 centered */
+  flex: 1; /* 👈 half width */
+  text-align: center; /* 👈 centered */
   padding: 10px 0;
   font-size: 15px;
   color: #6b7280;
@@ -36,7 +44,7 @@
 }
 
 .activeTab {
-  flex: 1;                 /* 👈 half width */
+  flex: 1; /* 👈 half width */
   text-align: center;
   padding: 10px 0;
   font-size: 15px;
@@ -45,7 +53,6 @@
   font-weight: 600;
   text-decoration: none;
 }
-
 
 .content {
   padding-top: 8px;

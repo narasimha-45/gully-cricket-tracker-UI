@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
-import {
-  useParams,
-  useNavigate,
-} from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 
 import { saveMatch } from "../storage/matchDB";
 
@@ -11,16 +8,13 @@ import Scorecard from "../components/Scorecard";
 export default function MatchSummary() {
   const { matchId } = useParams();
 
-  const [match, setMatch] =
-    useState(null);
+  const [match, setMatch] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   const navigate = useNavigate();
 
-  const API =
-    import.meta.env.VITE_API_BASE_URL;
+  const API = import.meta.env.VITE_API_BASE_URL;
 
   /* =====================================
      PLAY AGAIN
@@ -32,39 +26,25 @@ export default function MatchSummary() {
     const newMatch = {
       id: newMatchId,
 
-      seasonId:
-        match.matchInfo.seasonId,
+      seasonId: match.matchInfo.seasonId,
 
-      matchType:
-        match.matchInfo.matchType,
+      matchType: match.matchInfo.matchType,
 
-      totalOvers:
-        match.matchInfo.totalOvers,
+      totalOvers: match.matchInfo.totalOvers,
 
-      rules:
-        match.matchInfo.rules,
+      rules: match.matchInfo.rules,
 
       teams: {
         teamA: {
-          name:
-            match.matchInfo.teams
-              .teamA.name,
+          name: match.matchInfo.teams.teamA.name,
 
-          players: [
-            ...match.matchInfo
-              .teams.teamA.players,
-          ],
+          players: [...match.matchInfo.teams.teamA.players],
         },
 
         teamB: {
-          name:
-            match.matchInfo.teams
-              .teamB.name,
+          name: match.matchInfo.teams.teamB.name,
 
-          players: [
-            ...match.matchInfo
-              .teams.teamB.players,
-          ],
+          players: [...match.matchInfo.teams.teamB.players],
         },
       },
 
@@ -85,9 +65,7 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(
-      `/season/${match.matchInfo.seasonId}/matches`
-    );
+    navigate(`/season/${match.matchInfo.seasonId}/matches`);
   };
 
   /* =====================================
@@ -97,19 +75,15 @@ export default function MatchSummary() {
   useEffect(() => {
     const loadMatch = async () => {
       try {
-        const res = await fetch(
-          `${API}/api/matches/${matchId}`
-        );
+        const res = await fetch(`${API}/api/matches/${matchId}`);
 
-        const data =
-          await res.json();
+        const data = await res.json();
+
+        window.scrollTo(0, 0);
 
         setMatch(data.data);
       } catch (err) {
-        console.error(
-          "Failed to load match",
-          err
-        );
+        console.error("Failed to load match", err);
       } finally {
         setLoading(false);
       }
@@ -126,24 +100,16 @@ export default function MatchSummary() {
     return (
       <div style={loadingPage}>
         <div style={loadingCard}>
-          <div style={pulseIcon}>
-            🏏
-          </div>
+          <div style={pulseIcon}>🏏</div>
 
-          <div style={loadingTitle}>
-            Getting Match Summary
-          </div>
+          <div style={loadingTitle}>Getting Match Summary</div>
 
           <div style={loadingSub}>
-            Loading scorecard,
-            innings and match
-            insights...
+            Loading scorecard, innings and match insights...
           </div>
 
           <div style={loaderTrack}>
-            <div
-              style={loaderBar}
-            ></div>
+            <div style={loaderBar}></div>
           </div>
         </div>
       </div>
@@ -157,44 +123,28 @@ export default function MatchSummary() {
   if (!match) {
     return (
       <div style={errorWrap}>
-        <div style={errorIcon}>
-          ❌
-        </div>
+        <div style={errorIcon}>❌</div>
 
-        <div style={errorTitle}>
-          Match not found
-        </div>
+        <div style={errorTitle}>Match not found</div>
 
-        <div style={errorSub}>
-          Unable to load this
-          scorecard
-        </div>
+        <div style={errorSub}>Unable to load this scorecard</div>
       </div>
     );
   }
 
-  const {
-    matchInfo,
-    innings,
-    manOfTheMatch,
-  } = match;
+  const { matchInfo, innings, manOfTheMatch } = match;
 
-  const {
-    teams,
-    toss,
-    result,
-    totalOvers,
-  } = matchInfo;
+  const { teams, toss, result, totalOvers } = matchInfo;
 
   /* =====================================
      BACK
   ===================================== */
 
   const goBackToSeason = () => {
-    navigate(
-      `/season/${match.matchInfo.seasonId}/matches`
-    );
+    navigate(-1);
   };
+
+
 
   /* =====================================
      UI
@@ -205,17 +155,11 @@ export default function MatchSummary() {
       {/* TOP BAR */}
 
       <div style={topBar}>
-        <button
-          onClick={goBackToSeason}
-          style={backBtn}
-        >
+        <button onClick={goBackToSeason} style={backBtn}>
           ← Back
         </button>
 
-        <button
-          onClick={playAgain}
-          style={replayBtn}
-        >
+        <button onClick={playAgain} style={replayBtn}>
           ↻ Replay
         </button>
       </div>
@@ -223,29 +167,21 @@ export default function MatchSummary() {
       {/* RESULT CARD */}
 
       <div style={headerCard}>
-        <div style={liveBadge}>
-          COMPLETED
-        </div>
+        <div style={liveBadge}>COMPLETED</div>
 
         <div style={title}>
-          {teams.teamA.name} vs{" "}
-          {teams.teamB.name}
+          {teams.teamA.name} vs {teams.teamB.name}
         </div>
 
         <div style={resultText}>
-          {result.winner} won by{" "}
-          {result.margin}{" "}
-          {result.type === "RUNS"
-            ? "runs"
-            : "wickets"}
+          {result.winner} won by {result.margin}{" "}
+          {result.type === "RUNS" ? "runs" : "wickets"}
         </div>
 
         {manOfTheMatch && (
           <div style={momBadge}>
             ⭐ Man of the Match:
-            <strong>
-              {manOfTheMatch}
-            </strong>
+            <strong>{manOfTheMatch}</strong>
           </div>
         )}
       </div>
@@ -283,8 +219,7 @@ const page = {
 const topBar = {
   display: "flex",
 
-  justifyContent:
-    "space-between",
+  justifyContent: "space-between",
 
   alignItems: "center",
 };
@@ -338,8 +273,7 @@ const replayBtn = {
 ===================================== */
 
 const headerCard = {
-  background:
-    "linear-gradient(135deg,#312e81,#4338ca)",
+  background: "linear-gradient(135deg,#312e81,#4338ca)",
 
   borderRadius: 24,
 
@@ -347,8 +281,7 @@ const headerCard = {
 
   color: "#fff",
 
-  boxShadow:
-    "0 12px 30px rgba(67,56,202,0.25)",
+  boxShadow: "0 12px 30px rgba(67,56,202,0.25)",
 
   position: "relative",
 
@@ -366,8 +299,7 @@ const liveBadge = {
 
   borderRadius: 999,
 
-  background:
-    "rgba(255,255,255,0.16)",
+  background: "rgba(255,255,255,0.16)",
 
   backdropFilter: "blur(8px)",
 
@@ -413,8 +345,7 @@ const momBadge = {
 
   borderRadius: 999,
 
-  background:
-    "rgba(255,255,255,0.16)",
+  background: "rgba(255,255,255,0.16)",
 
   backdropFilter: "blur(10px)",
 
@@ -450,11 +381,9 @@ const loadingCard = {
 
   padding: "38px 28px",
 
-  boxShadow:
-    "0 10px 30px rgba(15,23,42,0.08)",
+  boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
 
-  border:
-    "1px solid rgba(226,232,240,0.8)",
+  border: "1px solid rgba(226,232,240,0.8)",
 
   display: "flex",
 
@@ -472,8 +401,7 @@ const pulseIcon = {
 
   borderRadius: "50%",
 
-  background:
-    "linear-gradient(135deg,#eef2ff,#e0e7ff)",
+  background: "linear-gradient(135deg,#eef2ff,#e0e7ff)",
 
   display: "flex",
 
@@ -485,8 +413,7 @@ const pulseIcon = {
 
   marginBottom: 22,
 
-  animation:
-    "pulse 1.8s ease-in-out infinite",
+  animation: "pulse 1.8s ease-in-out infinite",
 };
 
 const loadingTitle = {
@@ -528,11 +455,9 @@ const loaderBar = {
 
   borderRadius: 999,
 
-  background:
-    "linear-gradient(90deg,#4f46e5,#6366f1)",
+  background: "linear-gradient(90deg,#4f46e5,#6366f1)",
 
-  animation:
-    "loadingBar 1.4s ease-in-out infinite",
+  animation: "loadingBar 1.4s ease-in-out infinite",
 };
 
 /* =====================================
