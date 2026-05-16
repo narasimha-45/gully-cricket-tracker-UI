@@ -1,5 +1,9 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+
+import { useQuery } from "@tanstack/react-query";
+
 import {
   getMatchesBySeason,
   deleteMatch as deleteLocalMatchDB,
@@ -7,84 +11,106 @@ import {
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
+
   const navigate = useNavigate();
+
   const API = import.meta.env.VITE_API_BASE_URL;
 
-  // IndexedDB (setup + live)
+  /* ---------------------------------------
+     TAB STATE
+  --------------------------------------- */
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const tab = searchParams.get("tab") || "LIVE";
+
+  /* ---------------------------------------
+     LOCAL MATCHES
+  --------------------------------------- */
+
   const [localMatches, setLocalMatches] = useState([]);
+
   const [localLoading, setLocalLoading] = useState(true);
-
-  // Backend (completed)
-  const [serverMatches, setServerMatches] = useState([]);
-  const [serverLoading, setServerLoading] = useState(true);
-
-  const [tab, setTab] = useState("LIVE"); // LIVE | COMPLETED
-
-  /* ---------------- LOADERS ---------------- */
 
   const loadLocalMatches = async () => {
     setLocalLoading(true);
-    const local = await getMatchesBySeason(seasonId);
-    setLocalMatches(local || []);
-    setLocalLoading(false);
-  };
 
-  const loadServerMatches = async () => {
-    setServerLoading(true);
-    try {
-      const res = await fetch(`${API}/api/matches/season/${seasonId}`);
-      const json = await res.json();
-      console.log("Fetched matches from server:", json.data);
-      setServerMatches(json.data || []);
-    } catch (e) {
-      setServerMatches([]);
-    } finally {
-      setServerLoading(false);
-    }
+    const local = await getMatchesBySeason(seasonId);
+
+    setLocalMatches(local || []);
+
+    setLocalLoading(false);
   };
 
   useEffect(() => {
     loadLocalMatches();
-    loadServerMatches();
   }, [seasonId]);
 
-  /* ---------------- ACTIONS ---------------- */
+  /* ---------------------------------------
+     SERVER MATCHES
+  --------------------------------------- */
+
+  const { data: serverMatches = [], isLoading: serverLoading } = useQuery({
+    queryKey: ["seasonMatches", seasonId],
+
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/matches/season/${seasonId}`);
+
+      const json = await res.json();
+
+      return json.data || [];
+    },
+
+    staleTime: 1000 * 60 * 5,
+
+    refetchOnWindowFocus: false,
+  });
+
+  /* ---------------------------------------
+     ACTIONS
+  --------------------------------------- */
 
   const deleteLocalMatch = async (e, matchId) => {
     e.stopPropagation();
+
     if (!window.confirm("Delete this match?")) return;
 
     await deleteLocalMatchDB(matchId);
+
     loadLocalMatches();
   };
 
   const handleMatchClick = (match, source) => {
-    // COMPLETED (server)
+    // COMPLETED MATCH
+
     if (source === "SERVER") {
       navigate(`/season/${seasonId}/match/${match.id}`);
+
       return;
     }
 
-    // LOCAL (setup / live)
+    // SETUP MATCH
+
     if (match.status === "setup") {
       if (match.toss) {
-        navigate(`/season/${seasonId}/match/${match.id}/live`, {
-          replace: true,
-        });
+        navigate(`/season/${seasonId}/match/${match.id}/live`);
       } else {
         navigate(`/season/${seasonId}/match/${match.id}/toss`);
       }
+
       return;
     }
 
+    // LIVE MATCH
+
     if (match.status === "LIVE") {
-      navigate(`/season/${seasonId}/match/${match.id}/live`, {
-        replace: true,
-      });
+      navigate(`/season/${seasonId}/match/${match.id}/live`);
     }
   };
 
-  /* ---------------- FILTERS ---------------- */
+  /* ---------------------------------------
+     FILTERS
+  --------------------------------------- */
 
   const liveMatches = localMatches.filter(
     (m) => m.status === "setup" || m.status === "LIVE",
@@ -94,8 +120,13 @@ export default function SeasonMatches() {
     (m) => m.status === "COMPLETED",
   );
 
+  /* ---------------------------------------
+     HELPERS
+  --------------------------------------- */
+
   const formatDateTime = (dateStr) => {
     if (!dateStr) return "";
+
     const d = new Date(dateStr);
 
     return d.toLocaleString("en-IN", {
@@ -107,59 +138,71 @@ export default function SeasonMatches() {
       hour12: true,
     });
   };
+
   const ballsToOvers = (balls = 0) => {
     const overs = Math.floor(balls / 6);
+
     const ballsPart = balls % 6;
+
     return `${overs}.${ballsPart}`;
   };
 
   const getScoreLine = (inning) => {
     if (!inning) return "";
-    return `${inning.totalRuns}-${inning.wickets} (${ballsToOvers(inning.balls)})`;
+
+    return `${inning.totalRuns}-${inning.wickets} (${ballsToOvers(
+      inning.balls,
+    )})`;
   };
 
   const isWinner = (teamName, match) => match.result?.winner === teamName;
 
-  /* ---------------- UI ---------------- */
+  /* ---------------------------------------
+     UI
+  --------------------------------------- */
 
   return (
     <div>
-      {/* TABS (ALWAYS VISIBLE) */}
+      {/* TABS */}
+
       <div style={tabs}>
         <button
           style={tab === "LIVE" ? activeTab : tabBtn}
-          onClick={() => setTab("LIVE")}
+          onClick={() =>
+            setSearchParams({
+              tab: "LIVE",
+            })
+          }
         >
           Live
         </button>
+
         <button
           style={tab === "COMPLETED" ? activeTab : tabBtn}
-          onClick={() => setTab("COMPLETED")}
+          onClick={() =>
+            setSearchParams({
+              tab: "COMPLETED",
+            })
+          }
         >
           Completed
         </button>
       </div>
 
       {/* LIVE TAB */}
+
       {tab === "LIVE" && (
         <>
           {localLoading ? (
             <div style={emptyState}>
-              <style>
-                {`
-                  @keyframes spin {
-                    to {
-                      transform: rotate(360deg);
-                    }
-                  }
-                `}
-              </style>
               <div style={spinner}></div>
+
               <p style={muted}>Loading live matches...</p>
             </div>
           ) : liveMatches.length === 0 ? (
             <div style={emptyState}>
               <p style={emptyTitle}>No live matches</p>
+
               <p style={muted}>Create a match to start scoring</p>
             </div>
           ) : (
@@ -174,6 +217,7 @@ export default function SeasonMatches() {
                     <strong>
                       {match.teams.teamA.name} vs {match.teams.teamB.name}
                     </strong>
+
                     <button
                       style={deleteBtn}
                       onClick={(e) => deleteLocalMatch(e, match.id)}
@@ -193,20 +237,11 @@ export default function SeasonMatches() {
       )}
 
       {/* COMPLETED TAB */}
+
       {tab === "COMPLETED" && (
         <>
           {serverLoading ? (
             <div style={emptyState}>
-              <style>
-                {`
-                  @keyframes spin {
-                    to {
-                      transform: rotate(360deg);
-                    }
-                  }
-                `}
-              </style>
-
               <div style={spinner}></div>
 
               <p style={muted}>Loading completed matches...</p>
@@ -231,15 +266,18 @@ export default function SeasonMatches() {
                     onClick={() => handleMatchClick(match, "SERVER")}
                   >
                     {/* DATE */}
+
                     <div style={dateText}>
                       {formatDateTime(match.startTime || match.createdAt)}
                     </div>
 
                     {/* TEAM 1 */}
+
                     <div style={matchRow}>
                       <div
                         style={{
                           ...teamLeft,
+
                           fontWeight: isWinner(innings1?.battingTeam, match)
                             ? 700
                             : 500,
@@ -255,6 +293,7 @@ export default function SeasonMatches() {
                       <div
                         style={{
                           ...scoreText,
+
                           fontWeight: isWinner(innings1?.battingTeam, match)
                             ? 700
                             : 500,
@@ -269,10 +308,12 @@ export default function SeasonMatches() {
                     </div>
 
                     {/* TEAM 2 */}
+
                     <div style={matchRow}>
                       <div
                         style={{
                           ...teamLeft,
+
                           fontWeight: isWinner(innings2?.battingTeam, match)
                             ? 700
                             : 500,
@@ -288,6 +329,7 @@ export default function SeasonMatches() {
                       <div
                         style={{
                           ...scoreText,
+
                           fontWeight: isWinner(innings2?.battingTeam, match)
                             ? 700
                             : 500,
@@ -302,12 +344,13 @@ export default function SeasonMatches() {
                     </div>
 
                     {/* RESULT */}
+
                     <div style={resultLine}>
                       {match.result?.type === "TIE"
                         ? "Match Tied"
-                        : `${match.result?.winner} won by ${
-                            match.result?.margin
-                          } ${match.result?.type === "RUNS" ? "runs" : "wkts"}`}
+                        : `${match.result?.winner} won by ${match.result?.margin} ${
+                            match.result?.type === "RUNS" ? "runs" : "wkts"
+                          }`}
                     </div>
                   </div>
                 );
@@ -320,52 +363,39 @@ export default function SeasonMatches() {
   );
 }
 
-/* ---------------- STYLES ---------------- */
+/* ---------------------------------------
+   STYLES
+--------------------------------------- */
+
 const completedCard = {
   background: "#fff",
-
   borderRadius: 18,
-
   padding: 16,
-
   border: "1px solid #eef2ff",
-
   boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-
   transition: "0.18s ease",
-
   cursor: "pointer",
 };
 
 const matchRow = {
   display: "flex",
-
   justifyContent: "space-between",
-
   alignItems: "center",
-
   marginTop: 10,
 };
 
 const scoreText = {
   fontSize: 15,
-
   fontWeight: 600,
-
   letterSpacing: -0.2,
 };
 
 const resultLine = {
   marginTop: 14,
-
   paddingTop: 12,
-
   borderTop: "1px solid #f3f4f6",
-
   fontSize: 13,
-
   fontWeight: 600,
-
   color: "#4338ca",
 };
 
@@ -387,28 +417,12 @@ const spinner = {
   borderTop: "3px solid #4f46e5",
   borderRadius: "50%",
   margin: "0 auto 14px",
-  animation: "spin 0.8s linear infinite",
-};
-
-const row = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "4px 0",
 };
 
 const teamLeft = {
   display: "flex",
   alignItems: "center",
   gap: 8,
-  fontSize: 14,
-};
-
-const flag = {
-  fontSize: 18,
-};
-
-const score = {
   fontSize: 14,
 };
 
@@ -419,9 +433,23 @@ const dateText = {
 };
 
 const tabs = {
+  position: "sticky",
+
+  top: 159,
+
+  zIndex: 80,
+
   display: "flex",
+
   gap: 8,
-  marginBottom: 16,
+
+  margin: "0 -18px 16px -18px",
+
+  padding: "0 18px 10px 18px",
+
+  background: "rgba(248,250,252,0.92)",
+
+  backdropFilter: "blur(12px)",
 };
 
 const tabBtn = {
@@ -470,12 +498,6 @@ const statusText = {
   fontSize: 12,
   color: "#6b7280",
   marginTop: 4,
-};
-
-const resultText = {
-  fontSize: 13,
-  marginTop: 6,
-  fontWeight: 500,
 };
 
 const muted = {

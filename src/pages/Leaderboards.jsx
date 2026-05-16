@@ -1,9 +1,16 @@
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 
 import styles from "./Leaderboards.module.css";
 
 export default function Leaderboards() {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <div className={styles.page}>
       {/* HEADER */}

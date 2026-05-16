@@ -1,7 +1,5 @@
 import styles from "./AppShell.module.css";
 
-import logo from "../../public/gull-cricket-logo/favicon.svg";
-
 export default function AppShell({
   title,
   children,
@@ -13,7 +11,7 @@ export default function AppShell({
         <header className={styles.header}>
           <div className={styles.brand}>
             <img
-              src={logo}
+              src="/gull-cricket-logo/favicon.svg"
               alt="Gully Cricket"
               className={styles.logo}
             />

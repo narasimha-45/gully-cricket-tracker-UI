@@ -8,6 +8,20 @@
   overflow-x: auto;
 
   scrollbar-width: none;
+
+  position: sticky;
+
+  top: 159px;
+
+  z-index: 80;
+
+  margin: 0 -18px 18px -18px;
+
+  padding: 10px 18px;
+
+  background: rgba(248, 250, 252, 0.92);
+
+  backdrop-filter: blur(12px);
 }
 
 .subTabs::-webkit-scrollbar {
@@ -63,4 +77,5 @@
 
 .content {
   min-height: 300px;
+  --stats-header-top: 219px;
 }

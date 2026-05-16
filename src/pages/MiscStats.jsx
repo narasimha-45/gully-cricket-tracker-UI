@@ -223,7 +223,19 @@ const rowBase = {
 };
 
 const headerRow = {
-  padding: "0 14px 8px",
+  position: "sticky",
+
+  top: "var(--stats-header-top, 68px)",
+
+  zIndex: 70,
+
+  margin: "0 -18px 8px -18px",
+
+  padding: "10px 32px 8px",
+
+  background: "rgba(248, 250, 252, 0.96)",
+
+  backdropFilter: "blur(12px)",
 
   fontSize: 12,
 

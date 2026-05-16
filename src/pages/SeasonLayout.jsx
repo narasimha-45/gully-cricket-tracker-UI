@@ -19,38 +19,38 @@ export default function SeasonLayout() {
 
   return (
     <div>
-      {/* Sub header */}
-      <div className={styles.subHeader}>
-        <button
-          className={styles.back}
-          onClick={() => navigate("/")}
-          aria-label="Back"
-        >
-          ←
-        </button>
+      {/* UNIFIED STICKY HEADER */}
+      <div className={styles.stickyHeader}>
+        <div className={styles.subHeader}>
+          <button
+            className={styles.back}
+            onClick={() => navigate("/")}
+            aria-label="Back"
+          >
+            ←
+          </button>
+          <div className={styles.seasonName}>{seasonName}</div>
+        </div>
 
-        <div className={styles.seasonName}>{seasonName}</div>
-      </div>
+        <div className={styles.tabs}>
+          <NavLink
+            to="matches"
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            Matches
+          </NavLink>
 
-      {/* Tabs */}
-      <div className={styles.tabs}>
-        <NavLink
-          to="matches"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Matches
-        </NavLink>
-
-        <NavLink
-          to="stats"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Stats
-        </NavLink>
+          <NavLink
+            to="stats"
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            Stats
+          </NavLink>
+        </div>
       </div>
 
       {/* Page content */}
