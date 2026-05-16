@@ -1,393 +1,340 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { saveMatch } from "../storage/matchDB";
 
 export default function CreateMatch() {
   const navigate = useNavigate();
   const { seasonId } = useParams();
-
-  /* ---------------- backend teams ---------------- */
   const [teams, setTeams] = useState([]);
+  const [loading, setLoading] = useState(true);
   const API = import.meta.env.VITE_API_BASE_URL;
+
+  // Team Selection State
+  const [teamA, setTeamA] = useState({ id: "", name: "", query: "", players: [] });
+  const [teamB, setTeamB] = useState({ id: "", name: "", query: "", players: [] });
+  
+  // Format State
+  const [matchType, setMatchType] = useState("OVERS");
+  const [overs, setOvers] = useState(6);
 
   useEffect(() => {
     const loadTeams = async () => {
       try {
-        const res = await fetch(`${API}/api/teams?seasonId=${seasonId}`);
+        setLoading(true);
+        const res = await fetch(`${API}/api/teams/season/${seasonId}`);
         const json = await res.json();
-
         setTeams(json.data || []);
       } catch (err) {
         console.error("Failed to load teams", err);
+      } finally {
+        setLoading(false);
       }
     };
-
     loadTeams();
-  }, []);
+  }, [seasonId]);
 
-  /* ---------------- Team A ---------------- */
-  const [teamAId, setTeamAId] = useState("");
-  const [teamAName, setTeamAName] = useState("");
-
-  /* ---------------- Team B ---------------- */
-  const [teamBId, setTeamBId] = useState("");
-  const [teamBName, setTeamBName] = useState("");
-
-  /* ---------------- Match settings ---------------- */
-  const [matchType, setMatchType] = useState("OVERS");
-  const [overs, setOvers] = useState(6);
-
-  const canCreate =
-    (teamAId || teamAName.trim()) &&
-    (teamBId || teamBName.trim()) &&
-    (matchType !== "OVERS" || overs > 0);
-
-  const resolveTeamSnapshot = (teamId, teamName) => {
-    if (teamId) {
-      const team = teams.find((t) => t._id === teamId);
-
-      return {
-        name: team.name,
-        players: team.players || [], // copy players for offline
-      };
-    }
-
-    return {
-      name: teamName,
-      players: [], // new team starts empty
-    };
-  };
+  const canCreate = teamA.query.trim() && teamB.query.trim() && (matchType !== "OVERS" || overs > 0);
 
   const handleCreate = async () => {
     if (!canCreate) return;
 
     const matchId = `match_${Date.now()}`;
-
-    const teamASnapshot = resolveTeamSnapshot(teamAId, teamAName);
-    const teamBSnapshot = resolveTeamSnapshot(teamBId, teamBName);
+    
+    const resolveTeam = (t) => {
+      return { 
+        name: t.name || t.query, 
+        players: t.players || [],
+        isExisting: !!t.id
+      };
+    };
 
     const match = {
       id: matchId,
       seasonId,
       status: "setup",
-
       matchType,
       totalOvers: matchType === "OVERS" ? Number(overs) : null,
-
       teams: {
-        teamA: teamASnapshot,
-        teamB: teamBSnapshot,
+        teamA: resolveTeam(teamA),
+        teamB: resolveTeam(teamB),
       },
-
       createdAt: Date.now(),
       updatedAt: Date.now(),
     };
 
     await saveMatch(match);
-
-    navigate(`/season/${seasonId}/match/${matchId}/setup/team-a`, {
-      replace: true,
-    });
+    navigate(`/season/${seasonId}/match/${matchId}/setup/team-a`, { replace: true });
   };
 
   return (
     <div style={container}>
-      {/* Header */}
-      <div style={heroBox}>
-        <div style={heroTop}>
-          <button onClick={() => navigate(-1)} style={backBtn}>
-            ←
-          </button>
-          <div style={{ width: 28 }} />
-          <div>
-            <div style={heroTitle}>Create Match</div>
+      {/* HEADER */}
+      <div style={header}>
+        <button onClick={() => navigate(-1)} style={backCircle}>←</button>
+        <div style={{ flex: 1 }}>
+          <h1 style={title}>New Match</h1>
+          <p style={subtitle}>Configure teams and format</p>
+        </div>
+        <div style={badge}>Season Mode</div>
+      </div>
 
-            {/* <div style={heroSub}>Setup teams and match format</div> */}
+      <div style={mainGrid}>
+        {/* TEAM SELECTION */}
+        <div style={sectionCard}>
+          <div style={sectionTitle}>
+            <span style={iconSpan}>🛡️</span>
+            Select Teams
+          </div>
+          
+          <div style={teamGrid}>
+            <TeamSearch 
+              label="Team A" 
+              value={teamA} 
+              setValue={setTeamA} 
+              otherSelectedId={teamB.name}
+            />
+            <div style={vsDivider}>VS</div>
+            <TeamSearch 
+              label="Team B" 
+              value={teamB} 
+              setValue={setTeamB} 
+              otherSelectedId={teamA.name}
+            />
+          </div>
+        </div>
+
+        {/* MATCH FORMAT */}
+        <div style={sectionCard}>
+          <div style={sectionTitle}>
+            <span style={iconSpan}>⚙️</span>
+            Match Format
+          </div>
+          
+          <div style={formatRow}>
+            <div style={{ flex: 1 }}>
+              <label style={inputLabel}>Format Type</label>
+              <div style={toggleGroup}>
+                <button 
+                  style={matchType === "OVERS" ? activeToggle : inactiveToggle}
+                  onClick={() => setMatchType("OVERS")}
+                >
+                  Limited Overs
+                </button>
+                <button 
+                  style={matchType === "TEST" ? activeToggle : inactiveToggle}
+                  onClick={() => setMatchType("TEST")}
+                >
+                  Test Match
+                </button>
+              </div>
+            </div>
+
+            {matchType === "OVERS" && (
+              <div style={{ width: 120 }}>
+                <label style={inputLabel}>Overs</label>
+                <input 
+                  type="number" 
+                  style={numInput} 
+                  value={overs} 
+                  onChange={e => setOvers(e.target.value)}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* ---------------- TEAM A ---------------- */}
-      <div style={section}>
-        <label style={label}>Team A</label>
-
-        <div style={selectWrap}>
-          <select
-            value={teamAId}
-            onChange={(e) => {
-              setTeamAId(e.target.value);
-              setTeamAName("");
-            }}
-            style={input}
-          >
-            <option value="">Select existing team</option>
-            {teams.map((team) => (
-              <option key={team._id} value={team._id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
-          <span style={selectArrow}></span>
-        </div>
-        <div style={{ height: 8 }} />
-        <input
-          placeholder="Or create new team"
-          value={teamAName}
-          onChange={(e) => {
-            setTeamAName(e.target.value);
-            setTeamAId("");
-          }}
-          disabled={!!teamAId}
-          style={input}
-        />
+      {/* FOOTER ACTION */}
+      <div style={footer}>
+        <button 
+          onClick={handleCreate}
+          disabled={!canCreate}
+          style={!canCreate ? disabledBtn : primaryBtn}
+        >
+          {canCreate ? "Begin Match Setup" : "Please select teams"}
+        </button>
       </div>
-
-      {/* ---------------- TEAM B ---------------- */}
-      <div style={section}>
-        <label style={label}>Team B</label>
-
-        <div style={selectWrap}>
-          <select
-            value={teamBId}
-            onChange={(e) => {
-              setTeamBId(e.target.value);
-              setTeamBName("");
-            }}
-            style={input}
-          >
-            <option value="">Select existing team</option>
-            {teams.map((team) => (
-              <option key={team._id} value={team._id}>
-                {team.name}
-              </option>
-            ))}
-          </select>
-
-          <span style={selectArrow}></span>
-        </div>
-        <div style={{ height: 8 }} />
-        <input 
-          placeholder="Or create new team"
-          value={teamBName}
-          onChange={(e) => {
-            setTeamBName(e.target.value);
-            setTeamBId("");
-          }}
-          disabled={!!teamBId}
-          style={input}
-        />
-      </div>
-
-      {/* ---------------- MATCH TYPE ---------------- */}
-      <div style={section}>
-        <label style={label}>Match Type</label>
-
-        <div style={row}>
-          <button
-            style={pill(matchType === "OVERS")}
-            onClick={() => setMatchType("OVERS")}
-          >
-            Limited Overs
-          </button>
-
-          <button
-            style={pill(matchType === "TEST")}
-            onClick={() => setMatchType("TEST")}
-          >
-            Test
-          </button>
-        </div>
-
-        {matchType === "OVERS" && (
-          <input
-            type="number"
-            value={overs}
-            onChange={(e) => setOvers(e.target.value)}
-            style={input}
-            placeholder="Number of overs"
-          />
-        )}
-      </div>
-
-      {/* ---------------- CREATE ---------------- */}
-      <button
-        disabled={!canCreate}
-        onClick={handleCreate}
-        style={{
-          ...primaryBtn,
-          opacity: canCreate ? 1 : 0.5,
-          background: canCreate ? "#4f46e5" : "#c7d2fe",
-        }}
-      >
-        Create Match
-      </button>
     </div>
   );
 }
 
-/* ---------------- styles ---------------- */
-const container = {
-  padding: 16,
-  maxWidth: 520,
-  margin: "0 auto",
-};
+function TeamSearch({ label, value, setValue, otherSelectedId }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const containerRef = useRef(null);
+  const API = import.meta.env.VITE_API_BASE_URL;
 
-const section = {
-  marginBottom: 26,
-};
+  useEffect(() => {
+    if (!value.query.trim()) {
+      setResults([]);
+      return;
+    }
 
-const label = {
-  fontWeight: 600,
-  marginBottom: 10,
-  display: "block",
-  fontSize: 14,
-};
+    const fetchTeams = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`${API}/api/search?q=${encodeURIComponent(value.query)}`);
+        const json = await res.json();
+        console.log(json);
+        if (json.success) {
+          // Filter out the team selected in the other slot
 
-const input = {
-  width: "100%",
-  padding: "14px 16px",
-  borderRadius: 12,
-  border: "1px solid #e5e7eb",
-  background: "#0d15f019",
-  fontSize: 15,
-  outline: "none",
-  appearance: "none",
-  WebkitAppearance: "none",
-  MozAppearance: "none",
-  boxSizing: "border-box",
-};
+          const filtered = (json.data.teams || []).filter(t => t.name !== otherSelectedId);
+          console.log(filtered);
+          setResults(filtered);
+        }
+      } catch (err) {
+        console.error("Team search failed", err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-const selectWrap = {
-  position: "relative",
-};
+    const timer = setTimeout(fetchTeams, 300);
+    return () => clearTimeout(timer);
+  }, [value.query, otherSelectedId]);
 
-const selectArrow = {
+  useEffect(() => {
+    const clickOut = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", clickOut);
+    return () => document.removeEventListener("mousedown", clickOut);
+  }, []);
+
+  return (
+    <div style={{ position: "relative", flex: 1 }} ref={containerRef}>
+      <label style={inputLabel}>{label}</label>
+      <div style={inputWrapper}>
+        <input 
+          style={searchInput}
+          placeholder="Search team name..."
+          value={value.query}
+          onFocus={() => setIsOpen(true)}
+          onChange={(e) => {
+            setValue({ id: "", name: "", query: e.target.value, players: [] });
+            setIsOpen(true);
+          }}
+        />
+        {value.name && !loading && <span style={checkIcon}>✓</span>}
+        {loading && <div style={miniSpinner}></div>}
+      </div>
+
+      {isOpen && (value.query.trim()) && (
+        <div style={dropdown}>
+          {results.length > 0 ? (
+            results.map(t => (
+              <div 
+                key={t.id} 
+                style={dropItem}
+                onClick={async () => {
+                  // Set what we have immediately from the search result
+                  setValue({ 
+                    id: t.id, 
+                    name: t.name, 
+                    query: t.name, 
+                    players: t.players || [] 
+                  });
+                  
+                  setLoading(true);
+                  try {
+                    const res = await fetch(`${API}/api/teams/${encodeURIComponent(t.name)}`);
+                    const json = await res.json();
+                    console.log(json);
+                    if (json.success && (json.data?.team || json.data?.profile)) {
+                      const profile = json.data.team || json.data.profile;
+                      setValue({ 
+                        id: profile._id, 
+                        name: profile.name, 
+                        query: profile.name,
+                        players: (profile.players || []).map(p => {
+                          if (typeof p === 'object' && p !== null) return p.name || "Unknown Player";
+                          return p;
+                        })
+                      });
+                    }
+                  } catch (err) {
+                    console.error("Failed to fetch team details", err);
+                  } finally {
+                    setLoading(false);
+                    setIsOpen(false);
+                  }
+                }}
+              >
+                <div style={teamIcon}>🛡️</div>
+                <div>
+                  <div style={teamNameStyle}>{t.name}</div>
+                  <div style={teamMeta}>{t.matches} matches played</div>
+                </div>
+              </div>
+            ))
+          ) : !loading ? (
+            <div 
+              style={dropItem}
+              onClick={() => setIsOpen(false)}
+            >
+              <div style={newTeamIcon}>+</div>
+              <div>
+                <div style={teamNameStyle}>New Team: "{value.query}"</div>
+                <div style={teamMeta}>Will be created for this match</div>
+              </div>
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
+const miniSpinner = {
   position: "absolute",
   right: 16,
   top: "50%",
   transform: "translateY(-50%)",
-  pointerEvents: "none",
-  color: "#6b7280",
+  width: 16,
+  height: 16,
+  border: "2px solid #e2e8f0",
+  borderTop: "2px solid #4f46e5",
+  borderRadius: "50%",
+  animation: "spin 0.6s linear infinite"
 };
 
-const row = { display: "flex", gap: 8, marginBottom: 12 };
+/* ---------------- STYLES ---------------- */
+const container = { padding: "20px", maxWidth: 600, margin: "0 auto", paddingBottom: 100 };
 
-const pill = (active) => ({
-  flex: 1,
-  height: 46,
-  borderRadius: 12,
-  border: "none",
-  cursor: "pointer",
-  fontWeight: 600,
-  transition: "0.2s ease",
-  background: active ? "#4f46e5" : "#f3f4f6",
-  color: active ? "#fff" : "#111827",
-});
+const header = { display: "flex", alignItems: "center", gap: 16, marginBottom: 32 };
+const backCircle = { width: 40, height: 40, borderRadius: "50%", border: "1px solid #e2e8f0", background: "white", fontSize: 20, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" };
+const title = { fontSize: 28, fontWeight: 800, color: "#0f172a", margin: 0 };
+const subtitle = { fontSize: 14, color: "#64748b", margin: "4px 0 0" };
+const badge = { background: "#eff6ff", color: "#3b82f6", padding: "6px 12px", borderRadius: 8, fontSize: 12, fontWeight: 700 };
 
-const primaryBtn = {
-  width: "100%",
-  padding: 16,
-  borderRadius: 14,
-  border: "none",
-  background: "#4f46e5",
-  color: "#fff",
-  fontWeight: 700,
-  fontSize: 15,
-  marginTop: 10,
-  cursor: "pointer",
-};
+const mainGrid = { display: "flex", flexDirection: "column", gap: 20 };
+const sectionCard = { background: "white", borderRadius: 20, padding: 24, border: "1px solid #eef2ff", boxShadow: "0 4px 15px rgba(0,0,0,0.02)" };
+const sectionTitle = { fontSize: 16, fontWeight: 700, color: "#334155", marginBottom: 20, display: "flex", alignItems: "center", gap: 10 };
+const iconSpan = { fontSize: 20 };
 
-const topTitle = {
-  fontSize: 20,
-  fontWeight: 700,
-};
+const teamGrid = { display: "flex", flexDirection: "column", gap: 16, position: "relative" };
+const vsDivider = { textAlign: "center", fontSize: 11, fontWeight: 800, color: "#cbd5e1", padding: "4px 0", letterSpacing: "0.2em" };
 
-const topBar = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-  marginBottom: 26,
-};
+const inputLabel = { fontSize: 12, fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, display: "block" };
+const inputWrapper = { position: "relative" };
+const searchInput = { width: "100%", padding: "14px 16px", borderRadius: 14, border: "2px solid #f1f5f9", fontSize: 15, fontWeight: 500, outline: "none", transition: "all 0.2s", background: "#f8fafc" };
+const checkIcon = { position: "absolute", right: 16, top: "50%", transform: "translateY(-50%)", color: "#10b981", fontWeight: 900 };
 
-const iconBtn = {
-  width: 38,
-  height: 38,
-  borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  fontSize: 18,
-  cursor: "pointer",
-  flexShrink: 0,
-};
+const dropdown = { position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0, background: "white", borderRadius: 16, border: "1px solid #e2e8f0", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", zIndex: 100, maxHeight: 220, overflowY: "auto" };
+const dropItem = { display: "flex", alignItems: "center", gap: 12, padding: "12px 16px", cursor: "pointer", borderBottom: "1px solid #f8fafc" };
+const teamIcon = { width: 36, height: 36, borderRadius: 10, background: "#f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18 };
+const newTeamIcon = { width: 36, height: 36, borderRadius: 10, background: "#ecfdf5", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, fontWeight: 700 };
+const teamNameStyle = { fontSize: 14, fontWeight: 700, color: "#0f172a" };
+const teamMeta = { fontSize: 11, color: "#94a3b8" };
 
-const navBar = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  marginBottom: 22,
-};
+const formatRow = { display: "flex", gap: 20, alignItems: "flex-end" };
+const toggleGroup = { display: "flex", background: "#f1f5f9", padding: 4, borderRadius: 12, gap: 4 };
+const activeToggle = { flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: "white", color: "#4f46e5", fontSize: 13, fontWeight: 700, boxShadow: "0 2px 4px rgba(0,0,0,0.05)", cursor: "pointer" };
+const inactiveToggle = { flex: 1, padding: "10px 16px", borderRadius: 10, border: "none", background: "transparent", color: "#64748b", fontSize: 13, fontWeight: 600, cursor: "pointer" };
+const numInput = { width: "100%", padding: "12px", borderRadius: 12, border: "2px solid #f1f5f9", fontSize: 15, fontWeight: 700, textAlign: "center", background: "white" };
 
-const navTitle = {
-  fontSize: 18,
-  fontWeight: 700,
-  color: "#111827",
-};
-
-const topSub = {
-  fontSize: 13,
-  color: "#6b7280",
-  marginTop: 2,
-};
-
-const header = {
-  display: "flex",
-  alignItems: "center",
-  gap: 18,
-  padding: "20px 24px",
-  borderRadius: 24,
-  background: "#f5f3ff",
-  marginBottom: 28,
-};
-
-const title = {
-  fontSize: 24,
-  fontWeight: 800,
-  color: "#111827",
-  padding: "20px",
-};
-
-const heroBox = {
-  background: "#031cfc31",
-  borderRadius: 18,
-  padding: "10px 20px",
-  marginBottom: 28,
-};
-
-const heroTop = {
-  display: "flex",
-  alignItems: "center",
-  gap: 12,
-};
-
-const heroTitle = {
-  fontSize: 25,
-  fontWeight: 700,
-  color: "#1e1b4b",
-};
-
-const heroSub = {
-  marginTop: 4,
-  fontSize: 14,
-  color: "#6b7280",
-};
-
-const backBtn = {
-  width: 35,
-  height: 35,
-  borderRadius: 14,
-  border: "none",
-  background: "#ffffff",
-  fontSize: 18,
-  cursor: "pointer",
-  flexShrink: 0,
-};
+const footer = { position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)", width: "calc(100% - 40px)", maxWidth: 400 };
+const primaryBtn = { width: "100%", padding: "18px", borderRadius: 16, border: "none", background: "#4f46e5", color: "white", fontSize: 16, fontWeight: 700, boxShadow: "0 8px 20px rgba(79, 70, 229, 0.3)", cursor: "pointer" };
+const disabledBtn = { width: "100%", padding: "18px", borderRadius: 16, border: "none", background: "#e2e8f0", color: "#94a3b8", fontSize: 16, fontWeight: 700, cursor: "not-allowed" };

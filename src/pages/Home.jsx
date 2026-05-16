@@ -159,6 +159,7 @@ export default function Home({ open, onClose }) {
         open={open}
         onClose={onClose}
         onCreated={loadSeasons}
+        existingSeasons={seasons}
       />
     </>
   );
