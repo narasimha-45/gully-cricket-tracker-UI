@@ -306,3 +306,4 @@ const rosterGrid = { display: "flex", flexDirection: "column", gap: 2 };
 const rosterItem = { display: "flex", alignItems: "center", gap: 12, padding: "10px 4px", borderBottom: "1px solid #f8fafc", cursor: "pointer" };
 const avatarMini = { width: 28, height: 28, borderRadius: "50%", background: "#f5f3ff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11, fontWeight: 700, color: "#5b21b6" };
 const rosterName = { fontSize: 14, fontWeight: 500, color: "#4f46e5", textTransform: "capitalize" };
+const emptyHint = { padding: "12px", textAlign: "center", color: "#94a3b8", fontSize: 12, fontStyle: "italic" };
