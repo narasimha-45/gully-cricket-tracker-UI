@@ -1,11 +1,16 @@
+/* ============================================================
+   LiveMatch.module.css  —  all styles in one place
+   ============================================================ */
+
+/* ── Hero card ─────────────────────────────────────────────── */
 .heroCard {
   background: linear-gradient(135deg, #312e81, #4338ca);
-  border-radius: 22px;
-  padding: 6px 14px;
+  border-radius: 20px;
+  padding: 14px 16px;         /* was 6px 14px — too tight */
   color: white;
   margin-bottom: 8px;
   margin-top: 2px;
-  box-shadow: 0 12px 30px rgba(67, 56, 202, 0.25);
+  box-shadow: 0 8px 24px rgba(67, 56, 202, 0.22);
 }
 
 .heroTop {
@@ -15,89 +20,369 @@
   gap: 12px;
 }
 
-.liveBadge {
-  font-size: 11px;
-  font-weight: 700;
-  color: #fce7f3;
-  margin: 0;
-  padding: 4px 10px;
-  border-radius: 9999px;
-  background: rgba(239, 5, 5, 0.705);
-  animation: pulse 1.2s infinite;;
-}
-
-.matchTitle {
-  font-size: 20px;
-  font-weight: 800;
-  text-align: center;
-  margin: 0;
-  line-height: 1.1;
-}
-
-.mainScore {
-  margin-top: 10px;
-}
-
 .titleRow {
   display: flex;
   flex-direction: row;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   flex: 1;
-  gap: 10px;
+  gap: 8px;
 }
 
-.scoreNumber {
-  font-size: 32px;
+.matchTitle {
+  font-size: 17px;
   font-weight: 800;
-  line-height: 1;
-  margin-top: 10px;
+  margin: 0;
+  line-height: 1.15;
 }
 
-.wicket {
-  opacity: 0.8;
-}
-
-.overText {
-  margin-top: 10px;
-  font-size: 15px;
-  opacity: 0.85;
-}
-
-.bottomInfo {
-  margin-top: 22px;
-  display: flex;
-  justify-content: space-between;
-  font-size: 14px;
-  font-weight: 600;
+.liveBadge {
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  margin: 0;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  background: rgba(239, 68, 68, 0.85);
+  white-space: nowrap;
+  animation: pulse 1.2s infinite;
 }
 
 .editBtn {
-  border: none;
-  background: rgba(255,255,255,0.15);
-  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
   cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.editBtn:active {
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* Score rows inside hero */
+.heroScoreRows {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.heroScoreRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 500;
+  opacity: 0.85;
+}
+
+.heroScoreRow.isCurrent {
+  font-weight: 800;
+  font-size: 16px;
+  opacity: 1;
+}
+
+.heroScoreVal {
+  font-variant-numeric: tabular-nums;
+}
+
+.heroYetToBat {
+  opacity: 0.45;
+  font-size: 13px;
+}
+
+/* CRR / RRR / Need chips */
+.heroMeta {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  gap: 6px;
+}
+
+.heroMetaChip {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 5px 8px;
+  text-align: center;
+}
+
+.heroMetaLabel {
+  font-size: 10px;
+  font-weight: 700;
+  opacity: 0.6;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 1px;
+}
+
+.heroMetaVal {
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Match result banner (inside hero when completed) */
+.heroResult {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  text-align: center;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+.tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tabBtn {
+  flex: 1;
+  padding: 10px;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #64748b;
+  transition: all 0.15s;
+}
+
+.activeTab {
+  background: #312e81;
+  color: white;
+  border-color: #312e81;
+}
+
+/* ── Generic card ───────────────────────────────────────────── */
+.card {
+  background: white;
+  border-radius: 14px;
+  padding: 10px 12px;
+  border: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+}
+
+.cardLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 8px;
+}
+
+/* ── Stats tables (batting / bowling) ──────────────────────── */
+.tableHeader {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  padding: 0 2px 4px;
+}
+
+.tableHeader span:not(:first-child),
+.tableRow span:not(:first-child) {
+  text-align: right;
+}
+
+.tableRow {
+  display: grid;
+  grid-template-columns: 2fr repeat(4, 1fr);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 2px;
+  border-top: 1px solid #f8fafc;
+}
+
+.playerName {
+  color: #0f172a;
+}
+
+.selectablePlayer {
+  color: #4f46e5;
+  cursor: pointer;
+}
+
+.statVal {
+  text-align: right;
+  color: #334155;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── This-over ball chips ───────────────────────────────────── */
+.overBox {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px 12px;
+  border: 1px solid #f1f5f9;
+  margin-bottom: 6px;
+}
+
+.overLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.overBalls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ballChip {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: white;
+}
+
+.normalBall  { background: #3b82f6; }
+.fourBall    { background: #16a34a; }
+.sixBall     { background: #7c3aed; }
+.wicketBall  { background: #dc2626; }
+.wideBall    { background: #f59e0b; color: #78350f; }
+.noBall      { background: #f97316; color: #7c2d12; }
+
+/* ── Keypad ─────────────────────────────────────────────────── */
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-top: 4px;
+}
+
+/* Base key */
+.keyBtn {
+  padding: 16px 0;
+  border-radius: 12px;
+  background: #eef2ff;
+  color: #1e1b4b;
   font-size: 18px;
+  font-weight: 800;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background 0.1s, transform 0.08s;
+}
+.keyBtn:active { transform: scale(0.95); }
+
+/* Wide / No-ball */
+.keyWide {
+  background: #fef3c7;
+  color: #92400e;
 }
 
-@keyframes pulse {
-  0% {
-    opacity: 0.4;
-  }
-
-  50% {
-    opacity: 1;
-  }
-
-  100% {
-    opacity: 0.4;
-  }
+.keyWideActive {
+  background: #fde68a;
+  color: #78350f;
+  outline: 2px solid #f59e0b;
+  outline-offset: 1px;
 }
 
+.keyWideDisabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Wicket */
+.keyWicket {
+  background: #fee2e2;
+  color: #7f1d1d;
+}
+
+.keyWicketDisabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Undo */
+.keyUndo {
+  background: #f1f5f9;
+  color: #374151;
+}
+
+.keyUndoActive {
+  background: #e2e8f0;
+  color: #374151;
+}
+
+.keyUndoDisabled {
+  background: #f8fafc;
+  color: #cbd5e1;
+  cursor: not-allowed;
+}
+
+/* Special (strike swap, retire) */
+.keySpecial {
+  background: #f5f3ff;
+  color: #4f46e5;
+}
+
+/* ── Man of the Match card ──────────────────────────────────── */
+.motmCard {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #713f12;
+}
+
+/* ── Buttons ────────────────────────────────────────────────── */
+.primaryBtn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 12px;
+  border: none;
+  background: #16a34a;
+  color: white;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.primaryBtn:active { background: #15803d; }
+
+.secondaryBtn {
+  width: 100%;
+  padding: 13px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  color: #374151;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+/* ── Finish / ack button ────────────────────────────────────── */
 .finishBtn {
   width: 100%;
   border: none;
@@ -110,6 +395,7 @@
   cursor: pointer;
 }
 
+/* ── Loader row (inside finish button) ─────────────────────── */
 .loaderRow {
   display: flex;
   align-items: center;
@@ -120,42 +406,18 @@
 .spinner {
   width: 18px;
   height: 18px;
-  border: 3px solid rgba(255,255,255,0.35);
-  border-top: 3px solid white;
+  border: 3px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
 
+/* ── Animations ─────────────────────────────────────────────── */
+@keyframes pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-.ballChip {
-  min-width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  color: white;
-  font-size: 14px;
-}
-
-.normalBall {
-  background: #2563eb;
-}
-
-.fourBall {
-  background: #16a34a;
-}
-
-.sixBall {
-  background: #7c3aed;
-}
-
-.wicketBall {
-  background: #dc2626;
+  to { transform: rotate(360deg); }
 }

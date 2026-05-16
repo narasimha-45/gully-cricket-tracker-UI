@@ -183,7 +183,7 @@ export default function AppRoutes() {
         {/* ================= TOSS ================= */}
 
         <Route
-          path="/season/:seasonId/match/:matchId/toss"
+          path="/season/:seasonId/match/:matchId/setup/toss"
           element={
             <AppShell title="Cricora">
               <TossPage />
