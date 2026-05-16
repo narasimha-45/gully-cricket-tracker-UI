@@ -65,7 +65,7 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(`/season/${match.matchInfo.seasonId}/matches`);
+    navigate(`/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`);
   };
 
   /* =====================================
@@ -143,8 +143,6 @@ export default function MatchSummary() {
   const goBackToSeason = () => {
     navigate(-1);
   };
-
-
 
   /* =====================================
      UI

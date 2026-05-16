@@ -187,7 +187,7 @@ export default function LiveMatch() {
   /* ---------------- UI ---------------- */
 
   return (
-    <div style={{ padding: 12 }}>
+    <div>
       {/* EDIT MATCH */}
       <EditMatchSheet
         open={editOpen}
