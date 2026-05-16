@@ -42,6 +42,15 @@ export default function SeasonStats() {
         </NavLink>
 
         <NavLink
+          to="teams"
+          className={({ isActive }) =>
+            isActive ? styles.activeTab : styles.tab
+          }
+        >
+          Teams
+        </NavLink>
+
+        <NavLink
           to="misc"
           className={({ isActive }) =>
             isActive ? styles.activeTab : styles.tab

@@ -127,6 +127,8 @@ export default function AppRoutes() {
 
               <Route path="bowling" element={<BowlingStats />} />
 
+              <Route path="teams" element={<TeamStats />} />
+
               <Route path="misc" element={<MiscStats />} />
 
               <Route path="matchups" element={<MatchupsPlaceholder />} />
