@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
 
 export default function BattingStats({ isOverall = false }) {
   const { seasonId } = useParams();
+  const navigate = useNavigate();
+  
+  // Attempt to get globalFilter from InsightsHub outlet context
+  const outletContext = useOutletContext();
+  const globalFilter = isOverall ? (outletContext?.globalFilter || "all") : null;
 
   const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -30,12 +35,12 @@ export default function BattingStats({ isOverall = false }) {
   /* ---------------- LOAD ONLY ONCE ---------------- */
 
   useEffect(() => {
-    if (isOverall && overallStats) return;
-
+    // If we are in Season scope and already have stats, return
     if (!isOverall && battingStats) return;
-
+    
+    // In overall scope, we re-fetch when globalFilter changes
     loadStats();
-  }, [seasonId, isOverall]);
+  }, [seasonId, isOverall, globalFilter]);
 
   /* ---------------- FETCH ---------------- */
 
@@ -43,9 +48,14 @@ export default function BattingStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      const endpoint = isOverall
-        ? `${API}/api/stats/leaderboard/batting`
-        : `${API}/api/stats/leaderboard/batting/${seasonId}`;
+      let endpoint;
+      if (isOverall) {
+        endpoint = globalFilter === "all" 
+          ? `${API}/api/stats/leaderboard/batting`
+          : `${API}/api/stats/leaderboard/batting/${globalFilter}`;
+      } else {
+        endpoint = `${API}/api/stats/leaderboard/batting/${seasonId}`;
+      }
 
       const res = await fetch(endpoint);
 
@@ -187,7 +197,12 @@ export default function BattingStats({ isOverall = false }) {
             ...dataRow,
           }}
         >
-          <span style={playerCell}>{p.name}</span>
+          <span 
+            style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
+            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+          >
+            {p.name}
+          </span>
 
           <span style={center}>{p.innings || 0}</span>
 

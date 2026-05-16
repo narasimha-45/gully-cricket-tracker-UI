@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useParams } from "react-router-dom";
 import styles from "./SeasonStats.module.css";
 
 export default function SeasonStats() {
+  const { seasonId } = useParams();
   const location = useLocation();
 
   useEffect(() => {
@@ -13,6 +14,15 @@ export default function SeasonStats() {
     <div>
       {/* SUB TABS */}
       <div className={styles.subTabs}>
+        <NavLink
+          to="overview"
+          className={({ isActive }) =>
+            isActive ? styles.activeTab : styles.tab
+          }
+        >
+          Overview
+        </NavLink>
+
         <NavLink
           to="batting"
           className={({ isActive }) =>
@@ -39,10 +49,19 @@ export default function SeasonStats() {
         >
           Misc
         </NavLink>
+
+        <NavLink
+          to="matchups"
+          className={({ isActive }) =>
+            isActive ? styles.activeTab : styles.tab
+          }
+        >
+          Matchups
+        </NavLink>
       </div>{" "}
       {/* CONTENT */}
       <div className={styles.content}>
-        <Outlet />
+        <Outlet context={{ globalFilter: seasonId }} />
       </div>
     </div>
   );
