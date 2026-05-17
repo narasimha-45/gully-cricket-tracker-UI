@@ -60,9 +60,11 @@ export default function MiscStats({ isOverall = false }) {
 
       const res = await fetch(endpoint);
 
+      
+
       const json = await res.json();
 
-
+      console.log(json);
       if (isOverall) {
         setOverallStats(json.data || []);
       } else {

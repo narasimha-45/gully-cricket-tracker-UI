@@ -41,6 +41,26 @@ export const applyWicket = ({
     runs: runs,
   });
 
+  // ---------------- BALL BY BALL (FULL HISTORY) ----------------
+  innings.ballByBall ||= [];
+  innings.ballByBall.push({
+    over: Math.floor(innings.balls / 6),
+    ballInOver: (innings.balls % 6) + (countsBall ? 1 : 0),
+    actualBallNum: innings.balls + (countsBall ? 1 : 0),
+    striker: live.striker,
+    nonStriker: live.nonStriker,
+    bowler: live.bowler,
+    runs,
+    type: "WICKET",
+    wicket: {
+      type: wicketType,
+      outBatsman,
+      helper,
+    },
+    isWicket: true,
+    timestamp: Date.now(),
+  });
+
   innings.battingStats[outBatsman] ||= {
     runs: 0,
     balls: 0,

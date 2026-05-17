@@ -5,67 +5,15 @@ import BottomSheetSelector from "../components/BottomSheetSelector";
 import EditMatchSheet from "../components/EditMatchSheet";
 import Scorecard from "../components/Scorecard";
 import { recreateMatch } from "../utils/recreateMatch";
-import {
-  primaryBtn,
-  secondaryBtn,
-  keyWide,
-  keyWideActive,
-  keypad,
-  keyBtn,
-  keyWicket,
-  keyWicketDisabled,
-  keyWideDisabled,
-  keyUndo,
-  grid2,
-  btn,
-  activeBtn,
-  listItem,
-  selectedListItem,
-  confirmBtn,
-  keyUndoActive,
-  keyUndoDisabled,
-  scoreBtn,
-  scoreBtnDisabled,
-  scoreRow,
-  crr,
-  infoRow,
-  tabs,
-  tabBtn,
-  activeTab,
-  headerCard,
-  headerTop,
-  editBtn,
-  scoreMain,
-  overs,
-  card,
-  tableHeader,
-  row,
-  selectable,
-  overBox,
-  overBalls,
-  ballChip,
-  popup,
-  popupCard,
-  popupActions,
-  popupUndoBtn,
-  popupPrimaryBtn,
-} from "./LiveMatch.styles";
 import { formatOvers, calcCRR } from "../utils/calcutors";
-import {
-  updateLive,
-  endFirstInnings,
-  endMatch,
-  isInningsComplete,
-  isTargetAchieved,
-  evaluateMatchState,
-} from "../utils/matchStateHandlers";
+import { updateLive, evaluateMatchState } from "../utils/matchStateHandlers";
 import { deepCopy } from "../utils/helpers";
 import {
   retireBatsman,
   pushSelectionHistory,
-  handleOverEnd,
   applyRun,
   startSecondInnings,
+  startSuperOver,
 } from "../utils/matchEvents";
 import { renderBatStats, renderBowlStats } from "../utils/renderStats";
 import { applyWicket } from "../utils/applyWicket";
@@ -74,25 +22,154 @@ import {
   undoFromMatchPopup,
   undoLast,
 } from "../utils/undos";
-import {
-  deriveFieldingStats,
-  calculateManOfTheMatch,
-  calculatePlayerScore,
-  getWinningTeamPlayers,
-} from "../utils/statsCalculator";
 import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
 import styles from "./LiveMatch.module.css";
 import { takeSnapshot } from "../utils/snapShot";
 import WicketSheet from "../components/WicketSheet";
 import MatchPopup from "../components/MatchPopup";
+import OversTimeline from "../components/OversTimeline";
+import { getCurrentPartnership } from "../utils/partnerships";
+import CompletedMatchView from "../components/CompletedMatchView";
+import MatchSummaryTab from "../components/MatchSummaryTab";
+
+/* ─────────────────────────────────────────────────────────────
+   buildHeroRows
+───────────────────────────────────────────────────────────── */
+function buildHeroRows(match) {
+  const { innings, live } = match;
+  const currentIdx = live.inningsIndex;
+  const visibleInnings = innings.slice(0, currentIdx + 1);
+  const rows = [];
+
+  const inn0 = visibleInnings[0];
+  const inn1 = visibleInnings[1];
+
+  if (inn0) {
+    rows.push({
+      label: inn0.battingTeam,
+      inn: inn0,
+      isCurrent: currentIdx === 0 && match.status !== "COMPLETED",
+      isSuperOver: false,
+      soNumber: null,
+    });
+  }
+  if (inn1) {
+    rows.push({
+      label: inn1.battingTeam,
+      inn: inn1,
+      isCurrent: currentIdx === 1 && match.status !== "COMPLETED",
+      isSuperOver: false,
+      soNumber: null,
+    });
+  } else if (inn0 && currentIdx === 0) {
+    rows.push({
+      label: inn0.bowlingTeam,
+      inn: null,
+      isCurrent: false,
+      isSuperOver: false,
+      soNumber: null,
+    });
+  }
+
+  let soIndex = 2;
+  let soNumber = 1;
+  while (soIndex <= currentIdx) {
+    const soInn1 = visibleInnings[soIndex];
+    const soInn2 = visibleInnings[soIndex + 1];
+    if (soInn1) {
+      rows.push({ isSectionLabel: true, label: `Super Over ${soNumber}` });
+      rows.push({
+        label: soInn1.battingTeam,
+        inn: soInn1,
+        isCurrent: currentIdx === soIndex && match.status !== "COMPLETED",
+        isSuperOver: true,
+        soNumber,
+      });
+    }
+    if (soInn2) {
+      rows.push({
+        label: soInn2.battingTeam,
+        inn: soInn2,
+        isCurrent: currentIdx === soIndex + 1 && match.status !== "COMPLETED",
+        isSuperOver: true,
+        soNumber,
+      });
+    } else if (soInn1 && currentIdx === soIndex) {
+      rows.push({
+        label: soInn1.bowlingTeam,
+        inn: null,
+        isCurrent: false,
+        isSuperOver: true,
+        soNumber,
+      });
+    }
+    soIndex += 2;
+    soNumber += 1;
+  }
+  return rows;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   buildStatusLine
+───────────────────────────────────────────────────────────── */
+function buildStatusLine(match) {
+  const { live, innings, totalOvers, status } = match;
+  const currentIdx = live.inningsIndex;
+  const inn = innings[currentIdx];
+  const isSuperOver = currentIdx >= 2;
+  const soNumber = isSuperOver ? Math.floor((currentIdx - 2) / 2) + 1 : null;
+
+  if (status === "COMPLETED") {
+    const r = match.result;
+    if (r.winner === "TIE") return { type: "text", text: "Match Tied" };
+    if (r.type === "SUPER_OVER")
+      return { type: "text", text: `${r.winner} won via Super Over` };
+    return {
+      type: "text",
+      text: `${r.winner} won by ${r.margin} ${r.type === "WICKETS" ? "wickets" : "runs"}`,
+    };
+  }
+
+  if (currentIdx % 2 === 0) {
+    return {
+      type: "crr",
+      crr: calcCRR(inn.totalRuns, inn.balls),
+      isSuperOver,
+      soNumber,
+    };
+  }
+
+  if (isSuperOver) {
+    return {
+      type: "superOverChase",
+      crr: calcCRR(inn.totalRuns, inn.balls),
+      soNumber,
+    };
+  }
+
+  const prevInn = innings[currentIdx - 1];
+  const target = prevInn.totalRuns + 1;
+  const totalBalls = totalOvers * 6;
+  const ballsLeft = totalBalls - inn.balls;
+  const need = Math.max(0, target - inn.totalRuns);
+  const rrr = ballsLeft > 0 ? (need / (ballsLeft / 6)).toFixed(2) : "∞";
+
+  return {
+    type: "chase",
+    crr: calcCRR(inn.totalRuns, inn.balls),
+    rrr,
+    need,
+    ballsLeft,
+  };
+}
+
+/* ═══════════════════════════════════════════════════════════ */
 
 export default function LiveMatch() {
   const { matchId } = useParams();
-
   const navigate = useNavigate();
 
-  const [matchState, setMatchState] = useState(null); // derived state for quick access
-  const [sheet, setSheet] = useState(null); // striker | nonStriker | bowler
+  const [sheet, setSheet] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState("live");
   const [match, setMatch] = useState(null);
@@ -100,41 +177,24 @@ export default function LiveMatch() {
   const [ackSubmitting, setAckSubmitting] = useState(false);
   const [wicketUI, setWicketUI] = useState({
     open: false,
-    type: null, // BOWLED | CAUGHT | RUN_OUT | STUMPED | ...
-    helper: null, // fielder / keeper
-    // Only used when type === "RUN_OUT"
-    runOut: {
-      outBatsman: null, // name of batsman
-      runs: 0, // runs completed
-    },
+    type: null,
+    helper: null,
+    runOut: { outBatsman: null, runs: 0 },
   });
 
-  const [inningsEnd, setInningsEnd] = useState(false);
-  const [matchEnd, setMatchEnd] = useState(false);
-
   useEffect(() => {
-    if (!match || !match.seasonId) return;
-
-    const handlePopState = () => {
+    if (!match?.seasonId) return;
+    const handlePopState = () =>
       navigate(`/season/${match.seasonId}/matches`, { replace: true });
-    };
-
     window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-    };
+    return () => window.removeEventListener("popstate", handlePopState);
   }, [match, navigate]);
 
   useEffect(() => {
-    const load = async () => {
-      const m = await getMatch(matchId);
+    getMatch(matchId).then((m) => {
       if (m) setMatch(m);
-    };
-    load();
+    });
   }, [matchId]);
-
-  /* ---------------- LOADING ---------------- */
 
   if (!match) return <p>Loading match…</p>;
   if (!match.live)
@@ -143,13 +203,10 @@ export default function LiveMatch() {
   const { teams, live } = match;
   const innings = match.innings[live.inningsIndex];
 
-  /* ---------------- PLAYERS ---------------- */
-
   const battingPlayers =
     innings.battingTeam === teams.teamA.name
       ? teams.teamA.players
       : teams.teamB.players;
-
   const bowlingPlayers =
     innings.bowlingTeam === teams.teamA.name
       ? teams.teamA.players
@@ -161,34 +218,20 @@ export default function LiveMatch() {
       p !== live.striker &&
       p !== live.nonStriker,
   );
-
   const disabledBowlers = [live.lastOverBowler];
-
-  const WICKET_TYPES = [
-    "BOWLED",
-    "CAUGHT",
-    "LBW",
-    "STUMPED",
-    "RUN_OUT",
-    "HIT_WICKET",
-    "SPECIAL",
-  ];
-
-  const invalidOnExtra = ["BOWLED", "LBW", "HIT_WICKET"];
-
-  const isInvalidWicket =
-    (extraMode === "NO_BALL" || extraMode === "WIDE") &&
-    invalidOnExtra.includes(wicketUI.type);
-
-  const setExtraModeWithHistory = (mode) => {
+  const setExtraModeWithHistory = (mode) =>
     setExtraMode((prev) => (prev === mode ? "NORMAL" : mode));
-  };
 
-  /* ---------------- UI ---------------- */
+  const heroRows = buildHeroRows(match);
+  const statusLine = buildStatusLine(match);
 
+  // Current partnership for live tab
+  const currentPartnership =
+    match.status === "LIVE" ? getCurrentPartnership(innings) : null;
+
+  /* ── UI ──────────────────────────────────────────────────── */
   return (
-    <div>
-      {/* EDIT MATCH */}
+    <div className={styles.page}>
       <EditMatchSheet
         open={editOpen}
         match={match}
@@ -196,73 +239,59 @@ export default function LiveMatch() {
         onSave={setMatch}
       />
 
-      {/* HEADER */}
+      {/* ── HERO CARD ──────────────────────────────────────── */}
       <div className={styles.heroCard}>
         <div className={styles.heroTop}>
           <div className={styles.titleRow}>
             <p className={styles.liveBadge}>
               ● {match.status === "COMPLETED" ? "END" : "LIVE"}
             </p>
-
             <h2 className={styles.matchTitle}>
               {teams.teamA.name} vs {teams.teamB.name}
             </h2>
+            <span className={styles.heroFormatPill}>
+              {match.matchType === "TEST" ? "Test" : `${match.totalOvers} Ov`}
+            </span>
           </div>
-
           <button
             className={styles.editBtn}
-            onClick={() => {
-              if (match.status === "COMPLETED") {
-                recreateMatch(match, navigate);
-              } else {
-                setEditOpen(true);
-              }
-            }}
+            onClick={() =>
+              match.status === "COMPLETED"
+                ? recreateMatch(match, navigate)
+                : setEditOpen(true)
+            }
           >
             {match.status === "COMPLETED" ? "↻" : "✎"}
           </button>
         </div>
 
-        <div
-          style={{
-            marginTop: 6,
-            display: "flex",
-            flexDirection: "column",
-            gap: 6,
-          }}
-        >
-          {[0, 1].map((idx) => {
-            const inn = match.innings[idx];
-
-            const isCurrent =
-              idx === live.inningsIndex && match.status !== "COMPLETED";
-
-            const teamName = idx === 0 ? teams.teamA.name : teams.teamB.name;
-
+        {/* Score rows */}
+        <div className={styles.heroScoreRows}>
+          {heroRows.map((row, idx) => {
+            if (row.isSectionLabel) {
+              return (
+                <div key={`label-${idx}`} className={styles.heroSectionDivider}>
+                  <div className={styles.heroSectionLine} />
+                  <span className={styles.heroSectionLabel}>{row.label}</span>
+                  <div className={styles.heroSectionLine} />
+                </div>
+              );
+            }
             return (
               <div
                 key={idx}
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-
-                  opacity: inn ? 1 : 0.7,
-
-                  fontWeight: isCurrent ? 700 : 500,
-
-                  fontSize: 16,
-                }}
+                className={`${styles.heroScoreRow} ${row.isCurrent ? styles.isCurrent : ""}`}
               >
-                <span>{teamName}</span>
-
-                <span>
-                  {inn ? (
-                    <>
-                      {inn.totalRuns}-{inn.wickets} ({formatOvers(inn.balls)})
-                    </>
+                <span
+                  className={row.isSuperOver ? styles.heroSuperOverTeam : ""}
+                >
+                  {row.label}
+                </span>
+                <span className={styles.heroScoreVal}>
+                  {row.inn ? (
+                    `${row.inn.totalRuns}-${row.inn.wickets} (${formatOvers(row.inn.balls)})`
                   ) : (
-                    "Yet to bat"
+                    <span className={styles.heroYetToBat}>Yet to bat</span>
                   )}
                 </span>
               </div>
@@ -270,111 +299,90 @@ export default function LiveMatch() {
           })}
         </div>
 
-        <div
-          style={{
-            marginTop: 6,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        >
-          {match.status === "COMPLETED" ? (
-            <div
-              style={{
-                textAlign: "center",
-                fontSize: 15,
-                fontWeight: 700,
-              }}
-            >
-              {match.result.winner} won by {match.result.margin}{" "}
-              {match.result.type === "WICKETS" ? "wickets" : "runs"}
-            </div>
-          ) : live.inningsIndex === 0 ? (
-            <div style={{ textAlign: "center" }}>
-              CRR: {calcCRR(innings.totalRuns, innings.balls)}
-            </div>
-          ) : (
-            <>
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                }}
-              >
-                <span>CRR: {calcCRR(innings.totalRuns, innings.balls)}</span>
-
-                <span>
-                  RRR:{" "}
-                  {innings.balls < match.totalOvers * 6
-                    ? (
-                        (match.innings[0].totalRuns + 1 - innings.totalRuns) /
-                        ((match.totalOvers * 6 - innings.balls) / 6)
-                      ).toFixed(2)
-                    : "∞"}
+        {/* Status line */}
+        <div className={styles.heroStatus}>
+          {statusLine.type === "text" && (
+            <div className={styles.heroResultText}>{statusLine.text}</div>
+          )}
+          {statusLine.type === "crr" && (
+            <div className={styles.heroStatusCenter}>
+              {statusLine.isSuperOver ? (
+                <span className={styles.heroSuperOverBadge}>
+                  Super Over {statusLine.soNumber} · CRR: {statusLine.crr}
                 </span>
+              ) : (
+                <span>CRR: {statusLine.crr}</span>
+              )}
+            </div>
+          )}
+          {statusLine.type === "superOverChase" && (
+            <div className={styles.heroStatusCenter}>
+              <span className={styles.heroSuperOverBadge}>
+                Super Over {statusLine.soNumber}
+              </span>
+              <span>CRR: {statusLine.crr}</span>
+            </div>
+          )}
+          {statusLine.type === "chase" && (
+            <>
+              <div className={styles.heroStatusRow}>
+                <span>CRR: {statusLine.crr}</span>
+                <span>RRR: {statusLine.rrr}</span>
               </div>
-
-              <div
-                style={{
-                  textAlign: "center",
-                  marginTop: 1,
-                }}
-              >
-                Need {match.innings[0].totalRuns + 1 - innings.totalRuns} in{" "}
-                {match.totalOvers * 6 - innings.balls} balls
+              <div className={styles.heroStatusCenter}>
+                Need {statusLine.need} in {statusLine.ballsLeft} balls
               </div>
             </>
           )}
         </div>
-
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            marginTop: 8,
-            fontSize: 13,
-            fontWeight: 600,
-          }}
-        ></div>
       </div>
 
+      {/* Man of the Match */}
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
-        <div style={card}>
+        <div className={styles.motmCard}>
           <strong>🏆 Man of the Match</strong>
           <div style={{ marginTop: 6 }}>{match.result.manOfTheMatch}</div>
         </div>
       )}
-      {/* TABS */}
-      <div style={tabs}>
-        <button
-          style={tab === "live" ? activeTab : tabBtn}
-          onClick={() => setTab("live")}
-        >
-          {match.status === "COMPLETED" ? "END" : "Live"}
-        </button>
 
-        <button
-          style={tab === "scorecard" ? activeTab : tabBtn}
-          onClick={() => setTab("scorecard")}
-        >
-          Scorecard
-        </button>
+      {/* ── TABS ───────────────────────────────────────────── */}
+      <div className={styles.tabs}>
+        {["live", "scorecard", "overs"].map((t) => (
+          <button
+            key={t}
+            className={`${styles.tabBtn} ${tab === t ? styles.activeTab : ""}`}
+            onClick={() => setTab(t)}
+          >
+            {t === "live"
+              ? match.status === "COMPLETED"
+                ? "Summary"
+                : "Live"
+              : t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
       </div>
 
       {tab === "scorecard" && <Scorecard match={match} />}
+      {tab === "overs" && <OversTimeline match={match} />}
 
       {tab === "live" && match.status === "COMPLETED" && (
-        <CompletedMatchSummary match={match} setTab={setTab} />
+        <MatchSummaryTab match={match} />
       )}
 
+      {/* ── POPUPS ─────────────────────────────────────────── */}
       {match.status === "COMPLETED" && match.result && (
         <MatchPopup
           open={!match.ui?.matchResultSeen}
-          title={`🏆 ${match.result.winner} Won`}
-          subtitle={`by ${match.result.margin} ${
-            match.result.type === "WICKETS" ? "wickets" : "runs"
-          }`}
+          title={`🏆 ${match.result.winner === "TIE" ? "Match Tied" : `${match.result.winner} Won`}`}
+          subtitle={
+            match.result.winner === "TIE"
+              ? "Scores level after Super Over"
+              : match.result.type === "SUPER_OVER"
+                ? "via Super Over"
+                : `by ${match.result.margin} ${match.result.type === "WICKETS" ? "wickets" : "runs"}`
+          }
           primaryText="Finish Match"
-          primaryLoadingText="Finalizing Match..."
+          primaryLoadingText="Finalizing…"
           loading={ackSubmitting}
           onPrimary={() =>
             acknowledgeMatchResult(
@@ -390,41 +398,47 @@ export default function LiveMatch() {
       )}
 
       <MatchPopup
-        open={match.live.pendingNextInnings}
+        open={!!match.live.pendingNextInnings}
         title="Innings Complete"
         subtitle={`${match.innings[0].battingTeam} scored ${match.innings[0].totalRuns} runs`}
         primaryText="Start Second Innings"
-        onPrimary={() =>
-          startSecondInnings({
-            match,
-            setMatch,
-          })
-        }
+        onPrimary={() => startSecondInnings({ match, setMatch })}
         secondaryText="Undo Last Ball"
         onSecondary={() =>
-          undoFromInningsPopup({
-            match,
-            setMatch,
-            setExtraMode,
-          })
+          undoFromInningsPopup({ match, setMatch, setExtraMode })
         }
       />
 
+      <MatchPopup
+        open={!!match.live.pendingSuperOver}
+        title="Match Tied!"
+        subtitle="Scores are level. Ready for a Super Over?"
+        primaryText="Start Super Over"
+        onPrimary={() => startSuperOver({ match, setMatch })}
+        secondaryText="Undo Last Ball"
+        onSecondary={() =>
+          undoFromInningsPopup({ match, setMatch, setExtraMode })
+        }
+      />
+
+      {/* ── LIVE SCORING UI ────────────────────────────────── */}
       {tab === "live" && match.status === "LIVE" && (
         <>
-          <div style={card}>
-            <div style={tableHeader}>
+          {/* Batting card */}
+          <div className={styles.card}>
+            <div className={styles.tableHeader}>
               <span>Batter</span>
               <span>R</span>
               <span>B</span>
               <span>4s</span>
               <span>6s</span>
             </div>
-
             {[live.striker, live.nonStriker].map((name, idx) => (
-              <div key={idx} style={row}>
+              <div key={idx} className={styles.tableRow}>
                 <span
-                  style={selectable(!name)}
+                  className={
+                    !name ? styles.selectablePlayer : styles.playerName
+                  }
                   onClick={() =>
                     !name && setSheet(idx === 0 ? "striker" : "nonStriker")
                   }
@@ -436,19 +450,58 @@ export default function LiveMatch() {
             ))}
           </div>
 
-          {/* BOWLER */}
-          <div style={card}>
-            <div style={tableHeader}>
+          {/* ── Current Partnership ─────────────────────────── */}
+          {/* Partnership — always visible once both batters are set */}
+          {live.striker && live.nonStriker && (
+            <div className={styles.partnershipCard}>
+              <span className={styles.partnershipLabel}>Partnership</span>
+              <div className={styles.partnershipMain}>
+                <span className={styles.partnershipRuns}>
+                  {currentPartnership?.runs ?? 0}
+                  <span className={styles.partnershipBalls}>
+                    {" "}
+                    ({currentPartnership?.balls ?? 0})
+                  </span>
+                </span>
+                <div className={styles.partnershipBatters}>
+                  {currentPartnership
+                    ? Object.keys(currentPartnership.contributions).map(
+                        (name) => {
+                          const c = currentPartnership.contributions[name];
+                          return (
+                            <span
+                              key={name}
+                              className={styles.partnershipBatter}
+                            >
+                              {name}: {c.runs} ({c.balls})
+                            </span>
+                          );
+                        },
+                      )
+                    : [live.striker, live.nonStriker].map((name) => (
+                        <span key={name} className={styles.partnershipBatter}>
+                          {name}: 0 (0)
+                        </span>
+                      ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Bowling card */}
+          <div className={styles.card}>
+            <div className={styles.tableHeader}>
               <span>Bowler</span>
               <span>O</span>
               <span>M</span>
               <span>R</span>
               <span>W</span>
             </div>
-
-            <div style={row}>
+            <div className={styles.tableRow}>
               <span
-                style={selectable(!live.bowler)}
+                className={
+                  !live.bowler ? styles.selectablePlayer : styles.playerName
+                }
                 onClick={() => !live.bowler && setSheet("bowler")}
               >
                 {live.bowler ? `${live.bowler} *` : "Select bowler"}
@@ -457,51 +510,45 @@ export default function LiveMatch() {
             </div>
           </div>
 
-          {/* {innings.thisOver?.length > 0 && ( */}
+          {/* This over */}
           {innings.thisOver.length >= 0 && (
-            <div style={overBox}>
-              <span>This over:</span>
-
-              <div style={overBalls}>
+            <div className={styles.overBox}>
+              <p className={styles.overLabel}>This over</p>
+              <div className={styles.overBalls}>
                 {innings.thisOver.map((b, i) => {
-                  // calculate batting runs (excluding automatic extra)
                   let batRuns = 0;
-
-                  if (b.type === "WIDE") {
+                  if (b.type === "WIDE")
                     batRuns = Math.max(
                       0,
                       b.runs - (match.rules?.wide?.extraRun ? 1 : 0),
                     );
-                  }
-
-                  if (b.type === "NO_BALL") {
+                  if (b.type === "NO_BALL")
                     batRuns = Math.max(
                       0,
                       b.runs - (match.rules?.noBall?.extraRun ? 1 : 0),
                     );
-                  }
+
+                  const chipClass = `${styles.ballChip} ${
+                    b.type === "WICKET"
+                      ? styles.wicketBall
+                      : b.runs === 4
+                        ? styles.fourBall
+                        : b.runs === 6
+                          ? styles.sixBall
+                          : b.type === "WIDE"
+                            ? styles.wideBall
+                            : b.type === "NO_BALL"
+                              ? styles.noBall
+                              : styles.normalBall
+                  }`;
 
                   return (
-                    <span
-                      key={i}
-                      className={`${styles.ballChip} ${
-                        b.type === "WICKET"
-                          ? styles.wicketBall
-                          : b.runs === 4
-                            ? styles.fourBall
-                            : b.runs === 6
-                              ? styles.sixBall
-                              : styles.normalBall
-                      }`}
-                    >
+                    <span key={i} className={chipClass}>
                       {b.type === "RUN" && b.runs}
-
                       {b.type === "WIDE" &&
                         (batRuns > 0 ? `${batRuns}Wd` : "Wd")}
-
                       {b.type === "NO_BALL" &&
                         (batRuns > 0 ? `${batRuns}Nb` : "Nb")}
-
                       {b.type === "WICKET" && "W"}
                     </span>
                   );
@@ -510,13 +557,12 @@ export default function LiveMatch() {
             </div>
           )}
 
-          {/* )} */}
-
-          <div style={keypad}>
+          {/* Keypad */}
+          <div className={styles.keypad}>
             {[1, 2, 3, 4, 6, 0].map((r) => (
               <button
                 key={r}
-                style={keyBtn}
+                className={styles.keyBtn}
                 onClick={() =>
                   applyRun({
                     runs: r,
@@ -532,25 +578,25 @@ export default function LiveMatch() {
             ))}
 
             <button
-              style={extraMode === "WIDE" ? keyWideActive : keyWide}
+              className={`${styles.keyBtn} ${styles.keyWide} ${extraMode === "WIDE" ? styles.keyWideActive : ""}`}
               onClick={() => setExtraModeWithHistory("WIDE")}
             >
               Wd
             </button>
 
             <button
-              style={extraMode === "NO_BALL" ? keyWideActive : keyWide}
+              className={`${styles.keyBtn} ${styles.keyWide} ${extraMode === "NO_BALL" ? styles.keyWideActive : ""}`}
               onClick={() => setExtraModeWithHistory("NO_BALL")}
             >
               Nb
             </button>
 
             <button
-              style={
+              className={`${styles.keyBtn} ${
                 !live.striker || !live.nonStriker || !live.bowler
-                  ? keyWicketDisabled
-                  : keyWicket
-              }
+                  ? styles.keyWicketDisabled
+                  : styles.keyWicket
+              }`}
               disabled={!live.striker || !live.nonStriker || !live.bowler}
               onClick={() => setWicketUI({ ...wicketUI, open: true })}
             >
@@ -558,40 +604,30 @@ export default function LiveMatch() {
             </button>
 
             <button
-              style={live.history.length === 0 ? keyUndoDisabled : keyUndo}
-              onClick={() => undoLast({ match, setMatch, setExtraMode })}
+              className={`${styles.keyBtn} ${live.history.length === 0 ? styles.keyUndoDisabled : styles.keyUndo}`}
               disabled={live.history.length === 0}
+              onClick={() => undoLast({ match, setMatch, setExtraMode })}
             >
               ↺
             </button>
 
             <button
-              style={keyBtn}
+              className={`${styles.keyBtn} ${styles.keySpecial}`}
               onClick={() => {
                 const updated = deepCopy(match);
-
-                // proper snapshot
                 takeSnapshot(updated, "STRIKE_CHANGE", extraMode);
-
-                const live = updated.live;
-
-                // swap strike
-                [live.striker, live.nonStriker] = [
-                  live.nonStriker,
-                  live.striker,
-                ];
-
+                const l = updated.live;
+                [l.striker, l.nonStriker] = [l.nonStriker, l.striker];
                 updated.updatedAt = Date.now();
-
                 saveMatch(updated);
-
                 setMatch(updated);
               }}
             >
               ⇄
             </button>
+
             <button
-              style={keyBtn}
+              className={`${styles.keyBtn} ${styles.keySpecial}`}
               disabled={!live.striker}
               onClick={() => retireBatsman(live.striker, match, setMatch)}
             >
@@ -601,9 +637,7 @@ export default function LiveMatch() {
         </>
       )}
 
-      {/* BATTERS */}
-
-      {/* SELECTORS */}
+      {/* ── SELECTORS ──────────────────────────────────────── */}
       <BottomSheetSelector
         open={sheet === "striker"}
         title="Select Striker"
@@ -615,7 +649,6 @@ export default function LiveMatch() {
         }}
         onClose={() => setSheet(null)}
       />
-
       <BottomSheetSelector
         open={sheet === "nonStriker"}
         title="Select Non-Striker"
@@ -627,7 +660,6 @@ export default function LiveMatch() {
         }}
         onClose={() => setSheet(null)}
       />
-
       <BottomSheetSelector
         open={sheet === "bowler"}
         title="Select Bowler"
@@ -656,22 +688,4 @@ export default function LiveMatch() {
   );
 }
 
-function CompletedMatchSummary({ match, setTab }) {
-  const formatOvers = (balls) => `${Math.floor(balls / 6)}.${balls % 6}`;
-  return (
-    <>
-      {match.innings.map((inn, i) => (
-        <div key={i} style={card}>
-          <strong>{inn.battingTeam}</strong>
-          <div>
-            {inn.totalRuns}/{inn.wickets} ({formatOvers(inn.balls)})
-          </div>
-        </div>
-      ))}
 
-      <button style={primaryBtn} onClick={() => setTab("scorecard")}>
-        View Full Scorecard
-      </button>
-    </>
-  );
-}

@@ -141,7 +141,7 @@ export default function AppRoutes() {
         <Route
           path="/season/:seasonId/create-match"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <CreateMatchType />
             </AppShell>
           }
@@ -152,7 +152,7 @@ export default function AppRoutes() {
         <Route
           path="/season/:seasonId/match/:matchId"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <MatchSummary />
             </AppShell>
           }
@@ -161,9 +161,9 @@ export default function AppRoutes() {
         {/* ================= TEAM A ================= */}
 
         <Route
-          path="/season/:seasonId/match/:matchId/setup/team-a"
+          path="/season/:seasonId/match/:matchId/team-a"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <TeamAPlayers />
             </AppShell>
           }
@@ -172,9 +172,9 @@ export default function AppRoutes() {
         {/* ================= TEAM B ================= */}
 
         <Route
-          path="/season/:seasonId/match/:matchId/setup/team-b"
+          path="/season/:seasonId/match/:matchId/team-b"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <TeamBPlayers />
             </AppShell>
           }
@@ -183,9 +183,9 @@ export default function AppRoutes() {
         {/* ================= TOSS ================= */}
 
         <Route
-          path="/season/:seasonId/match/:matchId/setup/toss"
+          path="/season/:seasonId/match/:matchId/toss"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <TossPage />
             </AppShell>
           }
@@ -196,7 +196,7 @@ export default function AppRoutes() {
         <Route
           path="/season/:seasonId/match/:matchId/live"
           element={
-            <AppShell title="Cricora">
+            <AppShell title="Gully Cricket">
               <LiveMatch />
             </AppShell>
           }

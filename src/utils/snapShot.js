@@ -28,6 +28,7 @@ export const takeSnapshot = (match, type, extraMode = "NORMAL") => {
       bowlingStats: deepCopy(innings.bowlingStats),
 
       thisOver: deepCopy(innings.thisOver || []),
+      ballByBall: deepCopy(innings.ballByBall || []),
 
       extras: deepCopy(
         innings.extras || {
