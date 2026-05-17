@@ -39,12 +39,14 @@ export const acknowledgeMatchResult = async (
 
       extras: inn.extras || { wides: 0, noBalls: 0 },
       dismissals: inn.dismissals || {},
+      ballByBall: inn.ballByBall || [],
+      isSuperOver: inn.isSuperOver ?? false,
       completed: true,
     })),
 
     result: {
       winner: match.result.winner,
-      type: match.result.type, // RUNS | WICKETS
+      type: match.result.type,
       margin: match.result.margin,
       manOfTheMatch: manOfTheMatch,
     },
@@ -52,15 +54,22 @@ export const acknowledgeMatchResult = async (
     fieldingStats: fieldingStats,
   };
 
-  // console.log("payload", payload);
+  try {
 
-  await fetch(`${API}/api/matches/complete`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(payload),
-  });
+    console.log(JSON.stringify(payload));
+    console.log(payload);
+    await fetch(`${API}/api/matches/complete`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+
+  } catch (err) {
+    console.warn("Backend sync failed (match saved locally):", err.message);
+  }
 
   const updated = deepCopy(match);
   updated.result.manOfTheMatch = manOfTheMatch;

@@ -3,7 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 
 import { saveMatch } from "../storage/matchDB";
 
+import MatchSummaryTab from "../components/MatchSummaryTab";
 import Scorecard from "../components/Scorecard";
+import OversTimeline from "../components/OversTimeline";
+
+import styles from "./LiveMatch.module.css";
 
 export default function MatchSummary() {
   const { matchId } = useParams();
@@ -11,6 +15,8 @@ export default function MatchSummary() {
   const [match, setMatch] = useState(null);
 
   const [loading, setLoading] = useState(true);
+
+  const [tab, setTab] = useState("summary");
 
   const navigate = useNavigate();
 
@@ -37,13 +43,11 @@ export default function MatchSummary() {
       teams: {
         teamA: {
           name: match.matchInfo.teams.teamA.name,
-
           players: [...match.matchInfo.teams.teamA.players],
         },
 
         teamB: {
           name: match.matchInfo.teams.teamB.name,
-
           players: [...match.matchInfo.teams.teamB.players],
         },
       },
@@ -65,7 +69,9 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(`/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`);
+    navigate(
+      `/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`
+    );
   };
 
   /* =====================================
@@ -75,7 +81,9 @@ export default function MatchSummary() {
   useEffect(() => {
     const loadMatch = async () => {
       try {
-        const res = await fetch(`${API}/api/matches/${matchId}`);
+        const res = await fetch(
+          `${API}/api/matches/${matchId}`
+        );
 
         const data = await res.json();
 
@@ -102,7 +110,9 @@ export default function MatchSummary() {
         <div style={loadingCard}>
           <div style={pulseIcon}>🏏</div>
 
-          <div style={loadingTitle}>Getting Match Summary</div>
+          <div style={loadingTitle}>
+            Getting Match Summary
+          </div>
 
           <div style={loadingSub}>
             Loading scorecard, innings and match insights...
@@ -125,233 +135,220 @@ export default function MatchSummary() {
       <div style={errorWrap}>
         <div style={errorIcon}>❌</div>
 
-        <div style={errorTitle}>Match not found</div>
+        <div style={errorTitle}>
+          Match not found
+        </div>
 
-        <div style={errorSub}>Unable to load this scorecard</div>
+        <div style={errorSub}>
+          Unable to load this scorecard
+        </div>
       </div>
     );
   }
 
-  const { matchInfo, innings, manOfTheMatch } = match;
+  const { matchInfo, innings } = match;
 
-  const { teams, toss, result, totalOvers } = matchInfo;
+  const result =
+    match.result || match.matchInfo.result;
+
+  const { teams } = matchInfo;
 
   /* =====================================
-     BACK
+     HELPERS
   ===================================== */
 
   const goBackToSeason = () => {
     navigate(-1);
   };
 
+  const completedMatch = {
+    ...match.matchInfo,
+    innings,
+    result,
+    live: match.live || null,
+  };
+
+  /* =====================================
+     RESULT TEXT
+  ===================================== */
+
+  const resultText =
+    result?.winner === "TIE"
+      ? "Match Tied"
+      : result?.type === "SUPER_OVER"
+      ? `${result.winner} won via Super Over`
+      : `${result?.winner} won by ${result?.margin} ${
+          result?.type === "RUNS"
+            ? "runs"
+            : "wickets"
+        }`;
+
   /* =====================================
      UI
   ===================================== */
 
   return (
-    <div style={page}>
+    <div className={styles.page}>
       {/* TOP BAR */}
 
-      <div style={topBar}>
-        <button onClick={goBackToSeason} style={backBtn}>
+      <div
+        className={styles.heroTop}
+        style={{ marginBottom: 12 }}
+      >
+        <button
+          onClick={goBackToSeason}
+          style={backBtn}
+        >
           ← Back
         </button>
 
-        <button onClick={playAgain} style={replayBtn}>
+        <button
+          onClick={playAgain}
+          style={replayBtn}
+        >
           ↻ Replay
         </button>
       </div>
 
-      {/* RESULT CARD */}
+      {/* HERO */}
 
-      <div style={headerCard}>
-        <div style={liveBadge}>COMPLETED</div>
+      <div className={styles.heroCard}>
+        <div className={styles.heroTop}>
+          <div className={styles.titleRow}>
+            <p className={styles.liveBadge}>
+              ● END
+            </p>
 
-        <div style={title}>
-          {teams.teamA.name} vs {teams.teamB.name}
-        </div>
+            <h2 className={styles.matchTitle}>
+              {teams.teamA.name} vs{" "}
+              {teams.teamB.name}
+            </h2>
 
-        <div style={resultText}>
-          {result.winner} won by {result.margin}{" "}
-          {result.type === "RUNS" ? "runs" : "wickets"}
-        </div>
-
-        {manOfTheMatch && (
-          <div style={momBadge}>
-            ⭐ Man of the Match:
-            <strong>{manOfTheMatch}</strong>
+            <span className={styles.heroFormatPill}>
+              {matchInfo.matchType === "TEST"
+                ? "Test"
+                : `${matchInfo.totalOvers} Ov`}
+            </span>
           </div>
+        </div>
+
+        {/* SCORE ROWS */}
+
+        <div className={styles.heroScoreRows}>
+          {innings.map((inn, idx) => (
+            <div
+              key={idx}
+              className={styles.heroScoreRow}
+            >
+              <span>{inn.battingTeam}</span>
+
+              <span className={styles.heroScoreVal}>
+                {inn.totalRuns}-{inn.wickets}
+                {" "}
+                ({Math.floor(inn.balls / 6)}.
+                {inn.balls % 6})
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* RESULT */}
+
+        <div className={styles.heroStatus}>
+          <div className={styles.heroResultText}>
+            {resultText}
+          </div>
+        </div>
+      </div>
+
+      {/* MOM */}
+
+      {(match.manOfTheMatch ||
+        result?.manOfTheMatch) && (
+        <div className={styles.motmCard}>
+          <strong>
+            🏆 Man of the Match
+          </strong>
+
+          <div style={{ marginTop: 6 }}>
+            {match.manOfTheMatch ||
+              result?.manOfTheMatch}
+          </div>
+        </div>
+      )}
+
+      {/* TABS */}
+
+      <div className={styles.tabs}>
+        {["summary", "scorecard", "overs"].map(
+          (t) => (
+            <button
+              key={t}
+              className={`${styles.tabBtn} ${
+                tab === t
+                  ? styles.activeTab
+                  : ""
+              }`}
+              onClick={() => setTab(t)}
+            >
+              {t.charAt(0).toUpperCase() +
+                t.slice(1)}
+            </button>
+          )
         )}
       </div>
 
+      {/* SUMMARY */}
+
+      {tab === "summary" && (
+        <MatchSummaryTab
+          match={completedMatch}
+        />
+      )}
+
       {/* SCORECARD */}
 
-      <Scorecard
-        match={{
-          ...match.matchInfo,
-          innings,
-        }}
-      />
+      {tab === "scorecard" && (
+        <Scorecard match={completedMatch} />
+      )}
+
+      {/* OVERS */}
+
+      {tab === "overs" && (
+        <OversTimeline match={completedMatch} />
+      )}
     </div>
   );
 }
-
-/* =========================================
-   STYLES
-========================================= */
-
-const page = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  gap: 18,
-
-  paddingBottom: 30,
-};
 
 /* =====================================
    TOP BAR
 ===================================== */
 
-const topBar = {
-  display: "flex",
-
-  justifyContent: "space-between",
-
-  alignItems: "center",
-};
-
 const backBtn = {
   border: "none",
-
   background: "transparent",
-
   color: "#4338ca",
-
   fontWeight: 700,
-
   fontSize: 14,
-
   cursor: "pointer",
-
   padding: 0,
 };
 
 const replayBtn = {
   border: "none",
-
   background: "#eef2ff",
-
   color: "#4338ca",
-
   height: 38,
-
   padding: "0 16px",
-
   borderRadius: 999,
-
   fontSize: 14,
-
   fontWeight: 700,
-
   cursor: "pointer",
-
   display: "flex",
-
   alignItems: "center",
-
   justifyContent: "center",
-
   gap: 6,
-};
-
-/* =====================================
-   HEADER CARD
-===================================== */
-
-const headerCard = {
-  background: "linear-gradient(135deg,#312e81,#4338ca)",
-
-  borderRadius: 24,
-
-  padding: 24,
-
-  color: "#fff",
-
-  boxShadow: "0 12px 30px rgba(67,56,202,0.25)",
-
-  position: "relative",
-
-  overflow: "hidden",
-};
-
-const liveBadge = {
-  display: "inline-flex",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  padding: "6px 12px",
-
-  borderRadius: 999,
-
-  background: "rgba(255,255,255,0.16)",
-
-  backdropFilter: "blur(8px)",
-
-  fontSize: 12,
-
-  fontWeight: 800,
-
-  letterSpacing: 0.5,
-
-  marginBottom: 16,
-};
-
-const title = {
-  fontSize: 24,
-
-  fontWeight: 800,
-
-  lineHeight: 1.3,
-};
-
-const resultText = {
-  marginTop: 14,
-
-  fontSize: 16,
-
-  fontWeight: 600,
-
-  color: "#e0e7ff",
-
-  lineHeight: 1.5,
-};
-
-const momBadge = {
-  marginTop: 18,
-
-  display: "inline-flex",
-
-  alignItems: "center",
-
-  gap: 8,
-
-  padding: "10px 16px",
-
-  borderRadius: 999,
-
-  background: "rgba(255,255,255,0.16)",
-
-  backdropFilter: "blur(10px)",
-
-  color: "#fff",
-
-  fontSize: 14,
-
-  fontWeight: 700,
 };
 
 /* =====================================
@@ -360,102 +357,68 @@ const momBadge = {
 
 const loadingPage = {
   minHeight: "60vh",
-
   display: "flex",
-
   alignItems: "center",
-
   justifyContent: "center",
 };
 
 const loadingCard = {
   width: "100%",
-
   maxWidth: 420,
-
   background: "#ffffff",
-
   borderRadius: 28,
-
   padding: "38px 28px",
-
-  boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
-
-  border: "1px solid rgba(226,232,240,0.8)",
-
+  boxShadow:
+    "0 10px 30px rgba(15,23,42,0.08)",
+  border:
+    "1px solid rgba(226,232,240,0.8)",
   display: "flex",
-
   flexDirection: "column",
-
   alignItems: "center",
-
   textAlign: "center",
 };
 
 const pulseIcon = {
   width: 72,
-
   height: 72,
-
   borderRadius: "50%",
-
-  background: "linear-gradient(135deg,#eef2ff,#e0e7ff)",
-
+  background:
+    "linear-gradient(135deg,#eef2ff,#e0e7ff)",
   display: "flex",
-
   alignItems: "center",
-
   justifyContent: "center",
-
   fontSize: 32,
-
   marginBottom: 22,
-
-  animation: "pulse 1.8s ease-in-out infinite",
 };
 
 const loadingTitle = {
   fontSize: 22,
-
   fontWeight: 800,
-
   color: "#111827",
 };
 
 const loadingSub = {
   marginTop: 10,
-
   fontSize: 14,
-
   lineHeight: 1.6,
-
   color: "#6b7280",
 };
 
 const loaderTrack = {
   marginTop: 24,
-
   width: "100%",
-
   height: 8,
-
   borderRadius: 999,
-
   background: "#e5e7eb",
-
   overflow: "hidden",
 };
 
 const loaderBar = {
   width: "45%",
-
   height: "100%",
-
   borderRadius: 999,
-
-  background: "linear-gradient(90deg,#4f46e5,#6366f1)",
-
-  animation: "loadingBar 1.4s ease-in-out infinite",
+  background:
+    "linear-gradient(90deg,#4f46e5,#6366f1)",
 };
 
 /* =====================================
@@ -464,15 +427,10 @@ const loaderBar = {
 
 const errorWrap = {
   minHeight: "50vh",
-
   display: "flex",
-
   flexDirection: "column",
-
   alignItems: "center",
-
   justifyContent: "center",
-
   textAlign: "center",
 };
 
@@ -482,18 +440,13 @@ const errorIcon = {
 
 const errorTitle = {
   marginTop: 14,
-
   fontSize: 22,
-
   fontWeight: 800,
-
   color: "#111827",
 };
 
 const errorSub = {
   marginTop: 8,
-
   fontSize: 14,
-
   color: "#6b7280",
 };

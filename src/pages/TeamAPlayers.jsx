@@ -200,7 +200,7 @@ export default function TeamAPlayers() {
       {/* FOOTER */}
       <div style={footer}>
         <button 
-          onClick={() => navigate(`/season/${seasonId}/match/${matchId}/setup/team-b`, { replace: true })}
+          onClick={() => navigate(`/season/${seasonId}/match/${matchId}/team-b`, { replace: true })}
           disabled={players.length === 0}
           style={players.length === 0 ? disabledBtn : primaryBtn}
         >
