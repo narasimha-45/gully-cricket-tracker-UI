@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
+import { formatName } from "../utils/helpers";
 
 export default function TeamStats() {
   const { globalFilter } = useOutletContext();
@@ -62,7 +63,7 @@ export default function TeamStats() {
           >
             <div style={{ flex: 2, display: "flex", alignItems: "center", gap: 10 }}>
               <span style={rank}>{i + 1}</span>
-              <span style={teamName}>{t.name}</span>
+              <span style={teamName}>{formatName(t.name)}</span>
             </div>
             <span style={centerCol}>{t.stats.played}</span>
             <span style={centerCol}>{t.stats.wins}</span>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
+import { formatName } from "../utils/helpers";
 
 export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
@@ -218,7 +219,7 @@ export default function BowlingStats({ isOverall = false }) {
             style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
             onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
           >
-            {p.name}
+            {formatName(p.name)}
           </span>
 
           <span style={center}>{p.innings || 0}</span>

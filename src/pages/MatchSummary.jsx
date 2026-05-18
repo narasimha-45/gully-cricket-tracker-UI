@@ -8,6 +8,7 @@ import Scorecard from "../components/Scorecard";
 import OversTimeline from "../components/OversTimeline";
 
 import styles from "./LiveMatch.module.css";
+import { formatName } from "../utils/helpers";
 
 export default function MatchSummary() {
   const { matchId } = useParams();
@@ -69,9 +70,7 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(
-      `/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`
-    );
+    navigate(`/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`);
   };
 
   /* =====================================
@@ -81,9 +80,7 @@ export default function MatchSummary() {
   useEffect(() => {
     const loadMatch = async () => {
       try {
-        const res = await fetch(
-          `${API}/api/matches/${matchId}`
-        );
+        const res = await fetch(`${API}/api/matches/${matchId}`);
 
         const data = await res.json();
 
@@ -110,9 +107,7 @@ export default function MatchSummary() {
         <div style={loadingCard}>
           <div style={pulseIcon}>🏏</div>
 
-          <div style={loadingTitle}>
-            Getting Match Summary
-          </div>
+          <div style={loadingTitle}>Getting Match Summary</div>
 
           <div style={loadingSub}>
             Loading scorecard, innings and match insights...
@@ -135,21 +130,16 @@ export default function MatchSummary() {
       <div style={errorWrap}>
         <div style={errorIcon}>❌</div>
 
-        <div style={errorTitle}>
-          Match not found
-        </div>
+        <div style={errorTitle}>Match not found</div>
 
-        <div style={errorSub}>
-          Unable to load this scorecard
-        </div>
+        <div style={errorSub}>Unable to load this scorecard</div>
       </div>
     );
   }
 
   const { matchInfo, innings } = match;
 
-  const result =
-    match.result || match.matchInfo.result;
+  const result = match.result || match.matchInfo.result;
 
   const { teams } = matchInfo;
 
@@ -176,12 +166,10 @@ export default function MatchSummary() {
     result?.winner === "TIE"
       ? "Match Tied"
       : result?.type === "SUPER_OVER"
-      ? `${result.winner} won via Super Over`
-      : `${result?.winner} won by ${result?.margin} ${
-          result?.type === "RUNS"
-            ? "runs"
-            : "wickets"
-        }`;
+        ? `${formatName(result.winner)} won via Super Over`
+        : `${formatName(result?.winner)} won by ${result?.margin} ${
+            result?.type === "RUNS" ? "runs" : "wickets"
+          }`;
 
   /* =====================================
      UI
@@ -190,44 +178,29 @@ export default function MatchSummary() {
   return (
     <div className={styles.page}>
       {/* TOP BAR */}
-
-      <div
-        className={styles.heroTop}
-        style={{ marginBottom: 12 }}
-      >
-        <button
-          onClick={goBackToSeason}
-          style={backBtn}
-        >
+      <div className={styles.heroTop} style={{ marginBottom: 12 }}>
+        <button onClick={goBackToSeason} style={backBtn}>
           ← Back
         </button>
 
-        <button
-          onClick={playAgain}
-          style={replayBtn}
-        >
+        <button onClick={playAgain} style={replayBtn}>
           ↻ Replay
         </button>
       </div>
-
       {/* HERO */}
-
       <div className={styles.heroCard}>
         <div className={styles.heroTop}>
           <div className={styles.titleRow}>
-            <p className={styles.liveBadge}>
-              ● END
-            </p>
+            <p className={styles.liveBadge}>● END</p>
 
             <h2 className={styles.matchTitle}>
-              {teams.teamA.name} vs{" "}
-              {teams.teamB.name}
+              {formatName(teams.teamA.name)} vs {formatName(teams.teamB.name)}
             </h2>
 
             <span className={styles.heroFormatPill}>
               {matchInfo.matchType === "TEST"
                 ? "Test"
-                : `${matchInfo.totalOvers} Ov`}
+                : `${matchInfo.totalOvers} Overs`}
             </span>
           </div>
         </div>
@@ -236,16 +209,11 @@ export default function MatchSummary() {
 
         <div className={styles.heroScoreRows}>
           {innings.map((inn, idx) => (
-            <div
-              key={idx}
-              className={styles.heroScoreRow}
-            >
-              <span>{inn.battingTeam}</span>
+            <div key={idx} className={styles.heroScoreRow}>
+              <span>{formatName(inn.battingTeam)}</span>
 
               <span className={styles.heroScoreVal}>
-                {inn.totalRuns}-{inn.wickets}
-                {" "}
-                ({Math.floor(inn.balls / 6)}.
+                {inn.totalRuns}-{inn.wickets} ({Math.floor(inn.balls / 6)}.
                 {inn.balls % 6})
               </span>
             </div>
@@ -255,68 +223,79 @@ export default function MatchSummary() {
         {/* RESULT */}
 
         <div className={styles.heroStatus}>
-          <div className={styles.heroResultText}>
-            {resultText}
-          </div>
+          <div className={styles.heroResultText}>{resultText}</div>
         </div>
       </div>
-
       {/* MOM */}
-
-      {(match.manOfTheMatch ||
-        result?.manOfTheMatch) && (
+      {(match.manOfTheMatch || result?.manOfTheMatch) && (
         <div className={styles.motmCard}>
-          <strong>
-            🏆 Man of the Match
-          </strong>
+          <strong>🏆 Man of the Match</strong>
 
           <div style={{ marginTop: 6 }}>
-            {match.manOfTheMatch ||
-              result?.manOfTheMatch}
+            {formatName(match.manOfTheMatch) ||
+              formatName(result?.manOfTheMatch)}
           </div>
         </div>
       )}
-
       {/* TABS */}
-
       <div className={styles.tabs}>
-        {["summary", "scorecard", "overs"].map(
-          (t) => (
-            <button
-              key={t}
-              className={`${styles.tabBtn} ${
-                tab === t
-                  ? styles.activeTab
-                  : ""
-              }`}
-              onClick={() => setTab(t)}
-            >
-              {t.charAt(0).toUpperCase() +
-                t.slice(1)}
-            </button>
-          )
-        )}
+        {["summary", "scorecard", "overs", "insights"].map((t) => (
+          <button
+            key={t}
+            className={`${styles.tabBtn} ${tab === t ? styles.activeTab : ""}`}
+            onClick={() => setTab(t)}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
       </div>
-
+      
       {/* SUMMARY */}
-
-      {tab === "summary" && (
-        <MatchSummaryTab
-          match={completedMatch}
-        />
-      )}
-
+      {tab === "summary" && <MatchSummaryTab match={completedMatch} />}
+      
       {/* SCORECARD */}
-
-      {tab === "scorecard" && (
-        <Scorecard match={completedMatch} />
-      )}
-
+      {tab === "scorecard" && <Scorecard match={completedMatch} />}
+      
       {/* OVERS */}
+      {tab === "overs" && <OversTimeline match={completedMatch} />}
 
-      {tab === "overs" && (
-        <OversTimeline match={completedMatch} />
-      )}
+      {/* INSIGHTS */}
+      {tab === "insights" &&
+        (completedMatch.innings?.some(
+          (inn) => inn.ballByBall && inn.ballByBall.length > 0,
+        ) ? (
+          <InsightsTab match={completedMatch} />
+        ) : (
+          <div
+            style={{
+              background: "#fff",
+              borderRadius: 16,
+              border: "1px solid #e2e8f0",
+              padding: "42px 20px",
+              textAlign: "center",
+            }}
+          >
+            <p
+              style={{
+                fontSize: 16,
+                fontWeight: 700,
+                color: "#334155",
+                marginBottom: 6,
+              }}
+            >
+              No ball-by-ball data
+            </p>
+
+            <span
+              style={{
+                fontSize: 13,
+                color: "#94a3b8",
+              }}
+            >
+              Insights are available only for newer matches.
+            </span>
+          </div>
+        ))}
     </div>
   );
 }
@@ -368,10 +347,8 @@ const loadingCard = {
   background: "#ffffff",
   borderRadius: 28,
   padding: "38px 28px",
-  boxShadow:
-    "0 10px 30px rgba(15,23,42,0.08)",
-  border:
-    "1px solid rgba(226,232,240,0.8)",
+  boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
+  border: "1px solid rgba(226,232,240,0.8)",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
@@ -382,8 +359,7 @@ const pulseIcon = {
   width: 72,
   height: 72,
   borderRadius: "50%",
-  background:
-    "linear-gradient(135deg,#eef2ff,#e0e7ff)",
+  background: "linear-gradient(135deg,#eef2ff,#e0e7ff)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -417,8 +393,7 @@ const loaderBar = {
   width: "45%",
   height: "100%",
   borderRadius: 999,
-  background:
-    "linear-gradient(90deg,#4f46e5,#6366f1)",
+  background: "linear-gradient(90deg,#4f46e5,#6366f1)",
 };
 
 /* =====================================

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMatch, saveMatch } from "../storage/matchDB";
+import { formatName } from "../utils/helpers";
 
 export default function TossPage() {
   const { seasonId, matchId } = useParams();
@@ -31,8 +32,8 @@ export default function TossPage() {
   if (loading) return <p>Loading toss...</p>;
   if (!match) return <p>Match not found</p>;
 
-  const teamAName = match.teams.teamA.name;
-  const teamBName = match.teams.teamB.name;
+  const teamAName = formatName(match.teams.teamA.name);
+  const teamBName = formatName(match.teams.teamB.name);
 
   const canProceed = wonBy && decision;
 
