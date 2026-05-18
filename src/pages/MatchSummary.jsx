@@ -9,6 +9,7 @@ import OversTimeline from "../components/OversTimeline";
 
 import styles from "./LiveMatch.module.css";
 import { formatName } from "../utils/helpers";
+import InsightsTab from "../components/Insightstab";
 
 export default function MatchSummary() {
   const { matchId } = useParams();
