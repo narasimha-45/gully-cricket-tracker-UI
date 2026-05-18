@@ -1,4 +1,5 @@
 // components/Scorecard.jsx
+import { formatName } from "../utils/helpers";
 import { derivePartnerships } from "../utils/partnerships";
 
 export default function Scorecard({ match }) {
@@ -114,7 +115,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
         return (
           <div key={p} style={rowStyle}>
             <div>
-              <div style={playerStyle}>{p}</div>
+              <div style={playerStyle}>{formatName(p)}</div>
               <div style={dismissalStyle}>
                 {s.dismissal ? formatDismissal(s.dismissal) : "batting"}
               </div>
@@ -149,7 +150,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
       {didNotBat.length > 0 && (
         <div style={infoRowStyle}>
           <span style={infoLabelStyle}>Yet to Bat</span>
-          <span style={yetToBatStyle}>{didNotBat.join(", ")}</span>
+          <span style={yetToBatStyle}>{didNotBat.map((p) => formatName(p)).join(", ")}</span>
         </div>
       )}
 
@@ -170,7 +171,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
           s.balls === 0 ? "0.00" : (s.runs / (s.balls / 6)).toFixed(2);
         return (
           <div key={b} style={rowStyle}>
-            <span style={playerStyle}>{b}</span>
+            <span style={playerStyle}>{formatName(b)}</span>
             <span>{bowlerOvers}</span>
             <span>{s.maidens}</span>
             <span>{s.runs}</span>
@@ -186,8 +187,8 @@ function InningsCard({ innings, teams, label, headerColor }) {
           <div style={bowlingTitleStyle}>Partnerships</div>
           {partnerships.map((p, idx) => {
             const batters = Object.keys(p.contributions);
-            const b1 = batters[0];
-            const b2 = batters[1];
+            const b1 = formatName(batters[0]);
+            const b2 = formatName(batters[1]);
             const c1 = p.contributions[b1] || { runs: 0, balls: 0 };
             const c2 = b2 ? p.contributions[b2] || { runs: 0, balls: 0 } : null;
             const total = p.runs || 0;

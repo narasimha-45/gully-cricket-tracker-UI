@@ -8,6 +8,7 @@ import {
   getMatchesBySeason,
   deleteMatch as deleteLocalMatchDB,
 } from "../storage/matchDB";
+import { formatName } from "../utils/helpers";
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
@@ -215,7 +216,7 @@ export default function SeasonMatches() {
                 >
                   <div style={cardHeader}>
                     <strong>
-                      {match.teams.teamA.name} vs {match.teams.teamB.name}
+                      {formatName(match.teams.teamA.name)} vs {formatName(match.teams.teamB.name)}
                     </strong>
 
                     <button
@@ -287,7 +288,7 @@ export default function SeasonMatches() {
                             : "#6b7280",
                         }}
                       >
-                        {innings1?.battingTeam}
+                        {formatName(innings1?.battingTeam)}
                       </div>
 
                       <div
@@ -323,7 +324,7 @@ export default function SeasonMatches() {
                             : "#6b7280",
                         }}
                       >
-                        {innings2?.battingTeam}
+                        {formatName(innings2?.battingTeam)}
                       </div>
 
                       <div
@@ -348,7 +349,7 @@ export default function SeasonMatches() {
                     <div style={resultLine}>
                       {match.result?.type === "TIE"
                         ? "Match Tied"
-                        : `${match.result?.winner} won by ${match.result?.margin} ${
+                        : `${formatName(match.result?.winner)} won by ${match.result?.margin} ${
                             match.result?.type === "RUNS" ? "runs" : "wkts"
                           }`}
                     </div>

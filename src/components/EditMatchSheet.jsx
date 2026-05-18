@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { saveMatch } from "../storage/matchDB";
 import BottomSheetSelector from "./BottomSheetSelector";
+import { formatName } from "../utils/helpers";
 
 export default function EditMatchSheet({ open, onClose, match, onSave }) {
   const { live } = match;
@@ -269,7 +270,7 @@ function TeamEditor({
         onClick={() => setOpenTeam(isOpen ? null : teamKey)}
       >
         <div>
-          <div style={teamTitle}>{team.name}</div>
+          <div style={teamTitle}>{formatName(team.name)}</div>
 
           <div style={teamSubText}>{team.players.length} players</div>
         </div>

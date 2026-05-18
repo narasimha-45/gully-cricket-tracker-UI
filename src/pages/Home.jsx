@@ -3,6 +3,8 @@ import CreateSeasonModal from "../components/CreateSeasonModal";
 import GlobalSearch from "../components/GlobalSearch";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
+import { formatName } from "../utils/helpers";
+
 
 export default function Home({ open, onClose }) {
   const [seasons, setSeasons] = useState([]);
@@ -142,7 +144,7 @@ export default function Home({ open, onClose }) {
                   }}
                 >
                   <div className={styles.cardTop}>
-                    <span className={styles.name}>{season.seasonName}</span>
+                    <span className={styles.name}>{formatName(season.seasonName)}</span>
                   </div>
 
                   <div className={styles.meta}>

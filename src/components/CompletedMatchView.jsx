@@ -2,6 +2,7 @@ import { useState } from "react";
 import Scorecard from "./Scorecard";
 import OversTimeline from "./OversTimeline";
 import styles from "../pages/LiveMatch.module.css";
+import { formatName } from "../utils/helpers";
 
 function buildHeroRows(match) {
   const { innings } = match;
@@ -41,10 +42,10 @@ function buildResultText(match) {
     return "Match Tied";
   }
   if (r.type === "SUPER_OVER") {
-    return `${r.winner} won via Super Over`;
+    return `${formatName(r.winner)} won via Super Over`;
   }
 
-  return `${r.winner} won by ${r.margin} ${
+  return `${formatName(r.winner)} won by ${r.margin} ${
     r.type === "WICKETS" ? "wickets" : "runs"
   }`;
 }
@@ -69,7 +70,7 @@ export default function CompletedMatchView({ match, topBar, showTabs = true }) {
             <p className={styles.liveBadge}>● END</p>
 
             <h2 className={styles.matchTitle}>
-              {match.teams.teamA.name} vs {match.teams.teamB.name}
+              {formatName(match.teams.teamA.name)} vs {formatName(match.teams.teamB.name)}
             </h2>
 
             <span className={styles.heroFormatPill}>
@@ -110,7 +111,7 @@ export default function CompletedMatchView({ match, topBar, showTabs = true }) {
         <div className={styles.motmCard}>
           <strong>🏆 Man of the Match</strong>
 
-          <div style={{ marginTop: 6 }}>{match.result.manOfTheMatch}</div>
+          <div style={{ marginTop: 6 }}>{formatName(match.result.manOfTheMatch)}</div>
         </div>
       )}
       {/* TABS */}
@@ -140,7 +141,7 @@ export default function CompletedMatchView({ match, topBar, showTabs = true }) {
                 </div>
               )}
 
-              <strong>{inn.battingTeam}</strong>
+              <strong>{formatName(inn.battingTeam)}</strong>
 
               <div>
                 {inn.totalRuns}/{inn.wickets} ({fmt(inn.balls)})

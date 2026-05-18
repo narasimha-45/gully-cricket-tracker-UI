@@ -1,3 +1,4 @@
+import { formatName } from "../utils/helpers";
 import styles from "./MatchSummaryTab.module.css";
 
 function formatOvers(balls = 0) {
@@ -132,7 +133,7 @@ export default function MatchSummaryTab({ match }) {
                     <span
                       className={styles.summaryCompactName}
                     >
-                      {player.name}
+                      {formatName(player.name)}
                     </span>
 
                     <span
@@ -159,7 +160,7 @@ export default function MatchSummaryTab({ match }) {
                     <span
                       className={styles.summaryCompactName}
                     >
-                      {player.name}
+                      {formatName(player.name)}
                     </span>
 
                     <span

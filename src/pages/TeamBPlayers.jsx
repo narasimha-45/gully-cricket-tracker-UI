@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { getMatch, saveMatch } from "../storage/matchDB";
+import { formatName } from "../utils/helpers";
 
 export default function TeamBPlayers() {
   const { seasonId, matchId } = useParams();
@@ -130,7 +131,7 @@ export default function TeamBPlayers() {
         <button onClick={() => navigate(-1)} style={backCircle}>←</button>
         <div style={{ flex: 1 }}>
           <h1 style={title}>Squad Selection</h1>
-          <p style={subtitle}>{team.name}</p>
+          <p style={subtitle}>{formatName(team.name)}</p>
         </div>
       </div>
 
@@ -158,7 +159,7 @@ export default function TeamBPlayers() {
                 <div key={idx} style={dropItem} onClick={() => addPlayer(p.name)}>
                   <div style={playerIcon}>👤</div>
                   <div>
-                    <div style={playerNameStyle}>{p.name}</div>
+                    <div style={playerNameStyle}>{formatName(p.name)}</div>
                     <div style={playerMeta}>{p.team || "Player"}</div>
                   </div>
                 </div>
@@ -167,7 +168,7 @@ export default function TeamBPlayers() {
               <div style={dropItem} onClick={() => addPlayer(query)}>
                 <div style={newPlayerIcon}>+</div>
                 <div>
-                  <div style={playerNameStyle}>New Player: "{query}"</div>
+                  <div style={playerNameStyle}>New Player: "{formatName(query)}"</div>
                   <div style={playerMeta}>Will be added to this squad</div>
                 </div>
               </div>
@@ -189,7 +190,7 @@ export default function TeamBPlayers() {
             <div key={i} style={playerRow}>
               <div style={playerAvatar}>{p[0]?.toUpperCase()}</div>
               <div style={playerInfo}>
-                <div style={playerNameInList}>{p}</div>
+                <div style={playerNameInList}>{formatName(p)}</div>
               </div>
               <button onClick={() => removePlayer(i)} style={removeBtn}>✕</button>
             </div>

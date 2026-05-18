@@ -94,6 +94,123 @@
   gap: 5px;
 }
 
+.titleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  width: 100%;
+}
+
+.matchTitleWrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  min-width: 0;
+  flex: 1;
+}
+
+.teamName {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #ffffff;
+
+  letter-spacing: -0.03em;
+  line-height: 1;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.vsBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 28px;
+  min-width: 28px;
+  padding: 0 10px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+
+  backdrop-filter: blur(8px);
+
+  color: rgba(255, 255, 255, 0.92);
+
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 10px rgba(0, 0, 0, 0.12);
+}
+
+.heroFormatPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  height: 38px;
+  padding: 0 16px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+
+  backdrop-filter: blur(10px);
+
+  color: #ffffff;
+
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 18px rgba(0, 0, 0, 0.14);
+}
+
+.heroFormatPill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 30px;
+  padding: 0 12px;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+
+  backdrop-filter: blur(10px);
+
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+
+  white-space: nowrap;
+
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.12);
+}
+
 .heroScoreRow {
   display: flex;
   justify-content: space-between;
@@ -571,7 +688,7 @@
   justify-content: space-between;
   gap: 12px;
 }
- 
+
 .partnershipLabel {
   font-size: 11px;
   font-weight: 700;
@@ -580,7 +697,7 @@
   letter-spacing: 0.05em;
   white-space: nowrap;
 }
- 
+
 .partnershipMain {
   display: flex;
   align-items: center;
@@ -588,7 +705,7 @@
   flex: 1;
   justify-content: flex-end;
 }
- 
+
 .partnershipRuns {
   font-size: 18px;
   font-weight: 800;
@@ -596,20 +713,20 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
- 
+
 .partnershipBalls {
   font-size: 13px;
   font-weight: 600;
   color: #64748b;
 }
- 
+
 .partnershipBatters {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 2px;
 }
- 
+
 .partnershipBatter {
   font-size: 12px;
   font-weight: 600;

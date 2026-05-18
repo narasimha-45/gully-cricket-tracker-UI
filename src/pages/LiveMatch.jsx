@@ -29,8 +29,7 @@ import WicketSheet from "../components/WicketSheet";
 import MatchPopup from "../components/MatchPopup";
 import OversTimeline from "../components/OversTimeline";
 import { getCurrentPartnership } from "../utils/partnerships";
-import CompletedMatchView from "../components/CompletedMatchView";
-import MatchSummaryTab from "../components/MatchSummaryTab";
+import InsightsTab from "../components/Insightstab";
 
 /* ─────────────────────────────────────────────────────────────
    buildHeroRows
@@ -201,16 +200,25 @@ export default function LiveMatch() {
     return <p style={{ color: "#dc2626" }}>Complete toss to start match</p>;
 
   const { teams, live } = match;
+
   const innings = match.innings[live.inningsIndex];
 
+  // Normalize names for safe comparison
+  const normalize = (v = "") => v.trim().toLowerCase();
+
+  const teamAName = normalize(teams.teamA.name);
+  const teamBName = normalize(teams.teamB.name);
+
+  const battingTeamName = normalize(innings.battingTeam);
+  const bowlingTeamName = normalize(innings.bowlingTeam);
+
+  // Correct batting players
   const battingPlayers =
-    innings.battingTeam === teams.teamA.name
-      ? teams.teamA.players
-      : teams.teamB.players;
+    battingTeamName === teamAName ? teams.teamA.players : teams.teamB.players;
+
+  // Correct bowling players
   const bowlingPlayers =
-    innings.bowlingTeam === teams.teamA.name
-      ? teams.teamA.players
-      : teams.teamB.players;
+    bowlingTeamName === teamAName ? teams.teamA.players : teams.teamB.players;
 
   const eligibleBatsmen = battingPlayers.filter(
     (p) =>
@@ -238,6 +246,21 @@ export default function LiveMatch() {
         onClose={() => setEditOpen(false)}
         onSave={setMatch}
       />
+      <button
+        onClick={() => navigate(`/season/${match.seasonId}/matches`)}
+        style={{
+          border: "none",
+          background: "transparent",
+          color: "#4338ca",
+          fontWeight: 700,
+          fontSize: 14,
+          cursor: "pointer",
+          padding: 0,
+          marginBottom: 12,
+        }}
+      >
+        ← Back to Season
+      </button>
 
       {/* ── HERO CARD ──────────────────────────────────────── */}
       <div className={styles.heroCard}>
@@ -336,7 +359,6 @@ export default function LiveMatch() {
           )}
         </div>
       </div>
-
       {/* Man of the Match */}
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
         <div className={styles.motmCard}>
@@ -344,10 +366,9 @@ export default function LiveMatch() {
           <div style={{ marginTop: 6 }}>{match.result.manOfTheMatch}</div>
         </div>
       )}
-
       {/* ── TABS ───────────────────────────────────────────── */}
       <div className={styles.tabs}>
-        {["live", "scorecard", "overs"].map((t) => (
+        {["live", "scorecard", "overs", "insights"].map((t) => (
           <button
             key={t}
             className={`${styles.tabBtn} ${tab === t ? styles.activeTab : ""}`}
@@ -361,14 +382,12 @@ export default function LiveMatch() {
           </button>
         ))}
       </div>
-
       {tab === "scorecard" && <Scorecard match={match} />}
       {tab === "overs" && <OversTimeline match={match} />}
-
+      {tab === "insights" && <InsightsTab match={match} />}
       {tab === "live" && match.status === "COMPLETED" && (
-        <MatchSummaryTab match={match} />
+        <CompletedMatchSummary match={match} setTab={setTab} />
       )}
-
       {/* ── POPUPS ─────────────────────────────────────────── */}
       {match.status === "COMPLETED" && match.result && (
         <MatchPopup
@@ -396,7 +415,6 @@ export default function LiveMatch() {
           onSecondary={() => undoFromMatchPopup(match, setMatch, setExtraMode)}
         />
       )}
-
       <MatchPopup
         open={!!match.live.pendingNextInnings}
         title="Innings Complete"
@@ -408,7 +426,6 @@ export default function LiveMatch() {
           undoFromInningsPopup({ match, setMatch, setExtraMode })
         }
       />
-
       <MatchPopup
         open={!!match.live.pendingSuperOver}
         title="Match Tied!"
@@ -420,7 +437,6 @@ export default function LiveMatch() {
           undoFromInningsPopup({ match, setMatch, setExtraMode })
         }
       />
-
       {/* ── LIVE SCORING UI ────────────────────────────────── */}
       {tab === "live" && match.status === "LIVE" && (
         <>
@@ -636,7 +652,6 @@ export default function LiveMatch() {
           </div>
         </>
       )}
-
       {/* ── SELECTORS ──────────────────────────────────────── */}
       <BottomSheetSelector
         open={sheet === "striker"}
@@ -672,7 +687,6 @@ export default function LiveMatch() {
         }}
         onClose={() => setSheet(null)}
       />
-
       <WicketSheet
         open={wicketUI.open}
         wicketUI={wicketUI}
@@ -688,4 +702,42 @@ export default function LiveMatch() {
   );
 }
 
+function CompletedMatchSummary({ match, setTab }) {
+  const fmt = (balls) => `${Math.floor(balls / 6)}.${balls % 6}`;
+  const mainInnings = match.innings.slice(0, 2);
+  const superOvers = match.innings.slice(2);
 
+  return (
+    <>
+      {mainInnings.map((inn, i) => (
+        <div key={i} className={styles.card} style={{ marginBottom: 6 }}>
+          <strong>{inn.battingTeam}</strong>
+          <div>
+            {inn.totalRuns}/{inn.wickets} ({fmt(inn.balls)})
+          </div>
+        </div>
+      ))}
+
+      {superOvers.length > 0 &&
+        superOvers.map((inn, i) => {
+          const soNum = Math.floor(i / 2) + 1;
+          const isFirst = i % 2 === 0;
+          return (
+            <div key={i} className={styles.card} style={{ marginBottom: 6 }}>
+              {isFirst && (
+                <div className={styles.soSummaryLabel}>Super Over {soNum}</div>
+              )}
+              <strong>{inn.battingTeam}</strong>
+              <div>
+                {inn.totalRuns}/{inn.wickets} ({fmt(inn.balls)})
+              </div>
+            </div>
+          );
+        })}
+
+      <button className={styles.primaryBtn} onClick={() => setTab("scorecard")}>
+        View Full Scorecard
+      </button>
+    </>
+  );
+}

@@ -1,5 +1,6 @@
 import React from "react";
 import "./BottomSheetSelector.css";
+import { formatName } from "../utils/helpers";
 
 export default function BottomSheetSelector({
   open,
@@ -41,7 +42,7 @@ export default function BottomSheetSelector({
                     disabled={disabled}
                     onClick={() => onSelect(player)}
                   >
-                    {player}
+                    {formatName(player)}
                   </button>
                 );
               })}
