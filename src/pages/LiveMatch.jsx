@@ -259,7 +259,7 @@ export default function LiveMatch() {
           marginBottom: 12,
         }}
       >
-        ← Back to Season
+        ← Go Back 
       </button>
 
       {/* ── HERO CARD ──────────────────────────────────────── */}
