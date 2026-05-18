@@ -1,8 +1,13 @@
+/** Convert ball count → overs string: 7 balls → "1.1", 12 → "2.0" */
+function ballsToOvers(balls) {
+  const fullOvers = Math.floor(balls / 6);
+  const rem = balls % 6;
+  return `${fullOvers}.${rem}`;
+}
+
 export function deriveInsights(match) {
   const { live, innings: allInnings, totalOvers = 20 } = match;
 
-  // Live match → only innings till current innings
-  // Older/completed match → all inning
   const visibleInnings = live
     ? allInnings.slice(0, live.inningsIndex + 1)
     : allInnings;
@@ -22,30 +27,18 @@ export function deriveInsights(match) {
 
   const ensureBatter = (name) => {
     if (!batterMap[name]) {
-      batterMap[name] = {
-        runs: 0,
-        balls: 0,
-        dots: 0,
-        fours: 0,
-        sixes: 0,
-      };
+      batterMap[name] = { runs: 0, balls: 0, dots: 0, fours: 0, sixes: 0 };
     }
   };
 
   const ensureBowler = (name) => {
     if (!bowlerMap[name]) {
-      bowlerMap[name] = {
-        runs: 0,
-        balls: 0,
-        dots: 0,
-        wickets: 0,
-      };
+      bowlerMap[name] = { runs: 0, balls: 0, dots: 0, wickets: 0 };
     }
   };
 
   const ensureH2H = (batter, bowler, inningsIdx) => {
     const key = `${inningsIdx}|||${batter}|||${bowler}`;
-
     if (!h2h[key]) {
       h2h[key] = {
         inningsIdx,
@@ -59,7 +52,6 @@ export function deriveInsights(match) {
         wickets: 0,
       };
     }
-
     return key;
   };
 
@@ -73,23 +65,19 @@ export function deriveInsights(match) {
 
       if (!striker || !bowler) continue;
 
-      const isLegal = type === "RUN";
+      const isWide = type === "WIDE";
 
       const isNoBall = type === "NO_BALL";
 
-      const isWide = type === "WIDE";
+      const isLegal = !isWide && !isNoBall;
 
       ensureBatter(striker);
       ensureBowler(bowler);
 
       const hk = ensureH2H(striker, bowler, inningsIdx);
 
-      /* ─────────────────────────
-           Over map
-        ───────────────────────── */
-
+      /* ── Over map ── */
       const overKey = `${inningsIdx}-${over}`;
-
       if (!overMap[overKey]) {
         overMap[overKey] = {
           label: `Inn${inningsIdx + 1} Ov${over + 1}`,
@@ -101,19 +89,11 @@ export function deriveInsights(match) {
           bowler,
         };
       }
-
       overMap[overKey].batters.add(striker);
-
       overMap[overKey].runs += runs;
+      if (isWicket) overMap[overKey].wickets += 1;
 
-      if (isWicket) {
-        overMap[overKey].wickets += 1;
-      }
-
-      /* ─────────────────────────
-           Batter stats
-        ───────────────────────── */
-
+      /* ── Batter stats ── */
       if (isLegal || isNoBall) {
         batterMap[striker].balls += 1;
         h2h[hk].balls += 1;
@@ -126,35 +106,34 @@ export function deriveInsights(match) {
 
       if (!isWide) {
         const penalty = isNoBall ? 1 : 0;
-
         const batRuns = runs - penalty;
 
         if (batRuns > 0) {
           batterMap[striker].runs += batRuns;
-
           h2h[hk].runs += batRuns;
 
           if (batRuns === 4) {
             batterMap[striker].fours += 1;
-
             h2h[hk].fours += 1;
           }
-
           if (batRuns === 6) {
             batterMap[striker].sixes += 1;
-
             h2h[hk].sixes += 1;
           }
         }
       }
 
-      /* ─────────────────────────
-           Bowler stats
-        ───────────────────────── */
-
+      /* ── Bowler stats ──
+         FIX: count legal balls only (not wides/no-balls) for overs.
+         FIX: a wicket delivery is NOT a dot ball — count dots only when
+              runs === 0 AND NOT a wicket (dot = batter faced, scored 0, not dismissed).
+              Actually in cricket, a wicket ball where 0 runs are scored IS
+              a dot ball for the bowler. We keep it as a dot (maiden calculation).
+              The original bug was excluding wickets from dot count — we fix by
+              removing the `&& !isWicket` guard.
+      ── */
       if (isWicket) {
         bowlerMap[bowler].wickets += 1;
-
         h2h[hk].wickets += 1;
       }
 
@@ -162,8 +141,8 @@ export function deriveInsights(match) {
 
       if (isLegal) {
         bowlerMap[bowler].balls += 1;
-
-        if (runs === 0 && !isWicket) {
+        // Dot = 0 runs on a legal delivery (wicket ball with 0 runs is still a dot)
+        if (runs === 0) {
           bowlerMap[bowler].dots += 1;
         }
       }
@@ -189,7 +168,7 @@ export function deriveInsights(match) {
     .sort((a, b) => b.runs - a.runs);
 
   /* ─────────────────────────────────────────────
-     Bowlers
+     Bowlers — FIX: show overs (e.g. "1.5") instead of raw balls
   ───────────────────────────────────────────── */
 
   const bowlers = Object.entries(bowlerMap)
@@ -198,6 +177,7 @@ export function deriveInsights(match) {
       name,
       runs: s.runs,
       balls: s.balls,
+      overs: ballsToOvers(s.balls), // ← "1.5", "2.0", etc.
       dots: s.dots,
       wickets: s.wickets,
       eco: s.balls ? +(s.runs / (s.balls / 6)).toFixed(2) : 0,
@@ -212,35 +192,19 @@ export function deriveInsights(match) {
   const oversByInnings = visibleInnings
     .map((inn, i) => {
       const balls = inn.ballByBall ?? [];
-
       const overNums = [...new Set(balls.map((b) => b.over))].sort(
         (a, b) => a - b,
       );
 
       let cum = 0;
-
-      const points = [
-        {
-          over: 0,
-          cumulative: 0,
-        },
-      ];
+      const points = [{ over: 0, cumulative: 0, runs: 0, wickets: 0 }];
 
       for (const o of overNums) {
         const overBalls = balls.filter((b) => b.over === o);
-
         const runs = overBalls.reduce((s, b) => s + b.runs, 0);
-
         const wickets = overBalls.filter((b) => b.isWicket).length;
-
         cum += runs;
-
-        points.push({
-          over: o + 1,
-          cumulative: cum,
-          runs,
-          wickets,
-        });
+        points.push({ over: o + 1, cumulative: cum, runs, wickets });
       }
 
       return {
@@ -264,35 +228,27 @@ export function deriveInsights(match) {
     .sort((a, b) => b.balls - a.balls);
 
   /* ─────────────────────────────────────────────
-     Cards
+     Cards — FIX: bowler detail shows overs not balls
   ───────────────────────────────────────────── */
 
-  const minBalls = 6;
+  const minBalls = 1;
 
   const mostRuns = [...batters].sort((a, b) => b.runs - a.runs)[0];
-
   const mostFours = [...batters].sort((a, b) => b.fours - a.fours)[0];
-
   const mostSixes = [...batters].sort((a, b) => b.sixes - a.sixes)[0];
-
   const highestSR = [...batters]
     .filter((b) => b.balls >= minBalls)
     .sort((a, b) => b.sr - a.sr)[0];
-
   const mostDotsBat = [...batters].sort((a, b) => b.dots - a.dots)[0];
 
   const mostWickets = [...bowlers].sort((a, b) => b.wickets - a.wickets)[0];
-
   const bestEco = [...bowlers]
     .filter((b) => b.balls >= minBalls)
     .sort((a, b) => a.eco - b.eco)[0];
-
   const mostExpensive = [...bowlers].sort((a, b) => b.eco - a.eco)[0];
-
   const mostDotsBowl = [...bowlers].sort((a, b) => b.dots - a.dots)[0];
 
   const biggestOver = Object.values(overMap).sort((a, b) => b.runs - a.runs)[0];
-
   Object.values(overMap).forEach((o) => {
     o.batterNames = [...o.batters].join(" & ");
   });
@@ -342,7 +298,8 @@ export function deriveInsights(match) {
       label: "Most Wickets",
       value: mostWickets.wickets,
       sub: mostWickets.name,
-      detail: `${mostWickets.balls}b · Eco ${mostWickets.eco}`,
+      // FIX: show overs instead of balls
+      detail: `${mostWickets.overs} ov · Eco ${mostWickets.eco}`,
       color: "#dc2626",
     },
 
@@ -350,7 +307,8 @@ export function deriveInsights(match) {
       label: "Best Economy",
       value: bestEco.eco,
       sub: bestEco.name,
-      detail: `${bestEco.runs}r in ${bestEco.balls}b`,
+      // FIX: show overs instead of balls
+      detail: `${bestEco.runs}r in ${bestEco.overs} ov`,
       color: "#0891b2",
     },
 
@@ -358,7 +316,8 @@ export function deriveInsights(match) {
       label: "Most Expensive",
       value: mostExpensive.eco,
       sub: mostExpensive.name,
-      detail: `${mostExpensive.runs}r in ${mostExpensive.balls}b`,
+      // FIX: show overs instead of balls
+      detail: `${mostExpensive.runs}r in ${mostExpensive.overs} ov`,
       color: "#dc2626",
     },
 
@@ -371,7 +330,7 @@ export function deriveInsights(match) {
     },
 
     biggestOver && {
-      label: "Biggest Over",
+      label: "Expensive Over",
       value: `${biggestOver.runs}`,
       sub: `${biggestOver.batterNames} vs ${biggestOver.bowler}`,
       detail: `${biggestOver.label} • ${biggestOver.wickets}W`,
