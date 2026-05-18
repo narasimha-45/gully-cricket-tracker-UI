@@ -4,7 +4,7 @@ import { deriveInsights } from "../utils/deriveInsights";
 import styles from "./InsightsTab.module.css";
 
 const INN_COLORS = ["#4f46e5", "#f59e0b", "#dc2626", "#16a34a"];
-
+ 
 export default function InsightsTab({ match }) {
   const data = deriveInsights(match);
 
