@@ -39,7 +39,10 @@ const OversTimeline = ({ match }) => {
 
   const [selectedIdx, setSelectedIdx] = useState(() => {
     // Default to current innings if it has data, else last with data
-    const cur = inningsWithData.find(({ idx }) => idx === live.inningsIndex);
+    const cur = live
+      ? inningsWithData.find(({ idx }) => idx === live.inningsIndex)
+      : null;
+
     return cur
       ? cur.idx
       : (inningsWithData[inningsWithData.length - 1]?.idx ?? 0);

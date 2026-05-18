@@ -85,6 +85,7 @@ export default function MatchSummary() {
 
         const data = await res.json();
 
+        console.log("Match Data", data);
         window.scrollTo(0, 0);
 
         setMatch(data.data);
