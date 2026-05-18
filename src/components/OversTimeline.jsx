@@ -177,8 +177,11 @@ function InningsTimeline({ innings }) {
               {/* Col 2 */}
               <div className={styles.colBalls}>
                 <div className={styles.ovMatchup}>
-                  {over.bowler}
-                  {battersLabel ? ` → ${battersLabel}` : ""}
+                  <span className={styles.ovBowler}>{over.bowler}</span>
+
+                  {" → "}
+
+                  <span className={styles.ovBatters}>{battersLabel}</span>
                 </div>
                 <div className={styles.ovChips}>
                   {over.balls.map((ball, bIdx) => (
