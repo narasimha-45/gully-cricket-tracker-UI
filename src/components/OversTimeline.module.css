@@ -83,7 +83,7 @@
 /* ── Table header ───────────────────────────────────────────── */
 .tableHeader {
   display: grid;
-  grid-template-columns: 56px 1fr 64px;
+  grid-template-columns: 58px minmax(0, 1fr) 52px;
   background: #f8fafc;
   padding: 10px 14px;
   font-size: 11px;
@@ -96,11 +96,12 @@
 
 .colOver  { text-align: left; }
 .colBalls { padding: 0 10px; }
-.colRuns  {
-  text-align: right;
+.colRuns {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 0;
 }
 
 /* ── Over row wrapper ───────────────────────────────────────── */
@@ -114,7 +115,7 @@
 /* ── Summary row ────────────────────────────────────────────── */
 .overSummaryRow {
   display: grid;
-  grid-template-columns: 56px 1fr 64px;
+  grid-template-columns: 58px minmax(0, 1fr) 52px;
   padding: 12px 14px;
   cursor: pointer;
   align-items: center;
@@ -167,14 +168,14 @@
 }
 
 .ovTotalRuns {
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 800;
   color: #1e293b;
   font-variant-numeric: tabular-nums;
 }
 
 .chevron {
-  font-size: 16px;
+  font-size: 14px;
   color: #cbd5e1;
   line-height: 1;
   transition: transform 0.2s;
