@@ -35,7 +35,6 @@
   background: #f8fafc;
 }
 
-
 .inningsTabActive {
   background: #312e81;
   color: white;
@@ -94,8 +93,12 @@
   border-bottom: 1px solid #e2e8f0;
 }
 
-.colOver  { text-align: left; }
-.colBalls { padding: 0 10px; }
+.colOver {
+  text-align: left;
+}
+.colBalls {
+  padding: 0 10px;
+}
 .colRuns {
   display: flex;
   align-items: center;
@@ -118,8 +121,17 @@
   grid-template-columns: 58px minmax(0, 1fr) 52px;
   padding: 12px 14px;
   cursor: pointer;
-  align-items: center;
+  align-items: flex-start;
   transition: background 0.15s;
+}
+
+.ovBowler {
+  color: #1e293b;
+  font-weight: 700;
+}
+
+.ovBatters {
+  color: #64748b;
 }
 
 .overSummaryRow:hover,
@@ -149,9 +161,8 @@
   font-weight: 600;
   color: #64748b;
   margin-bottom: 7px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .ovChips {
@@ -266,13 +277,36 @@
 }
 
 /* ── Chip color variants ────────────────────────────────────── */
-.normal  { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
-.dot     { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
-.four    { background: #3b82f6; color: white; }
-.six     { background: #7c3aed; color: white; }
-.wicket  { background: #ef4444; color: white; }
-.wide    { background: #f59e0b; color: #78350f; }
-.noBall  { background: #f97316; color: #7c2d12; }
+.normal {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #e2e8f0;
+}
+.dot {
+  background: #f1f5f9;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+.four {
+  background: #3b82f6;
+  color: white;
+}
+.six {
+  background: #7c3aed;
+  color: white;
+}
+.wicket {
+  background: #ef4444;
+  color: white;
+}
+.wide {
+  background: #f59e0b;
+  color: #78350f;
+}
+.noBall {
+  background: #f97316;
+  color: #7c2d12;
+}
 
 /* ── Empty state ────────────────────────────────────────────── */
 .emptyState {

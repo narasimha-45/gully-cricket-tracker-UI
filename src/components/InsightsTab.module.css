@@ -73,7 +73,6 @@
   border-radius: 10px;
 }
 
-
 /* ── Graph legend ───────────────────────────────────────────── */
 .graphLegend {
   display: flex;
@@ -118,7 +117,8 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  align-items: stretch;   /* ← was missing; ensures equal height per row */
+  align-items: stretch;
+  grid-auto-rows: 1fr;
 }
 
 .card {
@@ -128,7 +128,7 @@
   padding: 14px 14px 12px;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 3px;
   /* ensure sibling cards in same row share the same height */
   height: 100%;
   box-sizing: border-box;
@@ -155,16 +155,16 @@
   font-weight: 700;
   color: #1e293b;
   margin-top: 5px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
+  word-break: break-word;
 }
 
 .cardDetail {
   font-size: 11px;
   color: #94a3b8;
   font-weight: 500;
-  margin-top: 1px;
+  margin-top: 2px;
+  line-height: 1.35;
 }
 
 /* ── H2H ────────────────────────────────────────────────────── */
@@ -207,7 +207,9 @@
   font-variant-numeric: tabular-nums;
 }
 
-.h2hRow:last-child { border-bottom: none; }
+.h2hRow:last-child {
+  border-bottom: none;
+}
 
 .h2hHead {
   font-size: 10px;
@@ -227,9 +229,18 @@
   text-overflow: ellipsis;
 }
 
-.good   { color: #16a34a; font-weight: 700; }
-.bad    { color: #dc2626; font-weight: 700; }
-.wicket { color: #dc2626; font-weight: 800; }
+.good {
+  color: #16a34a;
+  font-weight: 700;
+}
+.bad {
+  color: #dc2626;
+  font-weight: 700;
+}
+.wicket {
+  color: #dc2626;
+  font-weight: 800;
+}
 
 /* ── Empty ──────────────────────────────────────────────────── */
 .empty {
@@ -240,5 +251,13 @@
   border: 1px solid #e2e8f0;
 }
 
-.empty p    { font-size: 15px; font-weight: 700; color: #475569; margin-bottom: 6px; }
-.empty span { font-size: 13px; color: #94a3b8; }
+.empty p {
+  font-size: 15px;
+  font-weight: 700;
+  color: #475569;
+  margin-bottom: 6px;
+}
+.empty span {
+  font-size: 13px;
+  color: #94a3b8;
+}
