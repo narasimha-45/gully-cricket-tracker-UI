@@ -85,7 +85,6 @@ function InningsCard({ innings, teams, label, headerColor }) {
       : (innings.totalRuns / (innings.balls / 6)).toFixed(2);
 
   const partnerships = derivePartnerships(innings);
-
   return (
     <div style={inningsCardStyle}>
       {/* Header */}
@@ -187,11 +186,13 @@ function InningsCard({ innings, teams, label, headerColor }) {
           <div style={bowlingTitleStyle}>Partnerships</div>
           {partnerships.map((p, idx) => {
             const batters = Object.keys(p.contributions);
-            const b1 = formatName(batters[0]);
-            const b2 = formatName(batters[1]);
+            const b1 = batters[0];
+            const b2 = batters[1];
             const c1 = p.contributions[b1] || { runs: 0, balls: 0 };
             const c2 = b2 ? p.contributions[b2] || { runs: 0, balls: 0 } : null;
             const total = p.runs || 0;
+            
+
             // Bar widths — split proportionally by runs, min 8% so name is readable
             const b1Pct =
               total === 0
