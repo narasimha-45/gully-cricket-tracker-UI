@@ -196,15 +196,35 @@ export function deriveInsights(match) {
         (a, b) => a - b,
       );
 
-      let cum = 0;
-      const points = [{ over: 0, cumulative: 0, runs: 0, wickets: 0 }];
+      let cumRuns = 0;
+      let cumWickets = 0;
+
+      const points = [
+        {
+          over: 0,
+          cumulative: 0,
+          runs: 0,
+          wickets: 0,
+        },
+      ];
 
       for (const o of overNums) {
         const overBalls = balls.filter((b) => b.over === o);
+
         const runs = overBalls.reduce((s, b) => s + b.runs, 0);
-        const wickets = overBalls.filter((b) => b.isWicket).length;
-        cum += runs;
-        points.push({ over: o + 1, cumulative: cum, runs, wickets });
+
+        const wicketsThisOver = overBalls.filter((b) => b.isWicket).length;
+
+        cumRuns += runs;
+        cumWickets += wicketsThisOver;
+
+        points.push({
+          over: o + 1,
+          cumulative: cumRuns,
+          runs,
+          wickets: cumWickets, // cumulative wickets
+          wicketsThisOver
+        });
       }
 
       return {
