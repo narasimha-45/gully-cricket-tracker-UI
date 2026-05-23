@@ -1,15 +1,21 @@
 import { useEffect, useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
+import { Filter } from "lucide-react";
+
 import { useSeasonStats } from "../context/SeasonStatsContext";
 import { formatName } from "../utils/helpers";
+
+import StatsFilterSheet from "../components/stats/StatsFilterSheet";
+
+import { buildBattingEndpoint } from "../utils/buildBattingEndpoint";
 
 export default function BattingStats({ isOverall = false }) {
   const { seasonId } = useParams();
   const navigate = useNavigate();
-  
+
   // Attempt to get globalFilter from InsightsHub outlet context
   const outletContext = useOutletContext();
-  const globalFilter = isOverall ? (outletContext?.globalFilter || "all") : null;
+  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
 
   const API = import.meta.env.VITE_API_BASE_URL;
 
@@ -25,7 +31,9 @@ export default function BattingStats({ isOverall = false }) {
 
   const [overallStats, setOverallStats] = useState(null);
 
-  const players = isOverall ? overallStats || [] : battingStats || [];
+  const [players, setPlayers] = useState([]);
+
+  // const players = isOverall ? overallStats || [] : battingStats || [];
 
   const [loading, setLoading] = useState(false);
 
@@ -33,15 +41,30 @@ export default function BattingStats({ isOverall = false }) {
 
   const [sortDir, setSortDir] = useState("desc");
 
+  const [showFilters, setShowFilters] = useState(false);
+
+  const [selectedFilters, setSelectedFilters] = useState({
+    innings: "All",
+    result: "All",
+    position: "All",
+    opponent: "All",
+    team: "All",
+  });
+
+  const [filterOptions, setFilterOptions] = useState({
+    teams: [],
+    opponents: [],
+  });
+
   /* ---------------- LOAD ONLY ONCE ---------------- */
 
   useEffect(() => {
-    // If we are in Season scope and already have stats, return
-    if (!isOverall && battingStats) return;
-    
-    // In overall scope, we re-fetch when globalFilter changes
     loadStats();
-  }, [seasonId, isOverall, globalFilter]);
+  }, [seasonId, isOverall, globalFilter, selectedFilters]);
+
+  useEffect(() => {
+    loadFilterOptions();
+  }, [seasonId, isOverall]);
 
   /* ---------------- FETCH ---------------- */
 
@@ -49,30 +72,51 @@ export default function BattingStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      let endpoint;
-      if (isOverall) {
-        endpoint = globalFilter === "all" 
-          ? `${API}/api/stats/leaderboard/batting`
-          : `${API}/api/stats/leaderboard/batting/${globalFilter}`;
-      } else {
-        endpoint = `${API}/api/stats/leaderboard/batting/${seasonId}`;
-      }
+      const endpoint = buildBattingEndpoint({
+        API,
+        isOverall,
+        globalFilter,
+        seasonId,
+        filters: selectedFilters,
+      });
 
       const res = await fetch(endpoint);
 
       const json = await res.json();
 
-      if (isOverall) {
-        setOverallStats(json.data || []);
-      } else {
-        setBattingStats(json.data || []);
-      }
+      setPlayers(json.data || []);
     } catch (err) {
       console.error(err);
     } finally {
       setLoading(false);
     }
   };
+
+  const loadFilterOptions = async () => {
+  try {
+    let endpoint;
+
+    if (isOverall) {
+      endpoint = `${API}/api/teams`;
+    } else {
+      endpoint = `${API}/api/teams/season/${seasonId}`;
+    }
+
+    const res = await fetch(endpoint);
+
+    const json = await res.json();
+
+    const teams =
+      json.data?.map((team) => team.name) || [];
+
+    setFilterOptions({
+      teams,
+      opponents: teams,
+    });
+  } catch (err) {
+    console.error(err);
+  }
+};
 
   /* ---------------- SORT ---------------- */
 
@@ -161,10 +205,73 @@ export default function BattingStats({ isOverall = false }) {
     );
   }
 
+  const battingFilters = [
+    {
+      key: "innings",
+      label: "Innings",
+      options: ["All", "First", "Second"],
+    },
+
+    {
+      key: "result",
+      label: "Match Result",
+      options: ["All", "Won", "Lost"],
+    },
+
+    {
+      key: "position",
+      label: "Batting Position",
+      options: [
+        "All",
+        "Opening",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9",
+        "10",
+        "11",
+      ],
+    },
+
+    {
+      key: "opponent",
+      label: "Opponent",
+      options: ["All", ...filterOptions.opponents],
+    },
+
+    {
+      key: "team",
+      label: "Team",
+      options: ["All", ...filterOptions.teams],
+    },
+  ];
+
   /* ---------------- UI ---------------- */
 
   return (
     <div style={page}>
+      <div style={topBar}>
+        <div>
+          <div style={activeFilters}>
+            {Object.entries(selectedFilters).map(([key, value]) => {
+              if (value === "All") return null;
+
+              return (
+                <span key={key} style={filterPill}>
+                  {value}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+
+        <button style={filterBtn} onClick={() => setShowFilters(true)}>
+          <Filter size={18} />
+        </button>
+      </div>
       {/* HEADER */}
 
       <div
@@ -198,7 +305,7 @@ export default function BattingStats({ isOverall = false }) {
             ...dataRow,
           }}
         >
-          <span 
+          <span
             style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
             onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
           >
@@ -228,11 +335,62 @@ export default function BattingStats({ isOverall = false }) {
           <p style={emptySub}>Completed matches will appear here</p>
         </div>
       )}
+
+      <StatsFilterSheet
+        open={showFilters}
+        onClose={() => setShowFilters(false)}
+        filters={battingFilters}
+        selectedFilters={selectedFilters}
+        onChange={setSelectedFilters}
+      />
     </div>
   );
 }
 
 /* ================= STYLES ================= */
+
+const topBar = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "flex-start",
+  marginBottom: 14,
+};
+
+const statsTitle = {
+  fontSize: 22,
+  fontWeight: 800,
+  color: "#111827",
+  marginBottom: 10,
+};
+
+const filterBtn = {
+  width: 42,
+  height: 42,
+  borderRadius: "50%",
+  border: "none",
+  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
+  color: "#ffffff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  cursor: "pointer",
+  boxShadow: "0 6px 18px rgba(79,70,229,0.25)",
+};
+
+const activeFilters = {
+  display: "flex",
+  gap: 8,
+  flexWrap: "wrap",
+};
+
+const filterPill = {
+  padding: "6px 12px",
+  borderRadius: 999,
+  background: "#eef2ff",
+  color: "#4338ca",
+  fontSize: 12,
+  fontWeight: 700,
+};
 
 const page = {
   display: "flex",
