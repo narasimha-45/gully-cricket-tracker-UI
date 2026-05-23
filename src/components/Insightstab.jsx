@@ -213,7 +213,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
-                {inn.points.filter((p) => p.wickets > 0).map((p) => (
+                {inn.points.filter((p) => p.wicketsThisOver > 0).map((p) => (
                   <circle
                     key={p.over}
                     cx={xScale(p.over).toFixed(1)}

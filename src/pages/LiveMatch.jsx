@@ -7,7 +7,7 @@ import Scorecard from "../components/Scorecard";
 import { recreateMatch } from "../utils/recreateMatch";
 import { formatOvers, calcCRR } from "../utils/calcutors";
 import { updateLive, evaluateMatchState } from "../utils/matchStateHandlers";
-import { deepCopy } from "../utils/helpers";
+import { deepCopy, formatName } from "../utils/helpers";
 import {
   retireBatsman,
   pushSelectionHistory,
@@ -459,7 +459,7 @@ export default function LiveMatch() {
                     !name && setSheet(idx === 0 ? "striker" : "nonStriker")
                   }
                 >
-                  {name ? `${name}${idx === 0 ? " *" : ""}` : "Select"}
+                  {name ? `${formatName(name)}${idx === 0 ? " *" : ""}` : "Select"}
                 </span>
                 {renderBatStats(innings, name)}
               </div>
@@ -489,7 +489,7 @@ export default function LiveMatch() {
                               key={name}
                               className={styles.partnershipBatter}
                             >
-                              {name}: {c.runs} ({c.balls})
+                              {formatName(name)}: {c.runs} ({c.balls})
                             </span>
                           );
                         },
