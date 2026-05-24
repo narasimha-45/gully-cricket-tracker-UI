@@ -50,7 +50,7 @@ export default function TeamStats() {
         <span style={centerCol}>W</span>
         <span style={centerCol}>L</span>
         <span style={centerCol}>NRR</span>
-        <span style={centerCol}>Pts</span>
+        {/* <span style={centerCol}>Pts</span> */}
       </div>
 
       {/* ROWS */}
@@ -71,7 +71,7 @@ export default function TeamStats() {
             <span style={{ ...centerCol, color: t.derived.netRunRate >= 0 ? "#16a34a" : "#dc2626", fontWeight: 600 }}>
               {t.derived.netRunRate > 0 ? "+" : ""}{t.derived.netRunRate}
             </span>
-            <span style={{ ...centerCol, fontWeight: 800, color: "#1e293b" }}>{t.stats.points}</span>
+            {/* <span style={{ ...centerCol, fontWeight: 800, color: "#1e293b" }}>{t.stats.points}</span> */}
           </div>
         ))
       ) : (
