@@ -30,6 +30,7 @@ import MatchPopup from "../components/MatchPopup";
 import OversTimeline from "../components/OversTimeline";
 import { getCurrentPartnership } from "../utils/partnerships";
 import InsightsTab from "../components/Insightstab";
+import MatchSummaryTab from "../components/MatchSummaryTab";
 
 /* ─────────────────────────────────────────────────────────────
    buildHeroRows
@@ -386,7 +387,7 @@ export default function LiveMatch() {
       {tab === "overs" && <OversTimeline match={match} />}
       {tab === "insights" && <InsightsTab match={match} />}
       {tab === "live" && match.status === "COMPLETED" && (
-        <CompletedMatchSummary match={match} setTab={setTab} />
+        <MatchSummaryTab match={match} />
       )}
       {/* ── POPUPS ─────────────────────────────────────────── */}
       {match.status === "COMPLETED" && match.result && (
