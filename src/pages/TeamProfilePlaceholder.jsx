@@ -9,6 +9,7 @@ export default function TeamProfile() {
   const [data, setData] = useState(null);
   const [selectedSeason, setSelectedSeason] = useState("overall");
   const [loading, setLoading] = useState(true);
+  // const [recentMatches, setRecentMatches] = useState([]);
 
   useEffect(() => {
     loadTeam();
@@ -17,18 +18,62 @@ export default function TeamProfile() {
   const loadTeam = async () => {
     try {
       setLoading(true);
-      const res = await fetch(
-        `${API}/api/stats/team/${encodeURIComponent(id)}`,
-      );
+      const res = await fetch(`${API}/api/stats/team/${encodeURIComponent(id)}`);
       const json = await res.json();
-      if (json.success) setData(json.data);
-      else setData(null);
+      if (json.success) {
+        setData(json.data);
+        // await loadRecentMatches(json.data);
+      } else {
+        setData(null);
+      }
     } catch (err) {
       console.error("Failed to load team stats", err);
     } finally {
       setLoading(false);
     }
   };
+
+  // const loadRecentMatches = async (teamData) => {
+  //   // Collect the last 3 match IDs from wonBattingFirst, lostBattingFirst,
+  //   // wonBowlingFirst, lostBowlingFirst — merge and sort by recency (order in array).
+  //   // The API returns recentMatches arrays in reverse-chron order.
+  //   const stats = teamData?.stats || {};
+
+  //   const tagged = [
+  //     ...(stats.wonBattingFirst?.recentMatches || []).map((id) => ({ id, result: "won", mode: "bat first" })),
+  //     ...(stats.lostBattingFirst?.recentMatches || []).map((id) => ({ id, result: "lost", mode: "bat first" })),
+  //     ...(stats.wonBowlingFirst?.recentMatches || []).map((id) => ({ id, result: "won", mode: "bowl first" })),
+  //     ...(stats.lostBowlingFirst?.recentMatches || []).map((id) => ({ id, result: "lost", mode: "bowl first" })),
+  //   ];
+
+  //   // Fetch individual match details for the first 3 unique IDs
+  //   const seen = new Set();
+  //   const unique = [];
+  //   for (const m of tagged) {
+  //     if (!seen.has(m.id)) {
+  //       seen.add(m.id);
+  //       unique.push(m);
+  //     }
+  //     if (unique.length === 3) break;
+  //   }
+
+  //   try {
+  //     const fetched = await Promise.all(
+  //       unique.map(async (m) => {
+  //         try {
+  //           const r = await fetch(`${API}/api/matches/${m.id}`);
+  //           const j = await r.json();
+  //           return { ...m, match: j.success ? j.data : null };
+  //         } catch {
+  //           return { ...m, match: null };
+  //         }
+  //       })
+  //     );
+  //     setRecentMatches(fetched);
+  //   } catch {
+  //     setRecentMatches(unique.map((m) => ({ ...m, match: null })));
+  //   }
+  // };
 
   if (loading && !data)
     return (
@@ -45,14 +90,7 @@ export default function TeamProfile() {
       <div style={errorContainer}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🛡️</div>
         <h2 style={{ margin: "0 0 8px", color: "#0f172a" }}>Team not found</h2>
-        <p
-          style={{
-            margin: "0 0 24px",
-            color: "#64748b",
-            maxWidth: 280,
-            lineHeight: 1.5,
-          }}
-        >
+        <p style={{ margin: "0 0 24px", color: "#64748b", maxWidth: 280, lineHeight: 1.5 }}>
           We couldn't find any team with the name "{id}".
         </p>
         <button onClick={() => navigate("/")} style={homeBtn}>
@@ -61,13 +99,9 @@ export default function TeamProfile() {
       </div>
     );
 
-  // With this:
-  const {
-    profile,
-    stats: rootStats,
-    derived: rootDerived,
-    seasons = [],
-  } = data || {};
+  const { profile, stats: rootStats, derived: rootDerived, seasons = [] } = data || {};
+
+  console.log(seasons)
 
   const activeSeason =
     selectedSeason === "overall"
@@ -78,58 +112,35 @@ export default function TeamProfile() {
   const derived = (activeSeason ? activeSeason.derived : rootDerived) || {};
   const seasonsPlayed = profile?.seasonsPlayed || [];
 
-  /* ── Computed ── */
-  const winPct = stats.played
-    ? Math.round((stats.wins / stats.played) * 100)
-    : 0;
+  const winPct = stats.played ? Math.round((stats.wins / stats.played) * 100) : 0;
 
   const defendWins = stats.wonBattingFirst?.count || 0;
   const defendLosses = stats.lostBattingFirst?.count || 0;
   const defendTotal = defendWins + defendLosses;
-  const defendWinPct = defendTotal
-    ? Math.round((defendWins / defendTotal) * 100)
-    : 0;
+  const defendWinPct = defendTotal ? Math.round((defendWins / defendTotal) * 100) : 0;
 
   const chaseWins = stats.wonBowlingFirst?.count || 0;
   const chaseLosses = stats.lostBowlingFirst?.count || 0;
   const chaseTotal = chaseWins + chaseLosses;
-  const chaseWinPct = chaseTotal
-    ? Math.round((chaseWins / chaseTotal) * 100)
-    : 0;
+  const chaseWinPct = chaseTotal ? Math.round((chaseWins / chaseTotal) * 100) : 0;
 
   const nrr = parseFloat(derived.netRunRate ?? 0);
   const nrrStr = (nrr > 0 ? "+" : "") + nrr.toFixed(3);
+  const nrrPositive = nrr >= 0;
 
   const initials = (profile?.name || "T")[0].toUpperCase();
 
   return (
-    <div
-      style={{
-        padding: 16,
-        display: "flex",
-        flexDirection: "column",
-        gap: 0,
-        paddingBottom: 60,
-      }}
-    >
+    <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 0, paddingBottom: 60 }}>
       {/* NAV */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginBottom: 12,
-        }}
-      >
-        <button onClick={() => navigate(-1)} style={backBtn}>
-          ← Back
-        </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <button onClick={() => navigate(-1)} style={backBtn}>← Back</button>
         <select
           style={seasonSelect}
           value={selectedSeason}
           onChange={(e) => setSelectedSeason(e.target.value)}
         >
-          <option value="overall">All Seasons (Overall)</option>
+          <option value="overall">All seasons</option>
           {seasons.map((s) => (
             <option key={s.season?._id} value={s.season?._id}>
               {s.season?.name || s.season?.seasonName || "Season"}
@@ -138,82 +149,41 @@ export default function TeamProfile() {
         </select>
       </div>
 
-      {/* HEADER CARD */}
+      {/* HERO CARD */}
       <div style={card}>
-        <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           <div style={avatar}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div
-              style={{
-                fontSize: 20,
-                fontWeight: 500,
-                color: "#0f172a",
-                textTransform: "capitalize",
-              }}
-            >
+            <div style={{ fontSize: 20, fontWeight: 500, color: "#0f172a", textTransform: "capitalize" }}>
               {profile?.name}
             </div>
-            <div style={{ fontSize: 13, color: "#64748b", marginTop: 2 }}>
-              {seasonsPlayed.length} season
-              {seasonsPlayed.length !== 1 ? "s" : ""}
+            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+              {seasonsPlayed.length} season{seasonsPlayed.length !== 1 ? "s" : ""} 
             </div>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontSize: 22, fontWeight: 500, color: "#0f172a" }}>
-              {stats.played || 0}
-            </div>
-            <div style={{ fontSize: 11, color: "#64748b" }}>played</div>
+            <div style={{ fontSize: 26, fontWeight: 500, color: "#0f172a" }}>{stats.played || 0}</div>
+            <div style={{ fontSize: 11, color: "#94a3b8" }}>played</div>
           </div>
         </div>
-
-        <div style={divider} />
 
         {/* WIN/LOSS BAR */}
-        <div style={{ marginBottom: 8 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              fontSize: 12,
-              marginBottom: 6,
-            }}
-          >
-            <span style={{ color: "#27500A", fontWeight: 600 }}>
-              {stats.wins || 0} wins
-            </span>
-            <span style={{ color: "#64748b" }}>{stats.ties || 0} ties</span>
-            <span style={{ color: "#791F1F", fontWeight: 600 }}>
-              {stats.losses || 0} losses
-            </span>
-          </div>
-          <div
-            style={{
-              height: 8,
-              borderRadius: 99,
-              background: "#f1f5f9",
-              overflow: "hidden",
-              display: "flex",
-            }}
-          >
-            <div style={{ width: `${winPct}%`, background: "#639922" }} />
-            <div style={{ flex: 1, background: "#E24B4A" }} />
-          </div>
+        <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 500, marginBottom: 7 }}>
+          <span style={{ color: "#27500A" }}>{stats.wins || 0} wins</span>
+          <span style={{ color: "#64748b" }}>{stats.ties || 0} ties</span>
+          <span style={{ color: "#791F1F" }}>{stats.losses || 0} losses</span>
+        </div>
+        <div style={{ height: 7, borderRadius: 99, background: "#f1f5f9", overflow: "hidden", display: "flex" }}>
+          <div style={{ width: `${winPct}%`, background: "#639922" }} />
+          <div style={{ flex: 1, background: "#E24B4A" }} />
         </div>
 
-        <div
-          style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 10 }}
-        >
-          <Badge color="green">NRR {nrrStr}</Badge>
-          {stats.biggestWins?.byRuns?.margin > 0 && (
-            <Badge color="gray">
-              Best win by runs: {stats.biggestWins.byRuns.margin}
-            </Badge>
-          )}
-          {stats.biggestWins?.byWickets?.margin > 0 && (
-            <Badge color="gray">
-              Best win by wickets: {stats.biggestWins.byWickets.margin}
-            </Badge>
-          )}
+        {/* BADGES */}
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginTop: 14 }}>
+          <Badge color={nrrPositive ? "green" : "red"}>
+            {nrrPositive ? "↑" : "↓"} NRR {nrrStr}
+          </Badge>
+          <Badge color="gray">{winPct}% win rate</Badge>
         </div>
       </div>
 
@@ -224,24 +194,27 @@ export default function TeamProfile() {
         </div>
       )}
 
-      {/* PERFORMANCE SUMMARY */}
-      <SectionTitle>Performance summary</SectionTitle>
+      {/* RECENT FORM
+      <SectionTitle>Recent form</SectionTitle>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {recentMatches.length > 0 ? (
+          recentMatches.map((m, i) => (
+            <RecentMatchCard key={i} item={m} teamName={profile?.name} />
+          ))
+        ) : (
+          <div style={emptyHint}>No recent matches found.</div>
+        )}
+      </div> */}
+
+      {/* BATTING & BOWLING */}
+      <SectionTitle>Batting &amp; bowling</SectionTitle>
       <div style={grid2}>
-        <StatTile label="Runs scored" value={stats.runsScored || 0} />
-        <StatTile label="Runs conceded" value={stats.runsConceded || 0} />
-        <StatTile
-          label="Batting SR"
-          value={derived.battingStrikeRate || "0.00"}
-        />
+        <StatTile label="Runs scored" value={stats.runsScored || 0} sub={`${derived.oversFaced || "—"} overs faced`} />
+        <StatTile label="Runs conceded" value={stats.runsConceded || 0} sub={`${derived.oversBowled || "—"} overs bowled`} />
+        <StatTile label="Batting SR" value={derived.battingStrikeRate || "0.00"} />
         <StatTile label="Economy" value={derived.economy || "0.00"} />
-        <StatTile
-          label="Batting avg"
-          value={derived.battingAverage || "0.00"}
-        />
-        <StatTile
-          label="Bowling avg"
-          value={derived.bowlingAverage || "0.00"}
-        />
+        <StatTile label="Batting avg" value={derived.battingAverage || "0.00"} />
+        <StatTile label="Bowling avg" value={derived.bowlingAverage || "0.00"} />
         <StatTile label="Wickets lost" value={stats.wicketsLost || 0} />
         <StatTile label="Wickets taken" value={stats.wicketsTaken || 0} />
       </div>
@@ -271,31 +244,17 @@ export default function TeamProfile() {
 
       {/* DEFENDING */}
       <SectionTitle>Defending (bat first)</SectionTitle>
-      <div style={grid2}>
-        <StatTile
-          label="Won"
-          value={defendWins}
-          color="green"
-          sub={`${defendWinPct}% success`}
-        />
-        <StatTile
-          label="Lost"
-          value={defendLosses}
-          color="red"
-          sub={`${100 - defendWinPct}% failure`}
-        />
+      <div style={{ ...grid2, marginBottom: 8 }}>
+        <SplitTile color="green" label="Won" value={defendWins} sub={`${defendWinPct}% success`} />
+        <SplitTile color="red" label="Lost" value={defendLosses} sub={`${100 - defendWinPct}% failure`} />
       </div>
-      <div style={{ ...card, marginTop: 10 }}>
+      <div style={card}>
         <Row
           label="Lowest total defended"
-          value={
-            stats.lowestDefendedScore?.defended != null
-              ? `${stats.lowestDefendedScore.defended} runs`
-              : "—"
-          }
+          value={stats.lowestDefendedScore?.defended != null ? `${stats.lowestDefendedScore.defended} runs` : "—"}
         />
         <Row
-          label="Highest total defended"
+          label="Highest total posted"
           value={
             stats.highestScore?.runs != null
               ? `${stats.highestScore.runs}/${stats.highestScore.wickets} (${stats.highestScore.overs} ov)`
@@ -307,21 +266,11 @@ export default function TeamProfile() {
 
       {/* CHASING */}
       <SectionTitle>Chasing (bowl first)</SectionTitle>
-      <div style={grid2}>
-        <StatTile
-          label="Won"
-          value={chaseWins}
-          color="green"
-          sub={`${chaseWinPct}% success`}
-        />
-        <StatTile
-          label="Lost"
-          value={chaseLosses}
-          color="red"
-          sub={`${100 - chaseWinPct}% failure`}
-        />
+      <div style={{ ...grid2, marginBottom: 8 }}>
+        <SplitTile color="green" label="Won" value={chaseWins} sub={`${chaseWinPct}% success`} />
+        <SplitTile color="red" label="Lost" value={chaseLosses} sub={`${100 - chaseWinPct}% failure`} />
       </div>
-      <div style={{ ...card, marginTop: 10 }}>
+      <div style={card}>
         <Row
           label="Highest successful chase"
           value={
@@ -333,32 +282,68 @@ export default function TeamProfile() {
         />
       </div>
 
-      {/* ROSTER */}
-      <SectionTitle>Team roster</SectionTitle>
-      <div style={card}>
-        <div style={rosterGrid}>
-          {profile?.players?.length > 0 ? (
-            profile.players.map((player) => (
-              <div
-                key={player._id || player.name}
-                style={rosterItem}
-                onClick={() =>
-                  navigate(`/player/${encodeURIComponent(player.name)}`)
-                }
-              >
-                <span style={avatarMini}>
-                  {(player.name || "P")[0].toUpperCase()}
-                </span>
-                <span style={rosterName}>{player.name}</span>
-              </div>
-            ))
-          ) : (
-            <div style={emptyHint}>No players registered.</div>
-          )}
-        </div>
-      </div>
-
       <div style={{ height: 32 }} />
+    </div>
+  );
+}
+
+/* ── RECENT MATCH CARD ── */
+// Derives opponent name and result description from match data.
+// Your match API response shape may differ — adjust field paths accordingly.
+function RecentMatchCard({ item, teamName }) {
+  const { result, mode, match } = item;
+  const isWin = result === "won";
+
+  // Try to derive opponent and margin from match data if available
+  let opponent = "Opponent";
+  let margin = null;
+
+  if (match) {
+    // Adjust these field paths to match your actual /api/matches/:id response shape
+    const teams = match.teams || [];
+    const other = teams.find(
+      (t) => t.name?.toLowerCase() !== teamName?.toLowerCase()
+    );
+    if (other?.name) opponent = other.name;
+
+    if (isWin) {
+      if (match.result?.margin && match.result?.by) {
+        margin = `by ${match.result.margin} ${match.result.by}`;
+      }
+    } else {
+      if (match.result?.margin && match.result?.by) {
+        margin = `by ${match.result.margin} ${match.result.by}`;
+      }
+    }
+  }
+
+  const modeLabel =
+    mode === "bat first"
+      ? isWin
+        ? "Bat first · defended"
+        : "Bat first · chased down"
+      : isWin
+      ? "Bowl first · chased"
+      : "Bowl first · failed chase";
+
+  return (
+    <div style={matchCard}>
+      <div style={{ ...matchPill, background: isWin ? "#639922" : "#E24B4A" }} />
+      <div style={{ flex: 1, padding: "12px 14px", minWidth: 0 }}>
+        <div style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3, color: isWin ? "#3B6D11" : "#A32D2D" }}>
+          {isWin ? "Won" : "Lost"}
+        </div>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "#0f172a", textTransform: "capitalize" }}>
+          {isWin ? "vs" : "lost to"} {opponent}
+        </div>
+        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>{modeLabel}</div>
+      </div>
+      {margin && (
+        <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", flexShrink: 0 }}>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{margin}</div>
+          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>margin</div>
+        </div>
+      )}
     </div>
   );
 }
@@ -366,92 +351,53 @@ export default function TeamProfile() {
 /* ── SUB-COMPONENTS ── */
 
 const SectionTitle = ({ children }) => (
-  <div
-    style={{
-      fontSize: 11,
-      fontWeight: 700,
-      color: "#94a3b8",
-      textTransform: "uppercase",
-      letterSpacing: "0.08em",
-      margin: "28px 0 10px",
-      paddingLeft: 4,
-    }}
-  >
+  <div style={{ fontSize: 10, fontWeight: 500, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "24px 0 10px", paddingLeft: 2 }}>
     {children}
   </div>
 );
 
-const StatTile = ({ label, value, color, sub }) => (
-  <div
-    style={{
-      background: "white",
-      borderRadius: 16,
-      padding: 16,
-      border: "1px solid #e2e8f0",
-      boxShadow: "0 2px 4px rgba(0,0,0,0.02)",
-    }}
-  >
-    <div
-      style={{
-        fontSize: 10,
-        textTransform: "uppercase",
-        letterSpacing: "0.05em",
-        marginBottom: 6,
-        color:
-          color === "green"
-            ? "#059669"
-            : color === "red"
-              ? "#dc2626"
-              : "#94a3b8",
-      }}
-    >
-      {label}
-    </div>
-    <div style={{ fontSize: 24, fontWeight: 700, color: "#0f172a" }}>
-      {value}
-    </div>
-    {sub && (
-      <div style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>{sub}</div>
-    )}
+const StatTile = ({ label, value, sub }) => (
+  <div style={{ background: "white", borderRadius: 12, padding: 14, border: "1px solid #e2e8f0" }}>
+    <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5, color: "#94a3b8" }}>{label}</div>
+    <div style={{ fontSize: 22, fontWeight: 500, color: "#0f172a" }}>{value}</div>
+    {sub && <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{sub}</div>}
   </div>
 );
 
+const SplitTile = ({ label, value, sub, color }) => {
+  const isGreen = color === "green";
+  return (
+    <div style={{
+      borderRadius: 12,
+      padding: 14,
+      border: "1px solid #e2e8f0",
+      background: isGreen ? "#EAF3DE" : "#FCEBEB",
+    }}>
+      <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, color: isGreen ? "#3B6D11" : "#A32D2D" }}>
+        {label}
+      </div>
+      <div style={{ fontSize: 26, fontWeight: 500, color: isGreen ? "#27500A" : "#791F1F" }}>{value}</div>
+      <div style={{ fontSize: 11, marginTop: 3, color: isGreen ? "#3B6D11" : "#A32D2D" }}>{sub}</div>
+    </div>
+  );
+};
+
 const Row = ({ label, value, last }) => (
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      padding: "12px 0",
-      borderBottom: last ? "none" : "1px solid #f1f5f9",
-    }}
-  >
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: last ? "none" : "1px solid #f1f5f9" }}>
     <span style={{ fontSize: 13, color: "#64748b" }}>{label}</span>
-    <span style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
-      {value}
-    </span>
+    <span style={{ fontSize: 14, fontWeight: 500, color: "#0f172a" }}>{value}</span>
   </div>
 );
 
 const Badge = ({ children, color }) => (
-  <span
-    style={{
-      display: "inline-flex",
-      alignItems: "center",
-      gap: 4,
-      fontSize: 11,
-      fontWeight: 600,
-      padding: "4px 10px",
-      borderRadius: 8,
-      ...badgeColors[color],
-    }}
-  >
+  <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 500, padding: "4px 10px", borderRadius: 8, ...badgeColors[color] }}>
     {children}
   </span>
 );
 
 const badgeColors = {
-  green: { background: "#f0fdf4", color: "#166534" },
+  green: { background: "#EAF3DE", color: "#27500A" },
+  red: { background: "#FCEBEB", color: "#791F1F" },
   gray: { background: "#f8fafc", color: "#475569" },
 };
 
@@ -459,39 +405,33 @@ const badgeColors = {
 
 const card = {
   background: "white",
-  borderRadius: 18,
+  borderRadius: 16,
   border: "1px solid #e2e8f0",
   padding: 18,
-  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
 };
 const grid2 = {
   display: "grid",
   gridTemplateColumns: "repeat(2, 1fr)",
-  gap: 10,
+  gap: 8,
 };
 const avatar = {
   width: 52,
   height: 52,
   borderRadius: "50%",
-  background: "#f5f3ff",
+  background: "#EAF3DE",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontSize: 22,
-  fontWeight: 700,
-  color: "#5b21b6",
-};
-const divider = {
-  border: "none",
-  borderTop: "1px solid #f1f5f9",
-  margin: "16px 0",
+  fontWeight: 500,
+  color: "#27500A",
 };
 const seasonSelect = {
-  padding: "8px 12px",
-  borderRadius: 10,
+  padding: "6px 10px",
+  borderRadius: 8,
   border: "1px solid #e2e8f0",
-  fontSize: 13,
-  fontWeight: 600,
+  fontSize: 12,
+  fontWeight: 500,
   color: "#475569",
   background: "white",
   outline: "none",
@@ -541,46 +481,34 @@ const homeBtn = {
   cursor: "pointer",
 };
 const backBtn = {
-  padding: "8px 16px",
-  borderRadius: 10,
+  padding: "6px 14px",
+  borderRadius: 8,
   border: "1px solid #e2e8f0",
   background: "white",
-  fontWeight: 600,
+  fontWeight: 500,
   fontSize: 13,
   color: "#475569",
   cursor: "pointer",
 };
-const rosterGrid = { display: "flex", flexDirection: "column", gap: 2 };
-const rosterItem = {
+const matchCard = {
+  background: "white",
+  border: "1px solid #e2e8f0",
+  borderRadius: 12,
   display: "flex",
-  alignItems: "center",
-  gap: 12,
-  padding: "10px 4px",
-  borderBottom: "1px solid #f8fafc",
-  cursor: "pointer",
+  alignItems: "stretch",
+  overflow: "hidden",
 };
-const avatarMini = {
-  width: 28,
-  height: 28,
-  borderRadius: "50%",
-  background: "#f5f3ff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  fontSize: 11,
-  fontWeight: 700,
-  color: "#5b21b6",
-};
-const rosterName = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: "#4f46e5",
-  textTransform: "capitalize",
+const matchPill = {
+  width: 4,
+  flexShrink: 0,
 };
 const emptyHint = {
-  padding: 12,
+  padding: 16,
   textAlign: "center",
   color: "#94a3b8",
-  fontSize: 12,
+  fontSize: 13,
   fontStyle: "italic",
+  background: "white",
+  border: "1px solid #e2e8f0",
+  borderRadius: 12,
 };

@@ -33,10 +33,12 @@ export default function GlobalSearch() {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        const res = await fetch(`${API}/api/search?q=${encodeURIComponent(query.trim())}`);
+        const res = await fetch(
+          `${API}/api/search?q=${encodeURIComponent(query.trim())}`,
+        );
         const json = await res.json();
         console.log("Player data:", json.data);
-        if (json.success) {  
+        if (json.success) {
           setResults(json.data);
         } else {
           setResults({ players: [], teams: [], seasons: [] });
@@ -59,14 +61,18 @@ export default function GlobalSearch() {
   const handleSelect = (type, id) => {
     setIsOpen(false);
     setQuery("");
-    
+
     // Navigate to the respective profile or page
     if (type === "player") navigate(`/player/${id}`);
     if (type === "team") navigate(`/team/${id}`);
     if (type === "season") navigate(`/season/${id}`);
   };
 
-  const hasResults = results && (results.players.length > 0 || results.teams.length > 0 || results.seasons.length > 0);
+  const hasResults =
+    results &&
+    (results.players.length > 0 ||
+      results.teams.length > 0 ||
+      results.seasons.length > 0);
 
   return (
     <div className={styles.container} ref={searchRef}>
@@ -92,16 +98,26 @@ export default function GlobalSearch() {
           {loading ? (
             <div className={styles.noResults}>Searching...</div>
           ) : !hasResults ? (
-            <div className={styles.noResults}>No results found for "{query}"</div>
+            <div className={styles.noResults}>
+              No results found for "{query}"
+            </div>
           ) : (
             <>
               {/* PLAYERS */}
               {results.players.length > 0 && (
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Players</div>
-                  {results.players.map(p => (
-                    <div key={p.id} className={styles.resultItem} onClick={() => handleSelect("player", p.id)}>
-                      <div className={`${styles.resultIcon} ${styles.iconPlayer}`}>👤</div>
+                  {results.players.map((p) => (
+                    <div
+                      key={p.id}
+                      className={styles.resultItem}
+                      onClick={() => handleSelect("player", p.playerId)}
+                    >
+                      <div
+                        className={`${styles.resultIcon} ${styles.iconPlayer}`}
+                      >
+                        👤
+                      </div>
                       <div>
                         <div className={styles.resultName}>{p.name}</div>
                         <div className={styles.resultSub}>{p.team}</div>
@@ -115,12 +131,22 @@ export default function GlobalSearch() {
               {results.teams.length > 0 && (
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Teams</div>
-                  {results.teams.map(t => (
-                    <div key={t.id} className={styles.resultItem} onClick={() => handleSelect("team", t.id)}>
-                      <div className={`${styles.resultIcon} ${styles.iconTeam}`}>🛡️</div>
+                  {results.teams.map((t) => (
+                    <div
+                      key={t.id}
+                      className={styles.resultItem}
+                      onClick={() => handleSelect("team", t.teamId)}
+                    >
+                      <div
+                        className={`${styles.resultIcon} ${styles.iconTeam}`}
+                      >
+                        🛡️
+                      </div>
                       <div>
                         <div className={styles.resultName}>{t.name}</div>
-                        <div className={styles.resultSub}>{t.matches} matches played</div>
+                        <div className={styles.resultSub}>
+                          {t.totalMatches} matches played
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -131,12 +157,22 @@ export default function GlobalSearch() {
               {results.seasons.length > 0 && (
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Seasons</div>
-                  {results.seasons.map(s => (
-                    <div key={s.id} className={styles.resultItem} onClick={() => handleSelect("season", s.id)}>
-                      <div className={`${styles.resultIcon} ${styles.iconSeason}`}>🏆</div>
+                  {results.seasons.map((s) => (
+                    <div
+                      key={s.id}
+                      className={styles.resultItem}
+                      onClick={() => handleSelect("season", s.seasonId)}
+                    >
+                      <div
+                        className={`${styles.resultIcon} ${styles.iconSeason}`}
+                      >
+                        🏆
+                      </div>
                       <div>
                         <div className={styles.resultName}>{s.name}</div>
-                        <div className={styles.resultSub}>{s.matches} matches</div>
+                        <div className={styles.resultSub}>
+                          {s.matchesCount} matches
+                        </div>
                       </div>
                     </div>
                   ))}
