@@ -9,13 +9,13 @@ import {
   deleteMatch as deleteLocalMatchDB,
 } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
+import { sameName } from "../utils/matchModel";
+import { api } from "../api";
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
 
   const navigate = useNavigate();
-
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   /* ---------------------------------------
      TAB STATE
@@ -55,10 +55,11 @@ export default function SeasonMatches() {
     queryKey: ["seasonMatches", seasonId],
 
     queryFn: async () => {
-      const res = await fetch(`${API}/seasons/matches/${seasonId}`);
-
-      const json = await res.json();
-      return json || [];
+      const response = await api.seasons.getSeasonMatches(seasonId);
+      if (Array.isArray(response)) return response;
+      if (Array.isArray(response?.content)) return response.content;
+      if (Array.isArray(response?.data)) return response.data;
+      return [];
     },
 
     staleTime: 1000 * 60 * 5,
@@ -93,7 +94,7 @@ export default function SeasonMatches() {
     // COMPLETED MATCH
 
     if (source === "SERVER") {
-      navigate(`/season/${seasonId}/match/${match.id}`);
+      navigate(`/season/${seasonId}/match/${match.id || match._id}`);
 
       return;
     }
@@ -125,8 +126,8 @@ export default function SeasonMatches() {
     (m) => m.status === "setup" || m.status === "LIVE",
   );
 
-  const completedMatches = serverMatches.filter(
-    (m) => m.matchStatus === "COMPLETED",
+  const completedMatches = (Array.isArray(serverMatches) ? serverMatches : []).filter(
+    (match) => match.matchStatus === "COMPLETED",
   );
 
   /* ---------------------------------------
@@ -164,7 +165,9 @@ export default function SeasonMatches() {
     )})`;
   };
 
-  const isWinner = (teamName, match) => match.winner === teamName;
+  const isWinner = (teamName, match) => sameName(match.winner, teamName);
+  const isDraw = (match) =>
+    match.winner === "DRAW" || match.resultType === "DRAW" || match.result?.type === "DRAW";
 
   /* ---------------------------------------
      FILTERED + SORTED COMPLETED MATCHES
@@ -183,8 +186,9 @@ export default function SeasonMatches() {
     })
     .filter((m) => {
       if (teamFilter === "ALL" || resultFilter === "ALL") return true;
+      if (resultFilter === "DRAW") return isDraw(m);
       const won = isWinner(teamFilter, m);
-      return resultFilter === "WON" ? won : !won;
+      return resultFilter === "WON" ? won : !won && !isDraw(m);
     })
     .sort((a, b) => {
       const dateA = new Date(a.completedAt || a.createdAt).getTime();
@@ -302,6 +306,7 @@ export default function SeasonMatches() {
               <option value="ALL">Won & Lost</option>
               <option value="WON">Won</option>
               <option value="LOST">Lost</option>
+              <option value="DRAW">Drawn</option>
             </select>
 
             <select
@@ -333,13 +338,9 @@ export default function SeasonMatches() {
           ) : (
             <div style={list}>
               {filteredCompletedMatches.map((match) => {
-                const innings1 = match.innings?.[0];
-
-                const innings2 = match.innings?.[1];
-
                 return (
                   <div
-                    key={match._id}
+                    key={match.id || match._id}
                     style={completedCard}
                     onClick={() => handleMatchClick(match, "SERVER")}
                   >
@@ -359,8 +360,8 @@ export default function SeasonMatches() {
                           fontWeight: isWinner(match.teamA, match) ? 700 : 500,
 
                           color: isWinner(match.teamA, match)
-                            ? "#111827"
-                            : "#6b7280",
+                            ? "var(--color-gray-900)"
+                            : "var(--color-gray-500)",
                         }}
                       >
                         {formatName(match.teamA)}
@@ -373,12 +374,12 @@ export default function SeasonMatches() {
                           fontWeight: isWinner(match.teamA, match) ? 700 : 500,
 
                           color: isWinner(match.teamA, match)
-                            ? "#111827"
-                            : "#6b7280",
+                            ? "var(--color-gray-900)"
+                            : "var(--color-gray-500)",
                         }}
                       >
-                        {match.teamAScore
-                          ? `${match.teamAScore}-${match.teamAWickets} (${ballsToOvers(match.teamABallsFaced)})`
+                        {match.teamAScore != null
+                          ? `${match.teamAScore}-${match.teamAWickets ?? 0} (${ballsToOvers(match.teamABallsFaced)})`
                           : "-"}
                       </div>
                     </div>
@@ -393,8 +394,8 @@ export default function SeasonMatches() {
                           fontWeight: isWinner(match.teamB, match) ? 700 : 500,
 
                           color: isWinner(match.teamB, match)
-                            ? "#111827"
-                            : "#6b7280",
+                            ? "var(--color-gray-900)"
+                            : "var(--color-gray-500)",
                         }}
                       >
                         {formatName(match.teamB)}
@@ -407,12 +408,12 @@ export default function SeasonMatches() {
                           fontWeight: isWinner(match.teamB, match) ? 700 : 500,
 
                           color: isWinner(match.teamB, match)
-                            ? "#111827"
-                            : "#6b7280",
+                            ? "var(--color-gray-900)"
+                            : "var(--color-gray-500)",
                         }}
                       >
-                        {match.teamBScore
-                          ? `${match.teamBScore}-${match.teamBWickets} (${ballsToOvers(match.teamBBallsFaced)})`
+                        {match.teamBScore != null
+                          ? `${match.teamBScore}-${match.teamBWickets ?? 0} (${ballsToOvers(match.teamBBallsFaced)})`
                           : "-"}
                       </div>
                     </div>
@@ -436,10 +437,10 @@ export default function SeasonMatches() {
 --------------------------------------- */
 
 const completedCard = {
-  background: "#fff",
+  background: "var(--color-white)",
   borderRadius: 18,
   padding: 16,
-  border: "1px solid #eef2ff",
+  border: "1px solid var(--color-indigo-50)",
   boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
   transition: "0.18s ease",
   cursor: "pointer",
@@ -461,10 +462,10 @@ const scoreText = {
 const resultLine = {
   marginTop: 14,
   paddingTop: 12,
-  borderTop: "1px solid #f3f4f6",
+  borderTop: "1px solid var(--color-gray-100)",
   fontSize: 13,
   fontWeight: 600,
-  color: "#4338ca",
+  color: "var(--color-indigo-700)",
 };
 
 const emptyState = {
@@ -483,9 +484,9 @@ const spinner = {
 
   height: 28,
 
-  border: "3px solid #e0e7ff",
+  border: "3px solid var(--color-indigo-100)",
 
-  borderTop: "3px solid #4338ca",
+  borderTop: "3px solid var(--color-indigo-700)",
 
   borderRadius: "50%",
 
@@ -503,7 +504,7 @@ const teamLeft = {
 
 const dateText = {
   fontSize: 12,
-  color: "#6b7280",
+  color: "var(--color-gray-500)",
   marginBottom: 6,
 };
 
@@ -531,15 +532,15 @@ const tabBtn = {
   flex: 1,
   padding: 10,
   borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
+  border: "1px solid var(--color-gray-200)",
+  background: "var(--color-white)",
   cursor: "pointer",
 };
 
 const activeTab = {
   ...tabBtn,
-  background: "#4f46e5",
-  color: "#fff",
+  background: "var(--color-indigo-600)",
+  color: "var(--color-white)",
 };
 
 const filterBar = {
@@ -552,10 +553,10 @@ const filterSelect = {
   flex: 1,
   padding: "8px 10px",
   borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
+  border: "1px solid var(--color-gray-200)",
+  background: "var(--color-white)",
   fontSize: 13,
-  color: "#374151",
+  color: "var(--color-gray-700)",
   cursor: "pointer",
 };
 
@@ -568,8 +569,8 @@ const list = {
 const card = {
   padding: 14,
   borderRadius: 12,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
+  border: "1px solid var(--color-gray-200)",
+  background: "var(--color-white)",
   cursor: "pointer",
 };
 
@@ -588,10 +589,10 @@ const deleteBtn = {
 
 const statusText = {
   fontSize: 12,
-  color: "#6b7280",
+  color: "var(--color-gray-500)",
   marginTop: 4,
 };
 
 const muted = {
-  color: "#6b7280",
+  color: "var(--color-gray-500)",
 };

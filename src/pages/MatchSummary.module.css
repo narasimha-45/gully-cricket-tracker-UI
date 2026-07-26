@@ -1,0 +1,188 @@
+.page {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding: 8px 12px 32px;
+  box-sizing: border-box;
+}
+
+.backButton {
+  margin: 0 0 10px;
+  padding: 7px 2px;
+  border: none;
+  background: transparent;
+  color: var(--color-indigo-700);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.motmCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: 15px;
+  background: var(--color-amber-50);
+  color: var(--color-amber-900);
+  font-size: 13px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.tabButton {
+  min-height: 40px;
+  padding: 8px 4px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 11px;
+  background: var(--color-white);
+  color: var(--color-slate-500);
+  font-size: 11px;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.activeTab {
+  border-color: var(--color-indigo-900);
+  background: var(--color-indigo-900);
+  color: var(--color-white);
+}
+
+.loadingPage,
+.errorState {
+  display: grid;
+  min-height: 58vh;
+  place-items: center;
+  padding: 20px;
+}
+
+.loadingCard {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  width: min(100%, 420px);
+  padding: 36px 26px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 26px;
+  background: var(--color-white);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+  text-align: center;
+}
+
+.loadingCard > strong {
+  color: var(--color-slate-900);
+  font-size: 20px;
+}
+
+.loadingCard p {
+  margin: 9px 0 0;
+  color: var(--color-slate-500);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pulseIcon {
+  display: grid;
+  width: 70px;
+  height: 70px;
+  margin-bottom: 20px;
+  place-items: center;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--color-indigo-50), var(--color-indigo-100));
+  font-size: 31px;
+}
+
+.loaderTrack {
+  width: 100%;
+  height: 7px;
+  margin-top: 22px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--color-slate-200);
+}
+
+.loaderBar {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--color-indigo-600), var(--color-indigo-500));
+  animation: load 1.2s ease-in-out infinite alternate;
+}
+
+.errorState {
+  align-content: center;
+  gap: 8px;
+  color: var(--color-slate-500);
+  text-align: center;
+}
+
+.errorState > span {
+  font-size: 38px;
+}
+
+.errorState strong {
+  color: var(--color-slate-900);
+  font-size: 20px;
+}
+
+.errorState p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.errorState button {
+  margin-top: 8px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--color-indigo-600);
+  color: var(--color-white);
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.emptyInsights {
+  display: grid;
+  gap: 6px;
+  padding: 42px 20px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 16px;
+  background: var(--color-white);
+  color: var(--color-slate-400);
+  text-align: center;
+}
+
+.emptyInsights strong {
+  color: var(--color-slate-700);
+  font-size: 15px;
+}
+
+.emptyInsights span {
+  font-size: 12px;
+}
+
+@keyframes load {
+  from { transform: translateX(0); }
+  to { transform: translateX(138%); }
+}
+
+@media (max-width: 520px) {
+  .page {
+    padding-right: 8px;
+    padding-left: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .tabs {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

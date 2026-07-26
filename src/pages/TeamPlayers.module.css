@@ -1,0 +1,334 @@
+.page {
+  width: min(100%, 520px);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 20px 16px 120px;
+  box-sizing: border-box;
+}
+
+.stateMessage {
+  padding: 40px 20px;
+  color: var(--color-slate-500);
+  text-align: center;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.header h1 {
+  margin: 2px 0 0;
+  color: var(--color-slate-900);
+  font-size: 24px;
+  line-height: 1.15;
+}
+
+.header p {
+  display: inline-block;
+  margin: 7px 0 0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  background: var(--color-violet-50);
+  color: var(--color-indigo-700);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.eyebrow {
+  color: var(--color-slate-400);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.backButton {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 50%;
+  background: var(--color-white);
+  color: var(--color-slate-800);
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.searchCard {
+  position: relative;
+  margin-bottom: 22px;
+  padding: 18px;
+  border: 1px solid var(--color-indigo-50);
+  border-radius: 19px;
+  background: var(--color-white);
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+
+.inputLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--color-slate-400);
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.inputWrapper {
+  position: relative;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 13px 42px 13px 14px;
+  border: 2px solid var(--color-slate-100);
+  border-radius: 12px;
+  outline: none;
+  background: var(--color-slate-50);
+  color: var(--color-slate-900);
+  font-size: 15px;
+  box-sizing: border-box;
+}
+
+.searchInput:focus {
+  border-color: var(--color-indigo-300);
+  background: var(--color-white);
+}
+
+.spinner {
+  position: absolute;
+  top: 50%;
+  right: 15px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid var(--color-slate-200);
+  border-top-color: var(--color-indigo-600);
+  border-radius: 50%;
+  animation: spin 0.65s linear infinite;
+  transform: translateY(-50%);
+}
+
+.feedback {
+  margin: 9px 1px 0;
+  color: var(--color-amber-900);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.dropdown {
+  position: absolute;
+  z-index: 100;
+  top: calc(100% + 7px);
+  right: 0;
+  left: 0;
+  max-height: 260px;
+  overflow-y: auto;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 14px;
+  background: var(--color-white);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+}
+
+.dropdownItem {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  border-bottom: 1px solid var(--color-slate-50);
+  background: var(--color-white);
+  color: var(--color-slate-900);
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdownItem:last-child {
+  border-bottom: none;
+}
+
+.dropdownItem:hover:not(:disabled) {
+  background: var(--color-indigo-50);
+}
+
+.dropdownItem:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.dropdownItem > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+
+.dropdownItem strong {
+  font-size: 13px;
+}
+
+.dropdownItem small {
+  color: var(--color-slate-400);
+  font-size: 10px;
+}
+
+.playerIcon,
+.newPlayerIcon {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+}
+
+.playerIcon {
+  background: var(--color-slate-100);
+}
+
+.newPlayerIcon {
+  background: var(--color-emerald-100);
+  color: var(--color-emerald-700);
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 4px 11px;
+  color: var(--color-slate-500);
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.sectionTitle strong {
+  display: grid;
+  place-items: center;
+  min-width: 25px;
+  height: 25px;
+  border-radius: 999px;
+  background: var(--color-slate-100);
+  color: var(--color-slate-700);
+  font-size: 11px;
+}
+
+.playerList {
+  display: grid;
+  gap: 9px;
+}
+
+.playerRow {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 11px 12px;
+  border: 1px solid var(--color-slate-100);
+  border-radius: 15px;
+  background: var(--color-white);
+}
+
+.playerAvatar {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-violet-50);
+  color: var(--color-indigo-700);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.playerName {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-slate-800);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.removeButton {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 9px;
+  background: var(--color-red-50);
+  color: var(--color-red-600);
+  cursor: pointer;
+}
+
+.emptySquad {
+  display: grid;
+  gap: 5px;
+  padding: 36px 20px;
+  border: 1px dashed var(--color-slate-200);
+  border-radius: 16px;
+  color: var(--color-slate-400);
+  text-align: center;
+}
+
+.emptySquad strong {
+  color: var(--color-slate-600);
+  font-size: 13px;
+}
+
+.emptySquad span {
+  font-size: 11px;
+}
+
+.footer {
+  position: fixed;
+  z-index: 30;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 10px 16px 18px;
+  border-top: 1px solid var(--color-slate-100);
+  background: rgba(248, 250, 252, 0.94);
+  backdrop-filter: blur(12px);
+  box-sizing: border-box;
+}
+
+.footer p {
+  margin: 0 0 7px;
+  color: var(--color-amber-900);
+  font-size: 10px;
+  font-weight: 700;
+  text-align: center;
+}
+
+.primaryButton {
+  width: 100%;
+  min-height: 50px;
+  padding: 12px;
+  border: none;
+  border-radius: 14px;
+  background: var(--color-indigo-600);
+  color: var(--color-white);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.2);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.primaryButton:disabled {
+  background: var(--color-slate-200);
+  color: var(--color-slate-400);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+@keyframes spin {
+  to { transform: translateY(-50%) rotate(360deg); }
+}

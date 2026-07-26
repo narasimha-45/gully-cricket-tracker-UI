@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { formatName } from "../utils/helpers";
 import LoadingState from "../components/common/LoadingState";
-import { api } from "../components/common/api";
+import { api } from "../api";
 
 export default function TeamStats() {
   const { globalFilter } = useOutletContext();
@@ -68,14 +68,14 @@ export default function TeamStats() {
             <span
               style={{
                 ...centerCol,
-                color: t.derived.netRunRate >= 0 ? "#16a34a" : "#dc2626",
+                color: t.derived.netRunRate >= 0 ? "var(--color-green-600)" : "var(--color-red-600)",
                 fontWeight: 600,
               }}
             >
               {t.derived.netRunRate > 0 ? "+" : ""}
               {t.derived.netRunRate}
             </span>
-            {/* <span style={{ ...centerCol, fontWeight: 800, color: "#1e293b" }}>{t.stats.points}</span> */}
+            {/* <span style={{ ...centerCol, fontWeight: 800, color: "var(--color-slate-800)" }}>{t.stats.points}</span> */}
           </div>
         ))
       ) : (
@@ -94,11 +94,11 @@ const container = {
 const headerRow = {
   display: "flex",
   padding: "10px 16px",
-  background: "#f1f5f9",
+  background: "var(--color-slate-100)",
   borderRadius: 12,
   fontSize: 12,
   fontWeight: 700,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   textTransform: "uppercase",
   letterSpacing: "0.05em",
 };
@@ -109,21 +109,21 @@ const row = {
   padding: "16px",
   background: "white",
   borderRadius: 16,
-  border: "1px solid #eef2ff",
+  border: "1px solid var(--color-indigo-50)",
   cursor: "pointer",
   transition: "transform 0.2s",
 };
 
 const rank = {
   fontSize: 12,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   fontWeight: 600,
   width: 20,
 };
 
 const teamName = {
   fontWeight: 700,
-  color: "#1e293b",
+  color: "var(--color-slate-800)",
   fontSize: 15,
 };
 
@@ -131,7 +131,7 @@ const centerCol = {
   flex: 1,
   textAlign: "center",
   fontSize: 14,
-  color: "#475569",
+  color: "var(--color-slate-600)",
 };
 
 const loadingWrap = {
@@ -144,24 +144,24 @@ const loadingWrap = {
 const spinner = {
   width: 32,
   height: 32,
-  border: "3px solid #e2e8f0",
-  borderTop: "3px solid #4f46e5",
+  border: "3px solid var(--color-slate-200)",
+  borderTop: "3px solid var(--color-indigo-600)",
   borderRadius: "50%",
   animation: "spin 0.8s linear infinite",
 };
 
 const loadingText = {
   marginTop: 16,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   fontSize: 14,
 };
 
 const empty = {
   textAlign: "center",
   padding: "40px 20px",
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   fontSize: 14,
-  background: "#f8fafc",
+  background: "var(--color-slate-50)",
   borderRadius: 16,
-  border: "1px dashed #cbd5e1",
+  border: "1px dashed var(--color-slate-300)",
 };

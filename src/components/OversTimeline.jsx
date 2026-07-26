@@ -1,22 +1,33 @@
 import React, { useState } from "react";
+import { formatName } from "../utils/helpers";
+import { getTeamInningsOrdinal, isTestMatch } from "../utils/matchModel";
+import { getBallPresentation } from "../utils/matchPresentation";
 import styles from "./OversTimeline.module.css";
 
 /* ─────────────────────────────────────────────────────────────
    Build a label for each innings tab
 ───────────────────────────────────────────────────────────── */
-function getInningsLabel(innings, index) {
-  if (index === 0) return `1st Inn`;
-  if (index === 1) return `2nd Inn`;
+function getInningsLabel(match, innings, index) {
+  if (isTestMatch(match)) {
+    const ordinal = getTeamInningsOrdinal(match, index);
+    return `${formatName(innings.battingTeam)} ${ordinal === 1 ? "1st" : "2nd"}`;
+  }
+  if (index === 0) return "1st Inn";
+  if (index === 1) return "2nd Inn";
   const soNumber = Math.floor((index - 2) / 2) + 1;
   const soLeg = (index - 2) % 2 === 0 ? "A" : "B";
   return `SO${soNumber}-${soLeg}`;
 }
 
-function getInningsFullLabel(innings, index) {
-  if (index === 0) return `1st Innings — ${innings.battingTeam}`;
-  if (index === 1) return `2nd Innings — ${innings.battingTeam}`;
+function getInningsFullLabel(match, innings, index) {
+  if (isTestMatch(match)) {
+    const ordinal = getTeamInningsOrdinal(match, index);
+    return `${formatName(innings.battingTeam)} — ${ordinal === 1 ? "1st" : "2nd"} innings`;
+  }
+  if (index === 0) return `1st Innings — ${formatName(innings.battingTeam)}`;
+  if (index === 1) return `2nd Innings — ${formatName(innings.battingTeam)}`;
   const soNumber = Math.floor((index - 2) / 2) + 1;
-  return `Super Over ${soNumber} — ${innings.battingTeam}`;
+  return `Super Over ${soNumber} — ${formatName(innings.battingTeam)}`;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -72,10 +83,10 @@ const OversTimeline = ({ match }) => {
           {inningsWithData.map(({ inn, idx }) => (
             <button
               key={idx}
-              className={`${styles.inningsTab} ${safeIdx === idx ? styles.inningsTabActive : ""} ${idx >= 2 ? styles.inningsTabSO : ""}`}
+              className={`${styles.inningsTab} ${safeIdx === idx ? styles.inningsTabActive : ""} ${inn.isSuperOver ? styles.inningsTabSO : ""}`}
               onClick={() => setSelectedIdx(idx)}
             >
-              {getInningsLabel(inn, idx)}
+              {getInningsLabel(match, inn, idx)}
             </button>
           ))}
         </div>
@@ -83,7 +94,7 @@ const OversTimeline = ({ match }) => {
 
       {/* ── Innings title ─────────────────────────────────── */}
       <div className={styles.inningsTitle}>
-        {getInningsFullLabel(currentInnings, safeIdx)}
+        {getInningsFullLabel(match, currentInnings, safeIdx)}
         <span className={styles.inningsSummary}>
           {currentInnings.totalRuns}-{currentInnings.wickets} (
           {Math.floor(currentInnings.balls / 6)}.{currentInnings.balls % 6} ov)
@@ -91,7 +102,7 @@ const OversTimeline = ({ match }) => {
       </div>
 
       {/* ── Ball-by-ball timeline ─────────────────────────── */}
-      <InningsTimeline  rules={match.rules} innings={currentInnings} />
+      <InningsTimeline match={match} innings={currentInnings} />
     </div>
   );
 };
@@ -99,7 +110,7 @@ const OversTimeline = ({ match }) => {
 /* ─────────────────────────────────────────────────────────────
    InningsTimeline — renders one innings' over list
 ───────────────────────────────────────────────────────────── */
-function InningsTimeline({ rules,innings }) {
+function InningsTimeline({ match, innings }) {
   const [expandedOver, setExpandedOver] = useState(null);
 
   if (!innings.ballByBall || innings.ballByBall.length === 0) {
@@ -192,7 +203,7 @@ function InningsTimeline({ rules,innings }) {
                       key={bIdx}
                       className={`${styles.miniChip} ${getChipClass(ball, styles)}`}
                     >
-                      {formatMiniResult(rules,ball)}
+                      {formatMiniResult(match, ball)}
                     </span>
                   ))}
                 </div>
@@ -241,7 +252,7 @@ function InningsTimeline({ rules,innings }) {
                       <div
                         className={`${styles.detailChip} ${getChipClass(ball, styles)}`}
                       >
-                        {formatMiniResult(rules,ball)}
+                        {formatMiniResult(match, ball)}
                       </div>
                     </div>
                   ))}
@@ -257,24 +268,9 @@ function InningsTimeline({ rules,innings }) {
 /* ─────────────────────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────────────────────── */
-const formatMiniResult = (rules,ball) => {
-  if (ball.isWicket) return "W";
-
-  if (ball.type === "WIDE") {
-    let wideRuns = ball.runs - (rules.wide.extraRun ? 1 : 0);
-
-    return wideRuns > 0 ? `${wideRuns}Wd` : "Wd";
-  }
-
-  if (ball.type === "NO_BALL") {
-
-    let noBallRuns = ball.runs - (rules.noBall.extraRun ? 1 : 0);
-    return noBallRuns > 0 ? `${noBallRuns}Nb` : "Nb";
-  }
-
-  if (ball.runs === 0) return "•";
-
-  return ball.runs;
+const formatMiniResult = (match, ball) => {
+  if (ball.runs === 0 && !ball.isWicket) return "•";
+  return getBallPresentation(ball, match).label;
 };
 
 const getChipClass = (ball, styles) => {

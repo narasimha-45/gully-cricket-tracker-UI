@@ -1,0 +1,199 @@
+.card {
+  width: 100%;
+  margin-bottom: 12px;
+  padding: 18px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 90% 12%, rgba(255, 255, 255, 0.13), transparent 24%),
+    linear-gradient(135deg, var(--color-indigo-900), var(--color-indigo-700));
+  color: var(--color-white);
+  box-shadow: 0 14px 34px rgba(67, 56, 202, 0.25);
+  box-sizing: border-box;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 7px;
+  min-width: 0;
+}
+
+.title {
+  min-width: 0;
+  margin: 0;
+  font-size: clamp(15px, 4vw, 18px);
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.liveBadge,
+.formatPill,
+.superOverBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.liveBadge {
+  padding: 3px 7px;
+  background: rgba(239, 68, 68, 0.86);
+  color: var(--color-white);
+  font-size: 9px;
+  font-weight: 850;
+  animation: pulse 1.3s infinite;
+}
+
+.formatPill {
+  min-height: 25px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.12);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.actionButton {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--color-white);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.scoreRows {
+  display: grid;
+  gap: 5px;
+  margin-top: 13px;
+}
+
+.scoreRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 24px;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 13px;
+}
+
+.current {
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.future {
+  opacity: 0.52;
+}
+
+.scoreValue {
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+  font-weight: 750;
+}
+
+.yetToBat {
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.sectionDivider {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+  margin: 5px 0 1px;
+}
+
+.sectionLine {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.sectionLabel {
+  color: var(--color-red-300);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.superOverTeam {
+  color: var(--color-red-200);
+}
+
+.status {
+  margin-top: 10px;
+  padding-top: 9px;
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.statusRow,
+.testStatusLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.statusCenter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 3px;
+  text-align: center;
+}
+
+.resultText {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.superOverBadge {
+  padding: 2px 7px;
+  background: rgba(239, 68, 68, 0.22);
+  color: var(--color-red-200);
+  font-size: 8px;
+  font-weight: 850;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+
+@media (max-width: 520px) {
+  .card {
+    padding: 15px;
+    border-radius: 19px;
+  }
+
+  .formatPill {
+    order: 3;
+  }
+}

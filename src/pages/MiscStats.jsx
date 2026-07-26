@@ -4,7 +4,7 @@ import { useSeasonStats } from "../context/SeasonStatsContext";
 import { formatName } from "../utils/helpers";
 import LoadingState from "../components/common/LoadingState";
 import EmptyState from "../components/common/EmptyState";
-import { api } from "../components/common/api";
+import { api } from "../api";
 
 export default function MiscStats({ isOverall = false }) {
   const { seasonId } = useParams();
@@ -177,7 +177,7 @@ export default function MiscStats({ isOverall = false }) {
           }}
         >
           <span
-            style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
+            style={{ ...playerCell, cursor: "pointer", color: "var(--color-indigo-600)" }}
             onClick={() =>
               navigate(`/player/${encodeURIComponent(p.playerId)}`)
             }
@@ -244,11 +244,11 @@ const headerRow = {
 
   fontWeight: 700,
 
-  color: "#64748b",
+  color: "var(--color-slate-500)",
 };
 
 const dataRow = {
-  background: "#ffffff",
+  background: "var(--color-white)",
 
   padding: "14px",
 
@@ -256,7 +256,7 @@ const dataRow = {
 
   boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
 
-  border: "1px solid #eef2ff",
+  border: "1px solid var(--color-indigo-50)",
 
   fontSize: 14,
 };
@@ -276,7 +276,7 @@ const playerHeader = {
 const playerCell = {
   fontWeight: 700,
 
-  color: "#111827",
+  color: "var(--color-gray-900)",
 
   textAlign: "left",
 
@@ -288,7 +288,7 @@ const center = {
 
   fontWeight: 600,
 
-  color: "#374151",
+  color: "var(--color-gray-700)",
 };
 
 const mom = {
@@ -296,5 +296,5 @@ const mom = {
 
   fontWeight: 800,
 
-  color: "#4338ca",
+  color: "var(--color-indigo-700)",
 };

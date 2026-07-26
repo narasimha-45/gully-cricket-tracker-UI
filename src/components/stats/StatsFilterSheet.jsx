@@ -133,7 +133,7 @@ const backdrop = {
 
 const sheet = {
   width: "100%",
-  background: "#ffffff",
+  background: "var(--color-white)",
   borderTopLeftRadius: 30,
   borderTopRightRadius: 30,
   padding: "10px 18px 18px",
@@ -164,7 +164,7 @@ const headerLeft = {
 const title = {
   fontSize: 22,
   fontWeight: 800,
-  color: "#111827",
+  color: "var(--color-gray-900)",
 };
 
 const resetBtn = {
@@ -173,7 +173,7 @@ const resetBtn = {
   display: "flex",
   alignItems: "center",
   gap: 6,
-  color: "#4338ca",
+  color: "var(--color-indigo-700)",
   fontWeight: 700,
   fontSize: 15,
 };
@@ -188,32 +188,32 @@ const filterRow = {
   justifyContent: "space-between",
   alignItems: "center",
   padding: "18px 0",
-  borderBottom: "1px solid #f1f5f9",
+  borderBottom: "1px solid var(--color-slate-100)",
 };
 
 const label = {
   fontSize: 16,
   fontWeight: 700,
-  color: "#111827",
+  color: "var(--color-gray-900)",
 };
 
 const select = {
   minWidth: 120,
   height: 42,
   borderRadius: 12,
-  border: "1px solid #e5e7eb",
-  background: "#f8fafc",
+  border: "1px solid var(--color-gray-200)",
+  background: "var(--color-slate-50)",
   padding: "0 14px",
   fontSize: 15,
   fontWeight: 700,
-  color: "#4338ca",
+  color: "var(--color-indigo-700)",
   outline: "none",
 };
 
 const footer = {
   position: "sticky",
   bottom: 0,
-  background: "#ffffff",
+  background: "var(--color-white)",
   paddingTop: 18,
 };
 
@@ -223,8 +223,8 @@ const applyBtn = {
   border: "none",
   borderRadius: 18,
   background:
-    "linear-gradient(135deg,#4f46e5,#4338ca)",
-  color: "#ffffff",
+    "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
+  color: "var(--color-white)",
   fontSize: 18,
   fontWeight: 800,
   boxShadow:

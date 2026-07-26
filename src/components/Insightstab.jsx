@@ -3,7 +3,7 @@ import { useState } from "react";
 import { deriveInsights } from "../utils/deriveInsights";
 import styles from "./InsightsTab.module.css";
 
-const INN_COLORS = ["#4f46e5", "#f59e0b", "#dc2626", "#16a34a"];
+const INN_COLORS = ["var(--color-indigo-600)", "var(--color-amber-500)", "var(--color-red-600)", "var(--color-green-600)"];
 
 /** Convert ball count → overs string: 7 balls → "1.1", 12 → "2.0" */
 function ballsToOvers(balls) {
@@ -173,12 +173,12 @@ function LineGraph({ oversByInnings, totalOvers }) {
               <line
                 x1={0} y1={yScale(t).toFixed(1)}
                 x2={chartW} y2={yScale(t).toFixed(1)}
-                stroke="#e2e8f0" strokeWidth="1"
+                stroke="var(--color-slate-200)" strokeWidth="1"
               />
               <text
                 x={-6} y={yScale(t).toFixed(1)}
                 textAnchor="end" dominantBaseline="middle"
-                fontSize="9" fill="#94a3b8"
+                fontSize="9" fill="var(--color-slate-400)"
               >
                 {t}
               </text>
@@ -193,7 +193,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
               y={chartH + 14}
               textAnchor="middle"
               fontSize="9"
-              fill="#94a3b8"
+              fill="var(--color-slate-400)"
             >
               {t}
             </text>
@@ -218,7 +218,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
                     key={p.over}
                     cx={xScale(p.over).toFixed(1)}
                     cy={yScale(p.cumulative).toFixed(1)}
-                    r="4" fill="#ef4444" stroke="white" strokeWidth="1.5"
+                    r="4" fill="var(--color-red-500)" stroke="white" strokeWidth="1.5"
                   />
                 ))}
               </g>
@@ -230,13 +230,13 @@ function LineGraph({ oversByInnings, totalOvers }) {
             <line
               x1={tooltip.x - PAD.left} y1={0}
               x2={tooltip.x - PAD.left} y2={chartH}
-              stroke="#64748b" strokeWidth="1" strokeDasharray="3,3"
+              stroke="var(--color-slate-500)" strokeWidth="1" strokeDasharray="3,3"
             />
           )}
 
           {/* Axes */}
-          <line x1={0} y1={0} x2={0} y2={chartH} stroke="#e2e8f0" strokeWidth="1" />
-          <line x1={0} y1={chartH} x2={chartW} y2={chartH} stroke="#e2e8f0" strokeWidth="1" />
+          <line x1={0} y1={0} x2={0} y2={chartH} stroke="var(--color-slate-200)" strokeWidth="1" />
+          <line x1={0} y1={chartH} x2={chartW} y2={chartH} stroke="var(--color-slate-200)" strokeWidth="1" />
         </g>
 
         {/* Tooltip box */}
@@ -253,10 +253,10 @@ function LineGraph({ oversByInnings, totalOvers }) {
               <rect
                 x={bx} y={by} width={boxW} height={boxH}
                 rx="6" fill="white"
-                stroke="#e2e8f0" strokeWidth="1"
+                stroke="var(--color-slate-200)" strokeWidth="1"
                 style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.12))" }}
               />
-              <text x={bx + 8} y={by + 13} fontSize="9" fontWeight="700" fill="#475569">
+              <text x={bx + 8} y={by + 13} fontSize="9" fontWeight="700" fill="var(--color-slate-600)">
                 Over {tooltip.over}
               </text>
               {tooltip.items.map((it, idx) => (
@@ -267,7 +267,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
                   />
                   <text
                     x={bx + 18} y={by + 26 + idx * lineH}
-                    fontSize="9" fontWeight="600" fill="#1e293b"
+                    fontSize="9" fontWeight="600" fill="var(--color-slate-800)"
                   >
                     {it.team}: {it.runs}/{it.wickets}
                   </text>

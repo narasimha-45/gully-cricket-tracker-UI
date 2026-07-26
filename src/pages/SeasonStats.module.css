@@ -39,15 +39,15 @@
 
   font-weight: 600;
 
-  color: #64748b;
+  color: var(--color-slate-500);
 
-  background: #f8fafc;
+  background: var(--color-slate-50);
 
   white-space: nowrap;
 
   transition: 0.18s ease;
 
-  border: 1px solid #eef2ff;
+  border: 1px solid var(--color-indigo-50);
 }
 
 
@@ -62,14 +62,14 @@
 
   font-weight: 700;
 
-  color: #fff;
+  color: var(--color-white);
 
   white-space: nowrap;
 
   background: linear-gradient(
     135deg,
-    #4f46e5,
-    #4338ca
+    var(--color-indigo-600),
+    var(--color-indigo-700)
   );
 
   box-shadow: 0 4px 12px rgba(67, 56, 202, 0.18);

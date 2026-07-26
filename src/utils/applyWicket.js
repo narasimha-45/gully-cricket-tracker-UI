@@ -4,6 +4,35 @@ import { handleOverEnd } from "./matchEvents";
 import { saveMatch } from "../storage/matchDB";
 import { evaluateMatchState } from "./matchStateHandlers";
 
+const BOWLER_WICKETS = new Set([
+  "BOWLED",
+  "CAUGHT",
+  "LBW",
+  "STUMPED",
+  "HIT_WICKET",
+  "SPECIAL",
+]);
+
+const ensureBattingStats = (innings, player) => {
+  innings.battingStats[player] ||= {
+    battingPosition: Object.keys(innings.battingStats).length + 1,
+    runs: 0,
+    balls: 0,
+    fours: 0,
+    sixes: 0,
+    dismissal: null,
+  };
+};
+
+const ensureBowlingStats = (innings, player) => {
+  innings.bowlingStats[player] ||= {
+    balls: 0,
+    runs: 0,
+    wickets: 0,
+    maidens: 0,
+  };
+};
+
 export const applyWicket = ({
   wicketType,
   outBatsman,
@@ -15,22 +44,37 @@ export const applyWicket = ({
   setExtraMode,
 }) => {
   if (match.status === "COMPLETED") return;
+  if (!outBatsman || !match.live?.bowler || !match.live?.striker) return;
+
   const updated = deepCopy(match);
   const live = updated.live;
   const innings = updated.innings[live.inningsIndex];
 
-  const isExtra = extraMode === "NO_BALL" || extraMode === "WIDE";
-
   takeSnapshot(updated, "WICKET", extraMode);
 
   innings.thisOver ||= [];
+  innings.ballByBall ||= [];
+  innings.dismissals ||= {};
+  innings.extras ||= { wides: 0, noBalls: 0 };
 
-  /* ---------- BALL COUNT ---------- */
-  const countsBall = extraMode === "NORMAL";
+  const isWide = extraMode === "WIDE";
+  const isNoBall = extraMode === "NO_BALL";
+  const isLegal = !isWide && !isNoBall;
+  const automaticExtra =
+    (isWide && match.rules?.wide?.extraRun) ||
+    (isNoBall && match.rules?.noBall?.extraRun)
+      ? 1
+      : 0;
+  const totalRuns = Number(runs || 0) + automaticExtra;
 
-  /* ---------- WICKET ---------- */
-  innings.wickets++;
-  live.outBatsmen.push(outBatsman);
+  ensureBattingStats(innings, live.striker);
+  ensureBattingStats(innings, outBatsman);
+  ensureBowlingStats(innings, live.bowler);
+
+  innings.wickets += 1;
+  if (!live.outBatsmen.includes(outBatsman)) {
+    live.outBatsmen.push(outBatsman);
+  }
 
   innings.thisOver.push({
     type: "WICKET",
@@ -38,20 +82,20 @@ export const applyWicket = ({
     outBatsman,
     helper,
     extra: extraMode,
-    runs: runs,
+    runs: totalRuns,
   });
 
-  // ---------------- BALL BY BALL (FULL HISTORY) ----------------
-  innings.ballByBall ||= [];
   innings.ballByBall.push({
     over: Math.floor(innings.balls / 6),
-    ballInOver: (innings.balls % 6) + (countsBall ? 1 : 0),
-    actualBallNum: innings.balls + (countsBall ? 1 : 0),
+    ballInOver: isLegal ? (innings.balls % 6) + 1 : innings.balls % 6,
+    actualBallNum: isLegal ? innings.balls + 1 : innings.balls,
     striker: live.striker,
     nonStriker: live.nonStriker,
     bowler: live.bowler,
-    runs,
+    runs: totalRuns,
+    battingRuns: Number(runs || 0),
     type: "WICKET",
+    extra: extraMode,
     wicket: {
       type: wicketType,
       outBatsman,
@@ -61,89 +105,53 @@ export const applyWicket = ({
     timestamp: Date.now(),
   });
 
-  innings.battingStats[outBatsman] ||= {
-    runs: 0,
-    balls: 0,
-    fours: 0,
-    sixes: 0,
-    dismissal: null,
-  };
+  innings.totalRuns += totalRuns;
+  innings.bowlingStats[live.bowler].runs += totalRuns;
 
-  innings.totalRuns += runs;
-
-  if (extraMode === "NO_BALL" && match.rules?.noBall?.extraRun) {
-    innings.totalRuns += 1;
+  // Completed runs on a run-out belong to the striker. The automatic
+  // wide/no-ball penalty is an extra and is not credited to the batter.
+  if (!isWide) {
+    innings.battingStats[live.striker].runs += Number(runs || 0);
   }
-  if (extraMode === "WIDE" && match.rules?.wide?.extraRun) {
-    innings.totalRuns += 1;
-  }
-
-  innings.battingStats[live.striker].runs += runs;
-
-  if (extraMode !== "WIDE") {
+  if (isLegal) {
     innings.battingStats[live.striker].balls += 1;
   }
 
-  innings.battingStats[outBatsman].dismissal = {
+  if (isWide) innings.extras.wides += totalRuns;
+  if (isNoBall) innings.extras.noBalls += automaticExtra;
+
+  const bowlerGetsWicket = BOWLER_WICKETS.has(wicketType) && !isNoBall;
+  if (bowlerGetsWicket) innings.bowlingStats[live.bowler].wickets += 1;
+
+  const dismissal = {
     type: wicketType,
     bowler: live.bowler,
     fielder: helper || null,
   };
+  innings.battingStats[outBatsman].dismissal = dismissal;
+  innings.dismissals[outBatsman] = dismissal;
 
-  /* ---------- BOWLER CREDIT ---------- */
-  const bowlerGetsWicket =
-    ["BOWLED", "CAUGHT", "LBW", "STUMPED", "HIT_WICKET", "SPECIAL"].includes(
-      wicketType,
-    ) && extraMode !== "NO_BALL";
-
-  if (bowlerGetsWicket) {
-    innings.bowlingStats[live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-    innings.bowlingStats[live.bowler].wickets++;
-    innings.bowlingStats[live.bowler].runs += runs;
-    if (extraMode === "NO_BALL" && match.rules?.noBall?.extraRun) {
-      innings.bowlingStats[live.bowler].runs += 1;
-    }
-    if (extraMode === "WIDE" && match.rules?.wide?.extraRun) {
-      innings.bowlingStats[live.bowler].runs += 1;
-    }
+  if (isLegal) {
+    innings.balls += 1;
+    innings.bowlingStats[live.bowler].balls += 1;
   }
 
-  innings.bowlingStats[live.bowler] ||= {
-    balls: 0,
-    runs: 0,
-    wickets: 0,
-    maidens: 0,
-  };
-  innings.dismissals ||= {};
-
-  innings.dismissals[outBatsman] = {
-    type: wicketType,
-    bowler: live.bowler,
-    fielder: helper || null,
-  };
-
-  /* ---------- NEXT BATSMAN ---------- */
-  // REMOVE BATSMAN REGARDLESS OF BALL COUNT
-  if (outBatsman === live.striker) {
-    live.striker = null;
-  } else if (outBatsman === live.nonStriker) {
-    live.nonStriker = null;
+  // Batters cross after an odd number of completed runs. Remove the
+  // dismissed batter only after applying that end change.
+  if (Number(runs || 0) % 2 === 1) {
+    [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
   }
 
-  /* ---------- RESET EXTRA ---------- */
+  if (live.striker === outBatsman) live.striker = null;
+  if (live.nonStriker === outBatsman) live.nonStriker = null;
+
   setExtraMode("NORMAL");
 
-  if (countsBall) {
-    innings.balls++;
-    innings.bowlingStats[live.bowler].balls++;
-
-    handleOverEnd(updated, live, innings);
-    evaluateMatchState(updated,setMatch);
+  const matchResolved = evaluateMatchState(updated, setMatch);
+  if (!matchResolved && updated.status !== "COMPLETED") {
+    if (isLegal && innings.balls > 0 && innings.balls % 6 === 0) {
+      handleOverEnd(updated, live, innings);
+    }
   }
 
   updated.updatedAt = Date.now();

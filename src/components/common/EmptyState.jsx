@@ -16,13 +16,13 @@ const wrap = {
 const titleStyle = {
   fontSize: 16,
   fontWeight: 700,
-  color: "#111827",
+  color: "var(--color-gray-900)",
   margin: 0,
 };
 
 const subtitleStyle = {
   marginTop: 6,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   fontSize: 14,
   margin: "6px 0 0",
 };

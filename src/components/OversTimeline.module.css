@@ -20,11 +20,11 @@
   min-width: 64px;
   padding: 8px 10px;
   border-radius: 10px;
-  border: 1.5px solid #e2e8f0;
+  border: 1.5px solid var(--color-slate-200);
   background: white;
   font-size: 12px;
   font-weight: 700;
-  color: #64748b;
+  color: var(--color-slate-500);
   cursor: pointer;
   text-align: center;
   transition: all 0.15s;
@@ -32,13 +32,13 @@
 }
 
 .inningsTab:hover:not(.inningsTabActive) {
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .inningsTabActive {
-  background: #312e81;
+  background: var(--color-indigo-900);
   color: white;
-  border-color: #312e81;
+  border-color: var(--color-indigo-900);
 }
 
 /* Super over tab gets a red tint when inactive */
@@ -48,8 +48,8 @@
 }
 
 .inningsTabSO.inningsTabActive {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--color-red-600);
+  border-color: var(--color-red-600);
   color: white;
 }
 
@@ -60,14 +60,14 @@
   align-items: center;
   font-size: 13px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-slate-800);
   padding: 4px 2px;
 }
 
 .inningsSummary {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-slate-500);
   font-variant-numeric: tabular-nums;
 }
 
@@ -76,21 +76,21 @@
   background: white;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-slate-200);
 }
 
 /* ── Table header ───────────────────────────────────────────── */
 .tableHeader {
   display: grid;
   grid-template-columns: 58px minmax(0, 1fr) 52px;
-  background: #f8fafc;
+  background: var(--color-slate-50);
   padding: 10px 14px;
   font-size: 11px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--color-slate-200);
 }
 
 .colOver {
@@ -109,7 +109,7 @@
 
 /* ── Over row wrapper ───────────────────────────────────────── */
 .overWrapper {
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-slate-100);
 }
 .overWrapper:last-child {
   border-bottom: none;
@@ -126,32 +126,32 @@
 }
 
 .ovBowler {
-  color: #1e293b;
+  color: var(--color-slate-800);
   font-weight: 700;
 }
 
 .ovBatters {
-  color: #64748b;
+  color: var(--color-slate-500);
 }
 
 .overSummaryRow:hover,
 .overSummaryRow:active {
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .overSummaryRow.expanded {
-  background: #f8fafc;
+  background: var(--color-slate-50);
 }
 
 .ovNum {
   font-size: 14px;
   font-weight: 700;
-  color: #1e293b;
+  color: var(--color-slate-800);
 }
 
 .ovScore {
   font-size: 11px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   margin-top: 2px;
   font-variant-numeric: tabular-nums;
 }
@@ -159,7 +159,7 @@
 .ovMatchup {
   font-size: 12px;
   font-weight: 600;
-  color: #64748b;
+  color: var(--color-slate-500);
   margin-bottom: 7px;
   line-height: 1.35;
   word-break: break-word;
@@ -181,13 +181,13 @@
 .ovTotalRuns {
   font-size: 18px;
   font-weight: 800;
-  color: #1e293b;
+  color: var(--color-slate-800);
   font-variant-numeric: tabular-nums;
 }
 
 .chevron {
   font-size: 14px;
-  color: #cbd5e1;
+  color: var(--color-slate-300);
   line-height: 1;
   transition: transform 0.2s;
   display: inline-block;
@@ -212,7 +212,7 @@
 /* ── Expanded detail ────────────────────────────────────────── */
 .detailedBalls {
   background: #fafafa;
-  border-top: 1px dashed #e2e8f0;
+  border-top: 1px dashed var(--color-slate-200);
   padding: 4px 14px 12px;
 }
 
@@ -221,7 +221,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 9px 0;
-  border-bottom: 1px solid #f1f5f9;
+  border-bottom: 1px solid var(--color-slate-100);
   gap: 8px;
 }
 
@@ -239,23 +239,23 @@
 .detailNum {
   font-size: 10px;
   font-weight: 700;
-  color: #94a3b8;
+  color: var(--color-slate-400);
   font-variant-numeric: tabular-nums;
 }
 
 .detailText {
   font-size: 13px;
-  color: #64748b;
+  color: var(--color-slate-500);
   line-height: 1.4;
 }
 
 .detailText strong {
-  color: #1e293b;
+  color: var(--color-slate-800);
   font-weight: 700;
 }
 
 .wicketText {
-  color: #dc2626;
+  color: var(--color-red-600);
   font-weight: 700;
 }
 
@@ -278,21 +278,21 @@
 
 /* ── Chip color variants ────────────────────────────────────── */
 .normal {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #e2e8f0;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  border: 1px solid var(--color-slate-200);
 }
 .dot {
-  background: #f1f5f9;
-  color: #94a3b8;
-  border: 1px solid #e2e8f0;
+  background: var(--color-slate-100);
+  color: var(--color-slate-400);
+  border: 1px solid var(--color-slate-200);
 }
 .four {
   background: #3b82f6;
   color: white;
 }
 .six {
-  background: #7c3aed;
+  background: var(--color-violet-600);
   color: white;
 }
 .wicket {
@@ -300,11 +300,11 @@
   color: white;
 }
 .wide {
-  background: #f59e0b;
-  color: #78350f;
+  background: var(--color-amber-500);
+  color: var(--color-amber-900);
 }
 .noBall {
-  background: #f97316;
+  background: var(--color-orange-500);
   color: #7c2d12;
 }
 
@@ -312,20 +312,20 @@
 .emptyState {
   text-align: center;
   padding: 40px 20px;
-  color: #64748b;
+  color: var(--color-slate-500);
   background: white;
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-slate-200);
 }
 
 .emptyState p {
   font-size: 15px;
   font-weight: 600;
-  color: #475569;
+  color: var(--color-slate-600);
   margin-bottom: 6px;
 }
 
 .emptyState span {
   font-size: 13px;
-  color: #94a3b8;
+  color: var(--color-slate-400);
 }

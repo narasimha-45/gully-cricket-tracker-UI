@@ -398,7 +398,7 @@ const StatRow = ({ label, v1, v2, isHighBetter = true }) => {
       <div
         style={{
           ...comparisonValue,
-          color: isBetter1 ? "#4338ca" : "#0f172a",
+          color: isBetter1 ? "var(--color-indigo-700)" : "var(--color-slate-900)",
           fontWeight: isBetter1 ? 800 : 600,
         }}
       >
@@ -410,7 +410,7 @@ const StatRow = ({ label, v1, v2, isHighBetter = true }) => {
       <div
         style={{
           ...comparisonValue,
-          color: isBetter2 ? "#4338ca" : "#0f172a",
+          color: isBetter2 ? "var(--color-indigo-700)" : "var(--color-slate-900)",
           fontWeight: isBetter2 ? 800 : 600,
         }}
       >
@@ -440,7 +440,7 @@ const comparisonPlayer = {
 const comparisonPlayerName = {
   fontSize: 15,
   fontWeight: 800,
-  color: "#0f172a",
+  color: "var(--color-slate-900)",
   textTransform: "capitalize",
   textAlign: "center",
 };
@@ -449,8 +449,8 @@ const vsPill = {
   width: 38,
   height: 38,
   borderRadius: "50%",
-  background: "#eef2ff",
-  color: "#4338ca",
+  background: "var(--color-indigo-50)",
+  color: "var(--color-indigo-700)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -463,7 +463,7 @@ const sectionTitle = {
   marginBottom: 10,
   fontSize: 11,
   fontWeight: 800,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   letterSpacing: ".08em",
 };
@@ -473,7 +473,7 @@ const comparisonLabel = {
   textAlign: "center",
   fontSize: 10,
   fontWeight: 800,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   letterSpacing: ".05em",
 };
@@ -489,11 +489,11 @@ const rowStyle = {
   alignItems: "center",
   justifyContent: "space-between",
   padding: "10px 0",
-  borderBottom: "1px solid #f8fafc",
+  borderBottom: "1px solid var(--color-slate-50)",
 };
 
 const statsTable = {
-  background: "#fff",
+  background: "var(--color-white)",
   borderRadius: 16,
   overflow: "hidden",
 };
@@ -502,7 +502,7 @@ const comparisonCard = {
   background: "white",
   padding: 20,
   borderRadius: 24,
-  border: "1px solid #f1f5f9",
+  border: "1px solid var(--color-slate-100)",
   boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
 };
 
@@ -515,7 +515,7 @@ const container = {
 
 const modeTabs = {
   display: "flex",
-  background: "#f1f5f9",
+  background: "var(--color-slate-100)",
   padding: 4,
   borderRadius: 14,
   gap: 4,
@@ -528,7 +528,7 @@ const modeTab = {
   background: "transparent",
   fontSize: 13,
   fontWeight: 600,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   cursor: "pointer",
   borderRadius: 10,
   transition: "all 0.2s",
@@ -537,7 +537,7 @@ const modeTab = {
 const activeModeTab = {
   ...modeTab,
   background: "white",
-  color: "#4f46e5",
+  color: "var(--color-indigo-600)",
   boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
 };
 
@@ -545,7 +545,7 @@ const card = {
   background: "white",
   padding: "24px",
   borderRadius: 24,
-  border: "1px solid #f1f5f9",
+  border: "1px solid var(--color-slate-100)",
   boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
   textAlign: "center",
 };
@@ -555,9 +555,9 @@ const title = {
   margin: "0 0 4px",
   fontSize: 20,
   fontWeight: 800,
-  color: "#0f172a",
+  color: "var(--color-slate-900)",
 };
-const sub = { margin: "0 0 24px", color: "#64748b", fontSize: 14 };
+const sub = { margin: "0 0 24px", color: "var(--color-slate-500)", fontSize: 14 };
 
 const inputRow = {
   display: "flex",
@@ -571,7 +571,7 @@ const labelStyle = {
   display: "block",
   fontSize: 11,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   marginBottom: 6,
   paddingLeft: 4,
@@ -580,15 +580,15 @@ const input = {
   width: "100%",
   padding: "12px 14px",
   borderRadius: 12,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   fontSize: 14,
   outline: "none",
-  background: "#f8fafc",
+  background: "var(--color-slate-50)",
   boxSizing: "border-box",
 };
 const vs = {
   fontWeight: 900,
-  color: "#cbd5e1",
+  color: "var(--color-slate-300)",
   fontSize: 11,
   paddingBottom: 14,
 };
@@ -598,7 +598,7 @@ const btn = {
   padding: "14px",
   borderRadius: 14,
   border: "none",
-  background: "linear-gradient(135deg, #4f46e5, #3730a3)",
+  background: "linear-gradient(135deg, var(--color-indigo-600), #3730a3)",
   color: "white",
   fontWeight: 700,
   cursor: "pointer",
@@ -616,12 +616,12 @@ const resultCard = {
   background: "white",
   padding: 24,
   borderRadius: 24,
-  border: "1px solid #f1f5f9",
+  border: "1px solid var(--color-slate-100)",
 };
 const resultHeader = {
   fontSize: 12,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   marginBottom: 16,
   textAlign: "center",
@@ -629,23 +629,23 @@ const resultHeader = {
 const statsGrid = { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 };
 const statBox = {
   padding: 20,
-  background: "#f8fafc",
+  background: "var(--color-slate-50)",
   borderRadius: 16,
   textAlign: "center",
 };
-const statVal = { fontSize: 32, fontWeight: 900, color: "#0f172a" };
+const statVal = { fontSize: 32, fontWeight: 900, color: "var(--color-slate-900)" };
 const statLabel = {
   fontSize: 11,
   fontWeight: 700,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   textTransform: "uppercase",
   marginTop: 4,
 };
-const statDesc = { fontSize: 11, color: "#94a3b8", marginTop: 2 };
+const statDesc = { fontSize: 11, color: "var(--color-slate-400)", marginTop: 2 };
 const futureNote = {
   marginTop: 16,
   padding: 12,
-  background: "#eff6ff",
+  background: "var(--color-blue-50)",
   color: "#1e40af",
   borderRadius: 12,
   fontSize: 12,
@@ -654,14 +654,14 @@ const futureNote = {
 const breakdownBox = {
   marginTop: 20,
   padding: 16,
-  background: "#f8fafc",
+  background: "var(--color-slate-50)",
   borderRadius: 16,
-  border: "1px solid #f1f5f9",
+  border: "1px solid var(--color-slate-100)",
 };
 const breakdownTitle = {
   fontSize: 11,
   fontWeight: 800,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   marginBottom: 12,
   textAlign: "center",
@@ -680,10 +680,10 @@ const breakdownItem = {
 };
 const breakdownType = {
   fontSize: 13,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   textTransform: "capitalize",
 };
-const breakdownCount = { fontSize: 13, fontWeight: 700, color: "#1e293b" };
+const breakdownCount = { fontSize: 13, fontWeight: 700, color: "var(--color-slate-800)" };
 
 
 const comparisonGrid = {
@@ -702,22 +702,22 @@ const playerHeaderCol = {
 const avatarCircle = {
   width: 44,
   height: 44,
-  background: "#f1f5f9",
+  background: "var(--color-slate-100)",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   fontSize: 18,
   fontWeight: 700,
-  color: "#4f46e5",
+  color: "var(--color-indigo-600)",
 };
 const playerNameLabel = {
   fontSize: 14,
   fontWeight: 700,
-  color: "#1e293b",
+  color: "var(--color-slate-800)",
   textTransform: "capitalize",
 };
-const vsDivider = { fontSize: 12, fontWeight: 900, color: "#e2e8f0" };
+const vsDivider = { fontSize: 12, fontWeight: 900, color: "var(--color-slate-200)" };
 
 
 const valStyle = { flex: 1, textAlign: "center", fontSize: 16 };
@@ -726,10 +726,10 @@ const rowLabel = {
   textAlign: "center",
   fontSize: 11,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
 };
-const tableDivider = { height: 1, background: "#f1f5f9", margin: "4px 0" };
+const tableDivider = { height: 1, background: "var(--color-slate-100)", margin: "4px 0" };
 
 const suggestionDropdown = {
   position: "absolute",
@@ -740,7 +740,7 @@ const suggestionDropdown = {
   borderRadius: 12,
   boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   zIndex: 100,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   maxHeight: 200,
   overflowY: "auto",
   boxSizing: "border-box",
@@ -749,6 +749,6 @@ const suggestionItem = {
   padding: "10px 14px",
   fontSize: 13,
   cursor: "pointer",
-  borderBottom: "1px solid #f1f5f9",
-  color: "#334155",
+  borderBottom: "1px solid var(--color-slate-100)",
+  color: "var(--color-slate-700)",
 };

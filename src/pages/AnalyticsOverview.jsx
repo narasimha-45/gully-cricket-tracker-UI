@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
+import { api } from "../api";
 
 export default function AnalyticsOverview() {
   const { globalFilter } = useOutletContext();
@@ -15,14 +16,12 @@ export default function AnalyticsOverview() {
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const suffix = globalFilter && globalFilter !== "all" ? `/${globalFilter}` : "";
-      
-      const [batRes, bowlRes] = await Promise.all([
-        fetch(`${API_ENDPOINTS.BATTING_LEADERBOARD}${suffix}`),
-        fetch(`${API_ENDPOINTS.BOWLING_LEADERBOARD}${suffix}`)
-      ]);
+      const seasonId = globalFilter && globalFilter !== "all" ? globalFilter : undefined;
 
-      const [batJson, bowlJson] = await Promise.all([batRes.json(), bowlRes.json()]);
+      const [batJson, bowlJson] = await Promise.all([
+        api.stats.getBattingLeaderboard({ seasonId }),
+        api.stats.getBowlingLeaderboard({ seasonId }),
+      ]);
 
       setData({
         topBatters: (batJson.data || []).slice(0, 3),
@@ -38,7 +37,7 @@ export default function AnalyticsOverview() {
   if (loading) return (
     <div style={center}>
       <div style={spinner}></div>
-      <p style={{ marginTop: 12, color: "#64748b" }}>Generating analytics summary...</p>
+      <p style={{ marginTop: 12, color: "var(--color-slate-500)" }}>Generating analytics summary...</p>
     </div>
   );
 
@@ -54,7 +53,7 @@ export default function AnalyticsOverview() {
           {data?.topBatters.map((p, i) => (
             <div 
               key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "#94a3b8" : "#b45309" }}
+              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "var(--color-slate-400)" : "#b45309" }}
               onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
             >
               <div style={rankBadge}>{i + 1}</div>
@@ -76,7 +75,7 @@ export default function AnalyticsOverview() {
           {data?.topBowlers.map((p, i) => (
             <div 
               key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "#94a3b8" : "#b45309" }}
+              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "var(--color-slate-400)" : "#b45309" }}
               onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
             >
               <div style={rankBadge}>{i + 1}</div>
@@ -96,10 +95,10 @@ export default function AnalyticsOverview() {
 }
 
 const center = { display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 0" };
-const spinner = { width: 32, height: 32, border: "3px solid #e2e8f0", borderTop: "3px solid #4f46e5", borderRadius: "50%", animation: "spin 0.8s linear infinite" };
+const spinner = { width: 32, height: 32, border: "3px solid var(--color-slate-200)", borderTop: "3px solid var(--color-indigo-600)", borderRadius: "50%", animation: "spin 0.8s linear infinite" };
 
 const sectionHeader = { display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingLeft: 4 };
-const sectionTitle = { fontSize: 16, fontWeight: 700, color: "#1e293b", margin: 0 };
+const sectionTitle = { fontSize: 16, fontWeight: 700, color: "var(--color-slate-800)", margin: 0 };
 
 const podiumRow = { display: "flex", gap: 10 };
 const podiumCard = { 
@@ -107,7 +106,7 @@ const podiumCard = {
   background: "white", 
   borderRadius: 16, 
   padding: "16px 12px", 
-  border: "1px solid #e2e8f0", 
+  border: "1px solid var(--color-slate-200)", 
   borderTopWidth: 4, 
   textAlign: "center",
   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
@@ -115,19 +114,19 @@ const podiumCard = {
   transition: "transform 0.2s"
 };
 
-const rankBadge = { fontSize: 10, fontWeight: 800, background: "#f1f5f9", color: "#64748b", width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" };
-const playerName = { fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 4, textTransform: "capitalize", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
-const statLabel = { fontSize: 16, fontWeight: 800, color: "#4f46e5", marginBottom: 4 };
-const subStat = { fontSize: 10, color: "#94a3b8", fontWeight: 500 };
+const rankBadge = { fontSize: 10, fontWeight: 800, background: "var(--color-slate-100)", color: "var(--color-slate-500)", width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" };
+const playerName = { fontSize: 14, fontWeight: 700, color: "var(--color-slate-900)", marginBottom: 4, textTransform: "capitalize", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
+const statLabel = { fontSize: 16, fontWeight: 800, color: "var(--color-indigo-600)", marginBottom: 4 };
+const subStat = { fontSize: 10, color: "var(--color-slate-400)", fontWeight: 500 };
 
 const fullLeaderboardBtn = {
   background: "white",
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   padding: "14px",
   borderRadius: 14,
   fontSize: 14,
   fontWeight: 600,
-  color: "#475569",
+  color: "var(--color-slate-600)",
   cursor: "pointer",
   marginTop: 10
 };

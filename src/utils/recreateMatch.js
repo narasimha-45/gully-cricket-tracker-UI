@@ -1,38 +1,32 @@
-import { useNavigate } from "react-router-dom";
 import { saveMatch } from "../storage/matchDB";
 
-export const recreateMatch = async (match,navigate) => {
-    const newMatchId = `match_${Date.now()}`;
-    const newMatch = {
-      id: newMatchId,
-      seasonId: match.seasonId,
-
-      matchType: match.matchType,
-      totalOvers: match.totalOvers,
-      rules: match.rules,
-
-      teams: {
-        teamA: {
-          name: match.teams.teamA.name,
-          players: [...match.teams.teamA.players],
-        },
-        teamB: {
-          name: match.teams.teamB.name,
-          players: [...match.teams.teamB.players],
-        },
+export const recreateMatch = async (match, navigate) => {
+  const newMatchId = `match_${Date.now()}`;
+  const newMatch = {
+    id: newMatchId,
+    seasonId: match.seasonId,
+    matchType: match.matchType,
+    totalOvers: match.totalOvers,
+    testConfig: match.testConfig || null,
+    rules: match.rules,
+    teams: {
+      teamA: {
+        ...match.teams.teamA,
+        players: [...match.teams.teamA.players],
       },
-
-      toss: null,
-      innings: [],
-      live: null,
-
-      status: "setup",
-
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    };
-
-    await saveMatch(newMatch);
-
-    navigate(`/season/${match.seasonId}/match/${newMatchId}/toss`);
+      teamB: {
+        ...match.teams.teamB,
+        players: [...match.teams.teamB.players],
+      },
+    },
+    toss: null,
+    innings: [],
+    live: null,
+    status: "setup",
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
   };
+
+  await saveMatch(newMatch);
+  navigate(`/season/${match.seasonId}/match/${newMatchId}/toss`);
+};

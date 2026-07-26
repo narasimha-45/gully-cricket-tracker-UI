@@ -1,3 +1,5 @@
+import { sameName } from "./matchModel";
+
 export function deriveFieldingStats(match) {
   const fielding = {};
 
@@ -5,10 +7,11 @@ export function deriveFieldingStats(match) {
     for (const d of Object.values(inn.dismissals || {})) {
       if (!d.fielder) continue;
 
-      fielding[d.fielder] ||= { catches: 0, runOuts: 0 };
+      fielding[d.fielder] ||= { catches: 0, runOuts: 0, stumpings: 0 };
 
       if (d.type === "CAUGHT") fielding[d.fielder].catches++;
       if (d.type === "RUN_OUT") fielding[d.fielder].runOuts++;
+      if (d.type === "STUMPED") fielding[d.fielder].stumpings++;
     }
   }
 
@@ -60,17 +63,24 @@ export function calculatePlayerScore(player, match, fieldingStats) {
   if (f) {
     points += (f.catches || 0) * 8;
     points += (f.runOuts || 0) * 10;
+    points += (f.stumpings || 0) * 10;
   }
 
   return points;
 }
 
 export function getWinningTeamPlayers(match) {
-  const winner = match.result.winner;
+  const winner = match.result?.winner;
+  const teamAPlayers = match.teams?.teamA?.players || [];
+  const teamBPlayers = match.teams?.teamB?.players || [];
 
-  return winner === match.teams.teamA.name
-    ? match.teams.teamA.players
-    : match.teams.teamB.players;
+  if (winner === "DRAW" || winner === "TIE") {
+    return [...new Set([...teamAPlayers, ...teamBPlayers])];
+  }
+
+  if (sameName(winner, match.teams?.teamA?.name)) return teamAPlayers;
+  if (sameName(winner, match.teams?.teamB?.name)) return teamBPlayers;
+  return [...new Set([...teamAPlayers, ...teamBPlayers])];
 }
 
 export function calculateManOfTheMatch(match, fieldingStats) {

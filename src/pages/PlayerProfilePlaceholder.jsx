@@ -52,7 +52,7 @@ export default function PlayerProfile() {
         <div
           style={{
             marginTop: 16,
-            color: "#64748b",
+            color: "var(--color-slate-500)",
             fontWeight: 500,
             fontSize: 14,
           }}
@@ -66,13 +66,13 @@ export default function PlayerProfile() {
     return (
       <div style={{ ...S.center, flexDirection: "column", padding: 20 }}>
         <div style={{ fontSize: 56, marginBottom: 16 }}>👤</div>
-        <h2 style={{ margin: "0 0 8px", color: "#0f172a" }}>
+        <h2 style={{ margin: "0 0 8px", color: "var(--color-slate-900)" }}>
           Player not found
         </h2>
         <p
           style={{
             margin: "0 0 24px",
-            color: "#64748b",
+            color: "var(--color-slate-500)",
             maxWidth: 280,
             lineHeight: 1.5,
             textAlign: "center",
@@ -149,7 +149,7 @@ export default function PlayerProfile() {
     <div
       style={{
         padding: "16px 16px 80px",
-        background: "#f8fafc",
+        background: "var(--color-slate-50)",
         minHeight: "100vh",
       }}
     >
@@ -214,7 +214,7 @@ export default function PlayerProfile() {
               style={{
                 fontSize: 22,
                 fontWeight: 700,
-                color: "#0f172a",
+                color: "var(--color-slate-900)",
                 textTransform: "capitalize",
                 letterSpacing: "-0.3px",
               }}
@@ -225,7 +225,7 @@ export default function PlayerProfile() {
               <div
                 style={{
                   fontSize: 12,
-                  color: "#64748b",
+                  color: "var(--color-slate-500)",
                   marginTop: 2,
                   textTransform: "capitalize",
                 }}
@@ -269,21 +269,21 @@ export default function PlayerProfile() {
               style={{
                 fontSize: 11,
                 fontWeight: 700,
-                color: "#64748b",
+                color: "var(--color-slate-500)",
                 textTransform: "uppercase",
                 letterSpacing: "0.06em",
               }}
             >
               Win / Loss
             </span>
-            <span style={{ fontSize: 11, color: "#64748b" }}>
+            <span style={{ fontSize: 11, color: "var(--color-slate-500)" }}>
               {wins}W · {losses}L · {winPct}%
             </span>
           </div>
           <div
             style={{
               height: 8,
-              background: "#f1f5f9",
+              background: "var(--color-slate-100)",
               borderRadius: 4,
               overflow: "hidden",
               display: "flex",
@@ -293,7 +293,7 @@ export default function PlayerProfile() {
               <div
                 style={{
                   width: `${winPct}%`,
-                  background: "linear-gradient(90deg,#10b981,#34d399)",
+                  background: "linear-gradient(90deg,var(--color-emerald-500),#34d399)",
                   borderRadius: "4px 0 0 4px",
                 }}
               />
@@ -302,15 +302,15 @@ export default function PlayerProfile() {
               <div
                 style={{
                   flex: 1,
-                  background: "#fee2e2",
+                  background: "var(--color-red-100)",
                   borderRadius: wins > 0 ? "0 4px 4px 0" : 4,
                 }}
               />
             )}
           </div>
           <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
-            <LegendDot color="#10b981" label={`${wins} wins`} />
-            <LegendDot color="#fca5a5" label={`${losses} losses`} />
+            <LegendDot color="var(--color-emerald-500)" label={`${wins} wins`} />
+            <LegendDot color="var(--color-red-300)" label={`${losses} losses`} />
           </div>
         </div>
 
@@ -354,7 +354,7 @@ export default function PlayerProfile() {
           label="Runs"
           value={batting.runs || 0}
           accent
-          color="#4f46e5"
+          color="var(--color-indigo-600)"
         />
         <BigStat label="Average" value={derived.battingAverage || "0.00"} />
         <BigStat label="Strike Rate" value={derived.strikeRate || "0.00"} />
@@ -416,7 +416,7 @@ export default function PlayerProfile() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#6366f1",
+                    color: "var(--color-indigo-500)",
                     width: 36,
                     textAlign: "right",
                   }}
@@ -427,7 +427,7 @@ export default function PlayerProfile() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#0ea5e9",
+                    color: "var(--color-sky-500)",
                     width: 32,
                     textAlign: "right",
                   }}
@@ -438,7 +438,7 @@ export default function PlayerProfile() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#10b981",
+                    color: "var(--color-emerald-500)",
                     width: 30,
                     textAlign: "right",
                   }}
@@ -468,14 +468,14 @@ export default function PlayerProfile() {
                         width: 32,
                         height: 32,
                         borderRadius: 8,
-                        background: "#f5f3ff",
-                        border: "1px solid #ede9fe",
+                        background: "var(--color-violet-50)",
+                        border: "1px solid var(--color-violet-100)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         fontSize: 11,
                         fontWeight: 700,
-                        color: "#4f46e5",
+                        color: "var(--color-indigo-600)",
                         flexShrink: 0,
                       }}
                     >
@@ -485,7 +485,7 @@ export default function PlayerProfile() {
                       style={{
                         flex: 1,
                         height: 8,
-                        background: "#f1f5f9",
+                        background: "var(--color-slate-100)",
                         borderRadius: 4,
                         overflow: "hidden",
                       }}
@@ -494,7 +494,7 @@ export default function PlayerProfile() {
                         style={{
                           width: `${(d.runs / maxPosRuns) * 100}%`,
                           height: "100%",
-                          background: "#6366f1",
+                          background: "var(--color-indigo-500)",
                           borderRadius: 4,
                         }}
                       />
@@ -504,7 +504,7 @@ export default function PlayerProfile() {
                         style={{
                           fontSize: 13,
                           fontWeight: 700,
-                          color: "#0f172a",
+                          color: "var(--color-slate-900)",
                           width: 36,
                           textAlign: "right",
                         }}
@@ -515,7 +515,7 @@ export default function PlayerProfile() {
                         style={{
                           fontSize: 12,
                           fontWeight: 600,
-                          color: "#0ea5e9",
+                          color: "var(--color-sky-500)",
                           width: 32,
                           textAlign: "right",
                         }}
@@ -526,7 +526,7 @@ export default function PlayerProfile() {
                         style={{
                           fontSize: 12,
                           fontWeight: 600,
-                          color: "#10b981",
+                          color: "var(--color-emerald-500)",
                           width: 30,
                           textAlign: "right",
                         }}
@@ -536,7 +536,7 @@ export default function PlayerProfile() {
                     </div>
                   </div>
                   <div
-                    style={{ paddingLeft: 42, fontSize: 10, color: "#94a3b8" }}
+                    style={{ paddingLeft: 42, fontSize: 10, color: "var(--color-slate-400)" }}
                   >
                     {d.innings} inn · {d.outs} out
                     {d.fours > 0 ? ` · ${d.fours}×4` : ""}
@@ -562,7 +562,7 @@ export default function PlayerProfile() {
                     label={bucketLabels[i]}
                     value={count}
                     max={maxBucket}
-                    color="#6366f1"
+                    color="var(--color-indigo-500)"
                   />
                 ),
             )}
@@ -581,7 +581,7 @@ export default function PlayerProfile() {
                 label={type.replace(/([A-Z])/g, " $1")}
                 value={count}
                 max={maxDismissal}
-                color="#6366f1"
+                color="var(--color-indigo-500)"
               />
             ))}
             {batting.dismissalTypes?.notOut > 0 && (
@@ -591,10 +591,10 @@ export default function PlayerProfile() {
                   display: "flex",
                   justifyContent: "space-between",
                   paddingTop: 8,
-                  borderTop: "1px solid #f1f5f9",
+                  borderTop: "1px solid var(--color-slate-100)",
                 }}
               >
-                <span style={{ fontSize: 13, color: "#64748b" }}>Not outs</span>
+                <span style={{ fontSize: 13, color: "var(--color-slate-500)" }}>Not outs</span>
                 <Pill color="green">{batting.dismissalTypes.notOut}×</Pill>
               </div>
             )}
@@ -636,7 +636,7 @@ export default function PlayerProfile() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "var(--color-slate-400)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 4,
@@ -667,7 +667,7 @@ export default function PlayerProfile() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: res === "wins" ? "#10b981" : "#ef4444",
+                  color: res === "wins" ? "var(--color-emerald-500)" : "var(--color-red-500)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 4,
@@ -701,7 +701,7 @@ export default function PlayerProfile() {
           label="Wickets"
           value={bowling.wickets || 0}
           accent
-          color="#0ea5e9"
+          color="var(--color-sky-500)"
         />
         <BigStat label="Average" value={derived.bowlingAverage || "0.00"} />
         <BigStat label="Economy" value={derived.economy || "0.00"} />
@@ -757,7 +757,7 @@ export default function PlayerProfile() {
                 style={{
                   textAlign: "center",
                   fontSize: 12,
-                  color: "#94a3b8",
+                  color: "var(--color-slate-400)",
                   paddingTop: 8,
                 }}
               >
@@ -778,7 +778,7 @@ export default function PlayerProfile() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: "#94a3b8",
+                  color: "var(--color-slate-400)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 4,
@@ -811,7 +811,7 @@ export default function PlayerProfile() {
                 style={{
                   fontSize: 11,
                   fontWeight: 700,
-                  color: res === "wins" ? "#10b981" : "#ef4444",
+                  color: res === "wins" ? "var(--color-emerald-500)" : "var(--color-red-500)",
                   textTransform: "uppercase",
                   letterSpacing: "0.06em",
                   marginBottom: 4,
@@ -863,12 +863,12 @@ export default function PlayerProfile() {
               >
                 <div>
                   <span
-                    style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}
+                    style={{ fontSize: 14, fontWeight: 700, color: "var(--color-slate-900)" }}
                   >
                     {season.seasonName}
                   </span>
                   <span
-                    style={{ fontSize: 12, color: "#64748b", marginLeft: 8 }}
+                    style={{ fontSize: 12, color: "var(--color-slate-500)", marginLeft: 8 }}
                   >
                     {sd.totalMatches || 0} matches
                   </span>
@@ -885,7 +885,7 @@ export default function PlayerProfile() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "var(--color-slate-400)",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                     marginBottom: 6,
@@ -914,7 +914,7 @@ export default function PlayerProfile() {
                   style={{
                     fontSize: 10,
                     fontWeight: 700,
-                    color: "#94a3b8",
+                    color: "var(--color-slate-400)",
                     textTransform: "uppercase",
                     letterSpacing: "0.06em",
                     marginBottom: 6,
@@ -963,8 +963,8 @@ export default function PlayerProfile() {
                   width: 28,
                   height: 28,
                   borderRadius: 6,
-                  background: m.won ? "#dcfce7" : "#fee2e2",
-                  border: `1.5px solid ${m.won ? "#86efac" : "#fca5a5"}`,
+                  background: m.won ? "#dcfce7" : "var(--color-red-100)",
+                  border: `1.5px solid ${m.won ? "#86efac" : "var(--color-red-300)"}`,
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
@@ -999,7 +999,7 @@ export default function PlayerProfile() {
                   key={m.matchId || idx}
                   style={{
                     ...S.card,
-                    borderLeft: `3px solid ${m.won ? "#10b981" : "#f87171"}`,
+                    borderLeft: `3px solid ${m.won ? "var(--color-emerald-500)" : "#f87171"}`,
                     padding: "14px 16px",
                   }}
                 >
@@ -1025,7 +1025,7 @@ export default function PlayerProfile() {
                           fontWeight: 700,
                           textTransform: "uppercase",
                           letterSpacing: "0.06em",
-                          color: m.won ? "#10b981" : "#ef4444",
+                          color: m.won ? "var(--color-emerald-500)" : "var(--color-red-500)",
                         }}
                       >
                         {m.won ? "Win" : "Loss"}
@@ -1033,12 +1033,12 @@ export default function PlayerProfile() {
                       {m.mom && <Pill color="amber">⭐ MOM</Pill>}
                       {inn && <Pill color="teal">Inn {inn}</Pill>}
                       {batPos && (
-                        <span style={{ fontSize: 10, color: "#94a3b8" }}>
+                        <span style={{ fontSize: 10, color: "var(--color-slate-400)" }}>
                           #{batPos}
                         </span>
                       )}
                     </div>
-                    <span style={{ fontSize: 11, color: "#94a3b8" }}>
+                    <span style={{ fontSize: 11, color: "var(--color-slate-400)" }}>
                       {date
                         ? new Date(date).toLocaleDateString("en-IN", {
                             day: "numeric",
@@ -1067,7 +1067,7 @@ export default function PlayerProfile() {
                           style={{
                             fontSize: 24,
                             fontWeight: 700,
-                            color: "#0f172a",
+                            color: "var(--color-slate-900)",
                             lineHeight: 1,
                           }}
                         >
@@ -1077,23 +1077,23 @@ export default function PlayerProfile() {
                           <span
                             style={{
                               fontSize: 11,
-                              color: "#10b981",
+                              color: "var(--color-emerald-500)",
                               fontWeight: 700,
                             }}
                           >
                             *
                           </span>
                         )}
-                        <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                        <span style={{ fontSize: 12, color: "var(--color-slate-400)" }}>
                           ({balls})
                         </span>
                       </div>
                       <div
-                        style={{ fontSize: 11, color: "#64748b", marginTop: 2 }}
+                        style={{ fontSize: 11, color: "var(--color-slate-500)", marginTop: 2 }}
                       >
                         bat{" "}
                         {balls > 0 && (
-                          <span style={{ color: "#4f46e5", fontWeight: 600 }}>
+                          <span style={{ color: "var(--color-indigo-600)", fontWeight: 600 }}>
                             SR {Math.round((runs / balls) * 100)}
                           </span>
                         )}
@@ -1102,7 +1102,7 @@ export default function PlayerProfile() {
                         <div
                           style={{
                             fontSize: 11,
-                            color: "#64748b",
+                            color: "var(--color-slate-500)",
                             marginTop: 2,
                           }}
                         >
@@ -1114,7 +1114,7 @@ export default function PlayerProfile() {
                     {(wickets > 0 || bBalls > 0) && (
                       <div
                         style={{
-                          borderLeft: "1px solid #e2e8f0",
+                          borderLeft: "1px solid var(--color-slate-200)",
                           paddingLeft: 16,
                           minWidth: 70,
                         }}
@@ -1130,32 +1130,32 @@ export default function PlayerProfile() {
                             style={{
                               fontSize: 24,
                               fontWeight: 700,
-                              color: "#0ea5e9",
+                              color: "var(--color-sky-500)",
                               lineHeight: 1,
                             }}
                           >
                             {wickets}
                           </span>
-                          <span style={{ fontSize: 12, color: "#94a3b8" }}>
+                          <span style={{ fontSize: 12, color: "var(--color-slate-400)" }}>
                             /{bRuns}
                           </span>
                         </div>
                         <div
                           style={{
                             fontSize: 11,
-                            color: "#64748b",
+                            color: "var(--color-slate-500)",
                             marginTop: 2,
                           }}
                         >
                           bowl{" "}
                           {eco && (
-                            <span style={{ color: "#0ea5e9", fontWeight: 600 }}>
+                            <span style={{ color: "var(--color-sky-500)", fontWeight: 600 }}>
                               eco {eco}
                             </span>
                           )}
                         </div>
                         {bBalls > 0 && (
-                          <div style={{ fontSize: 11, color: "#94a3b8" }}>
+                          <div style={{ fontSize: 11, color: "var(--color-slate-400)" }}>
                             {Math.floor(bBalls / 6)}.{bBalls % 6} ov
                           </div>
                         )}
@@ -1164,7 +1164,7 @@ export default function PlayerProfile() {
                     {catches > 0 && (
                       <div
                         style={{
-                          borderLeft: "1px solid #e2e8f0",
+                          borderLeft: "1px solid var(--color-slate-200)",
                           paddingLeft: 16,
                         }}
                       >
@@ -1181,7 +1181,7 @@ export default function PlayerProfile() {
                             style={{
                               fontSize: 12,
                               fontWeight: 400,
-                              color: "#94a3b8",
+                              color: "var(--color-slate-400)",
                             }}
                           >
                             {" "}
@@ -1191,7 +1191,7 @@ export default function PlayerProfile() {
                         <div
                           style={{
                             fontSize: 11,
-                            color: "#64748b",
+                            color: "var(--color-slate-500)",
                             marginTop: 2,
                           }}
                         >
@@ -1227,14 +1227,14 @@ function DismissedByRow({
 
   // colour map for dismissal type tags
   const tagMap = {
-    caught: { bg: "#eff6ff", color: "#1d4ed8", border: "#bfdbfe", label: "ct" },
-    lbw: { bg: "#fef2f2", color: "#991b1b", border: "#fecaca", label: "lbw" },
-    bowled: { bg: "#fef3c7", color: "#92400e", border: "#fde68a", label: "b" },
+    caught: { bg: "var(--color-blue-50)", color: "#1d4ed8", border: "#bfdbfe", label: "ct" },
+    lbw: { bg: "var(--color-red-50)", color: "#991b1b", border: "#fecaca", label: "lbw" },
+    bowled: { bg: "var(--color-amber-100)", color: "var(--color-amber-800)", border: "#fde68a", label: "b" },
     runOut: { bg: "#f0fdf4", color: "#166534", border: "#bbf7d0", label: "ro" },
     stumped: {
-      bg: "#f5f3ff",
+      bg: "var(--color-violet-50)",
       color: "#5b21b6",
-      border: "#ede9fe",
+      border: "var(--color-violet-100)",
       label: "st",
     },
     hitWicket: {
@@ -1246,8 +1246,8 @@ function DismissedByRow({
   };
 
   const accentMap = {
-    purple: { bg: "#f5f3ff", border: "#ede9fe", text: "#4f46e5" },
-    blue: { bg: "#eff6ff", border: "#bfdbfe", text: "#0ea5e9" },
+    purple: { bg: "var(--color-violet-50)", border: "var(--color-violet-100)", text: "var(--color-indigo-600)" },
+    blue: { bg: "var(--color-blue-50)", border: "#bfdbfe", text: "var(--color-sky-500)" },
   };
   const ac = accentMap[accentColor];
 
@@ -1259,7 +1259,7 @@ function DismissedByRow({
         alignItems: "center",
         gap: 10,
         padding: "9px 0",
-        borderBottom: last ? "none" : "1px solid #f1f5f9",
+        borderBottom: last ? "none" : "1px solid var(--color-slate-100)",
         cursor: "pointer",
       }}
     >
@@ -1289,7 +1289,7 @@ function DismissedByRow({
           style={{
             fontSize: 13,
             fontWeight: 700,
-            color: "#0f172a",
+            color: "var(--color-slate-900)",
             textTransform: "capitalize",
             marginBottom: 4,
           }}
@@ -1303,9 +1303,9 @@ function DismissedByRow({
               .sort(([, a], [, b]) => b - a)
               .map(([k, v]) => {
                 const t = tagMap[k] || {
-                  bg: "#f1f5f9",
-                  color: "#64748b",
-                  border: "#e2e8f0",
+                  bg: "var(--color-slate-100)",
+                  color: "var(--color-slate-500)",
+                  border: "var(--color-slate-200)",
                   label: k,
                 };
                 return (
@@ -1341,7 +1341,7 @@ function DismissedByRow({
         >
           {count}
         </div>
-        <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 2 }}>
+        <div style={{ fontSize: 10, color: "var(--color-slate-400)", marginTop: 2 }}>
           times
         </div>
       </div>
@@ -1358,7 +1358,7 @@ const CollapsibleSection = ({ title, icon, children }) => {
       <button
         style={{
           ...S.collapsibleBtn,
-          borderBottom: open ? "none" : "1px solid #e2e8f0",
+          borderBottom: open ? "none" : "1px solid var(--color-slate-200)",
           borderRadius: open ? "14px 14px 0 0" : 14,
         }}
         onClick={() => setOpen(!open)}
@@ -1367,7 +1367,7 @@ const CollapsibleSection = ({ title, icon, children }) => {
           <span>{icon}</span>
           <span style={{ fontWeight: 600, fontSize: 13 }}>{title}</span>
         </span>
-        <span style={{ fontSize: 10, color: "#94a3b8" }}>
+        <span style={{ fontSize: 10, color: "var(--color-slate-400)" }}>
           {open ? "▲" : "▼"}
         </span>
       </button>
@@ -1377,7 +1377,7 @@ const CollapsibleSection = ({ title, icon, children }) => {
             background: "white",
             padding: "12px 16px 16px",
             borderRadius: "0 0 14px 14px",
-            border: "1px solid #e2e8f0",
+            border: "1px solid var(--color-slate-200)",
             borderTop: "none",
           }}
         >
@@ -1393,7 +1393,7 @@ const SectionTitle = ({ children }) => (
     style={{
       fontSize: 11,
       fontWeight: 700,
-      color: "#94a3b8",
+      color: "var(--color-slate-400)",
       textTransform: "uppercase",
       letterSpacing: "0.08em",
       margin: "24px 0 8px",
@@ -1409,7 +1409,7 @@ const SubLabel = ({ children, style }) => (
     style={{
       fontSize: 11,
       fontWeight: 600,
-      color: "#cbd5e1",
+      color: "var(--color-slate-300)",
       textTransform: "uppercase",
       letterSpacing: "0.07em",
       margin: "12px 0 6px",
@@ -1427,14 +1427,14 @@ const BigStat = ({ label, value, accent, color }) => (
       background: "white",
       borderRadius: 14,
       padding: "14px 12px",
-      border: "1px solid #e2e8f0",
+      border: "1px solid var(--color-slate-200)",
       boxShadow: "0 1px 3px rgba(0,0,0,0.03)",
     }}
   >
     <div
       style={{
         fontSize: 10,
-        color: "#94a3b8",
+        color: "var(--color-slate-400)",
         textTransform: "uppercase",
         letterSpacing: "0.05em",
         marginBottom: 5,
@@ -1446,7 +1446,7 @@ const BigStat = ({ label, value, accent, color }) => (
       style={{
         fontSize: 22,
         fontWeight: 700,
-        color: accent ? color || "#4f46e5" : "#0f172a",
+        color: accent ? color || "var(--color-indigo-600)" : "var(--color-slate-900)",
         lineHeight: 1,
       }}
     >
@@ -1459,17 +1459,17 @@ const MiniStat = ({ label, value }) => (
   <div
     style={{
       flex: 1,
-      background: "#f8fafc",
+      background: "var(--color-slate-50)",
       borderRadius: 10,
       padding: "8px 10px",
-      border: "1px solid #f1f5f9",
+      border: "1px solid var(--color-slate-100)",
       minWidth: 0,
     }}
   >
     <div
       style={{
         fontSize: 10,
-        color: "#94a3b8",
+        color: "var(--color-slate-400)",
         textTransform: "uppercase",
         letterSpacing: "0.04em",
         marginBottom: 3,
@@ -1480,7 +1480,7 @@ const MiniStat = ({ label, value }) => (
     >
       {label}
     </div>
-    <div style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>
+    <div style={{ fontSize: 15, fontWeight: 700, color: "var(--color-slate-900)" }}>
       {value}
     </div>
   </div>
@@ -1492,18 +1492,18 @@ const MiniStatCard = ({ icon, label, value }) => (
       background: "white",
       borderRadius: 12,
       padding: "12px",
-      border: "1px solid #e2e8f0",
+      border: "1px solid var(--color-slate-200)",
       textAlign: "center",
     }}
   >
     <div style={{ fontSize: 20, marginBottom: 4 }}>{icon}</div>
-    <div style={{ fontSize: 18, fontWeight: 700, color: "#0f172a" }}>
+    <div style={{ fontSize: 18, fontWeight: 700, color: "var(--color-slate-900)" }}>
       {value}
     </div>
     <div
       style={{
         fontSize: 10,
-        color: "#94a3b8",
+        color: "var(--color-slate-400)",
         textTransform: "uppercase",
         letterSpacing: "0.05em",
         marginTop: 2,
@@ -1517,10 +1517,10 @@ const MiniStatCard = ({ icon, label, value }) => (
 const QuickStat = ({ icon, label, value }) => (
   <div
     style={{
-      background: "#f8fafc",
+      background: "var(--color-slate-50)",
       borderRadius: 10,
       padding: "10px",
-      border: "1px solid #f1f5f9",
+      border: "1px solid var(--color-slate-100)",
       display: "flex",
       alignItems: "center",
       gap: 8,
@@ -1531,14 +1531,14 @@ const QuickStat = ({ icon, label, value }) => (
       <div
         style={{
           fontSize: 10,
-          color: "#94a3b8",
+          color: "var(--color-slate-400)",
           textTransform: "uppercase",
           letterSpacing: "0.04em",
         }}
       >
         {label}
       </div>
-      <div style={{ fontSize: 14, fontWeight: 700, color: "#0f172a" }}>
+      <div style={{ fontSize: 14, fontWeight: 700, color: "var(--color-slate-900)" }}>
         {value}
       </div>
     </div>
@@ -1552,11 +1552,11 @@ const Row = ({ label, value, last }) => (
       justifyContent: "space-between",
       alignItems: "center",
       padding: "10px 0",
-      borderBottom: last ? "none" : "1px solid #f1f5f9",
+      borderBottom: last ? "none" : "1px solid var(--color-slate-100)",
     }}
   >
-    <span style={{ fontSize: 13, color: "#64748b" }}>{label}</span>
-    <span style={{ fontSize: 14, fontWeight: 700, color: "#1e293b" }}>
+    <span style={{ fontSize: 13, color: "var(--color-slate-500)" }}>{label}</span>
+    <span style={{ fontSize: 14, fontWeight: 700, color: "var(--color-slate-800)" }}>
       {value}
     </span>
   </div>
@@ -1569,13 +1569,13 @@ const BarRow = ({ label, value, max, color }) => (
       alignItems: "center",
       gap: 10,
       padding: "8px 0",
-      borderBottom: "1px solid #f8fafc",
+      borderBottom: "1px solid var(--color-slate-50)",
     }}
   >
     <span
       style={{
         fontSize: 12,
-        color: "#64748b",
+        color: "var(--color-slate-500)",
         width: 76,
         flexShrink: 0,
         textTransform: "capitalize",
@@ -1587,7 +1587,7 @@ const BarRow = ({ label, value, max, color }) => (
       style={{
         flex: 1,
         height: 6,
-        background: "#f1f5f9",
+        background: "var(--color-slate-100)",
         borderRadius: 3,
         overflow: "hidden",
       }}
@@ -1605,7 +1605,7 @@ const BarRow = ({ label, value, max, color }) => (
       style={{
         fontSize: 13,
         fontWeight: 700,
-        color: "#1e293b",
+        color: "var(--color-slate-800)",
         width: 20,
         textAlign: "right",
       }}
@@ -1618,9 +1618,9 @@ const BarRow = ({ label, value, max, color }) => (
 const Pill = ({ children, color }) => {
   const map = {
     purple: {
-      background: "#f5f3ff",
+      background: "var(--color-violet-50)",
       color: "#5b21b6",
-      border: "1px solid #ede9fe",
+      border: "1px solid var(--color-violet-100)",
     },
     teal: {
       background: "#f0fdfa",
@@ -1628,13 +1628,13 @@ const Pill = ({ children, color }) => {
       border: "1px solid #ccfbf1",
     },
     blue: {
-      background: "#eff6ff",
+      background: "var(--color-blue-50)",
       color: "#1d4ed8",
       border: "1px solid #dbeafe",
     },
     amber: {
       background: "#fffbeb",
-      color: "#92400e",
+      color: "var(--color-amber-800)",
       border: "1px solid #fde68a",
     },
     green: {
@@ -1664,7 +1664,7 @@ const Pill = ({ children, color }) => {
 const LegendDot = ({ color, label }) => (
   <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
     <div style={{ width: 8, height: 8, borderRadius: 2, background: color }} />
-    <span style={{ fontSize: 11, color: "#64748b" }}>{label}</span>
+    <span style={{ fontSize: 11, color: "var(--color-slate-500)" }}>{label}</span>
   </div>
 );
 
@@ -1672,7 +1672,7 @@ const S = {
   card: {
     background: "white",
     borderRadius: 16,
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--color-slate-200)",
     padding: "16px",
     boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
   },
@@ -1682,7 +1682,7 @@ const S = {
     width: 52,
     height: 52,
     borderRadius: "50%",
-    background: "#f5f3ff",
+    background: "var(--color-violet-50)",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
@@ -1690,26 +1690,26 @@ const S = {
     fontWeight: 700,
     color: "#5b21b6",
     flexShrink: 0,
-    border: "2px solid #ede9fe",
+    border: "2px solid var(--color-violet-100)",
   },
   seasonSelect: {
     padding: "7px 12px",
     borderRadius: 10,
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--color-slate-200)",
     fontSize: 12,
     fontWeight: 600,
-    color: "#475569",
+    color: "var(--color-slate-600)",
     background: "white",
     outline: "none",
   },
   backBtn: {
     padding: "8px 14px",
     borderRadius: 10,
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--color-slate-200)",
     background: "white",
     fontWeight: 600,
     fontSize: 13,
-    color: "#475569",
+    color: "var(--color-slate-600)",
     cursor: "pointer",
   },
   collapsibleBtn: {
@@ -1719,16 +1719,16 @@ const S = {
     alignItems: "center",
     padding: "13px 16px",
     background: "white",
-    border: "1px solid #e2e8f0",
+    border: "1px solid var(--color-slate-200)",
     cursor: "pointer",
   },
   noStatsBanner: {
     marginTop: 8,
     padding: "12px",
-    background: "#fef2f2",
-    border: "1px solid #fee2e2",
+    background: "var(--color-red-50)",
+    border: "1px solid var(--color-red-100)",
     borderRadius: 12,
-    color: "#b91c1c",
+    color: "var(--color-red-700)",
     fontSize: 13,
     textAlign: "center",
     fontWeight: 500,
@@ -1742,13 +1742,13 @@ const S = {
   spinner: {
     width: 30,
     height: 30,
-    border: "3px solid #e2e8f0",
-    borderTop: "3px solid #6366f1",
+    border: "3px solid var(--color-slate-200)",
+    borderTop: "3px solid var(--color-indigo-500)",
     borderRadius: "50%",
     animation: "spin 0.8s linear infinite",
   },
   homeBtn: {
-    background: "#4f46e5",
+    background: "var(--color-indigo-600)",
     color: "white",
     padding: "12px 24px",
     borderRadius: 12,

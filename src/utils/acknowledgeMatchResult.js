@@ -1,4 +1,4 @@
-import { API_ENDPOINTS } from "../config/apiEndPoints";
+import { api } from "../api";
 import { saveMatch } from "../storage/matchDB";
 import { deepCopy } from "./helpers";
 import { deriveFieldingStats, calculateManOfTheMatch } from "./statsCalculator";
@@ -11,7 +11,6 @@ export const acknowledgeMatchResult = async (
 ) => {
   if (ackSubmitting) return;
   setAckSubmitting(true);
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   const fieldingStats = deriveFieldingStats(match);
 
@@ -26,10 +25,12 @@ export const acknowledgeMatchResult = async (
     totalOvers: match.totalOvers,
 
     matchType: match.matchType,
+    testConfig: match.testConfig || null,
 
     innings: match.innings.map((inn) => ({
       battingTeam: inn.battingTeam,
       bowlingTeam: inn.bowlingTeam,
+      inningsNumber: inn.inningsNumber ?? 1,
 
       totalRuns: inn.totalRuns,
       wickets: inn.wickets,
@@ -43,6 +44,7 @@ export const acknowledgeMatchResult = async (
       ballByBall: inn.ballByBall || [],
       isSuperOver: inn.isSuperOver ?? false,
       completed: true,
+      completionReason: inn.completionReason ?? null,
     })),
 
     result: {
@@ -56,16 +58,7 @@ export const acknowledgeMatchResult = async (
   };
 
   try {
-
-    await fetch(`${API_ENDPOINTS.SUBMIT_MATCH}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-
-
+    await api.matches.createMatch(payload);
   } catch (err) {
     console.warn("Backend sync failed (match saved locally):", err.message);
   }

@@ -8,7 +8,7 @@ import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import LoadingState from "../components/common/LoadingState";
 import EmptyState from "../components/common/EmptyState";
 
-import { api } from "../components/common/api";
+import { api } from "../api";
 
 export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
@@ -268,7 +268,7 @@ export default function BowlingStats({ isOverall = false }) {
           }}
         >
           <span
-            style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
+            style={{ ...playerCell, cursor: "pointer", color: "var(--color-indigo-600)" }}
             onClick={() =>
               navigate(`/player/${encodeURIComponent(p.playerId)}`)
             }
@@ -322,7 +322,7 @@ const topBar = {
 const statsTitle = {
   fontSize: 22,
   fontWeight: 800,
-  color: "#111827",
+  color: "var(--color-gray-900)",
   marginBottom: 10,
 };
 
@@ -331,8 +331,8 @@ const filterBtn = {
   height: 42,
   borderRadius: "50%",
   border: "none",
-  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
-  color: "#ffffff",
+  background: "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
+  color: "var(--color-white)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -349,8 +349,8 @@ const activeFilters = {
 const filterPill = {
   padding: "6px 12px",
   borderRadius: 999,
-  background: "#eef2ff",
-  color: "#4338ca",
+  background: "var(--color-indigo-50)",
+  color: "var(--color-indigo-700)",
   fontSize: 12,
   fontWeight: 700,
 };
@@ -390,11 +390,11 @@ const headerRow = {
 
   fontWeight: 700,
 
-  color: "#64748b",
+  color: "var(--color-slate-500)",
 };
 
 const dataRow = {
-  background: "#ffffff",
+  background: "var(--color-white)",
 
   padding: "14px",
 
@@ -402,7 +402,7 @@ const dataRow = {
 
   boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
 
-  border: "1px solid #eef2ff",
+  border: "1px solid var(--color-indigo-50)",
 
   fontSize: 14,
 };
@@ -422,7 +422,7 @@ const playerHeader = {
 const playerCell = {
   fontWeight: 700,
 
-  color: "#111827",
+  color: "var(--color-gray-900)",
 
   textAlign: "left",
 
@@ -434,7 +434,7 @@ const center = {
 
   fontWeight: 600,
 
-  color: "#374151",
+  color: "var(--color-gray-700)",
 };
 
 const wickets = {
@@ -442,7 +442,7 @@ const wickets = {
 
   fontWeight: 800,
 
-  color: "#dc2626",
+  color: "var(--color-red-600)",
 };
 
 const eco = {
@@ -458,7 +458,7 @@ const avg = {
 
   fontWeight: 700,
 
-  color: "#059669",
+  color: "var(--color-emerald-600)",
 };
 
 const best = {
@@ -466,5 +466,5 @@ const best = {
 
   fontWeight: 800,
 
-  color: "#7c3aed",
+  color: "var(--color-violet-600)",
 };

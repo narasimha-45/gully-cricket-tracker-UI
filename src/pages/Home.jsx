@@ -4,7 +4,7 @@ import GlobalSearch from "../components/GlobalSearch";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
 import { formatName } from "../utils/helpers";
-import { API_ENDPOINTS } from "../config/apiEndPoints";
+import { api } from "../api";
 
 
 export default function Home({ open, onClose }) {
@@ -18,14 +18,7 @@ export default function Home({ open, onClose }) {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API_ENDPOINTS.GET_SEASONS}`);
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch seasons");
-      }
-
-      const result = await res.json();
-
+      const result = await api.seasons.getAllSeasons();
 
       setSeasons(result || []);
     } catch (err) {

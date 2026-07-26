@@ -10,8 +10,8 @@
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #4338ca
+      var(--color-indigo-600),
+      var(--color-indigo-700)
     );
 
   color: white;
@@ -55,8 +55,8 @@
   background:
     linear-gradient(
       135deg,
-      #312e81,
-      #4338ca
+      var(--color-indigo-900),
+      var(--color-indigo-700)
     );
 
   border-radius: 24px;
@@ -83,7 +83,7 @@
 
   font-weight: 700;
 
-  color: #c7d2fe;
+  color: var(--color-indigo-200);
 
   margin-bottom: 8px;
 }
@@ -126,7 +126,7 @@
   padding: 16px;
 
   border:
-    1px solid #eef2ff;
+    1px solid var(--color-indigo-50);
 
   box-shadow:
     0 10px 24px
@@ -153,8 +153,8 @@
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #4338ca
+      var(--color-indigo-600),
+      var(--color-indigo-700)
     );
 
   color: white;
@@ -163,7 +163,7 @@
 }
 
 .leaderboardCard h3 {
-  color: #ffffff;
+  color: var(--color-white);
 }
 
 .leaderboardCard p {
@@ -175,8 +175,8 @@
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #4338ca
+      var(--color-indigo-600),
+      var(--color-indigo-700)
     );
 
   border-radius: 22px;
@@ -248,7 +248,7 @@
 .dashboardCard p {
   font-size: 13px;
 
-  color: #64748b;
+  color: var(--color-slate-500);
 
   line-height: 1.5;
 }
@@ -276,15 +276,15 @@
 
   font-weight: 800;
 
-  color: #111827;
+  color: var(--color-gray-900);
 
   letter-spacing: -0.5px;
 }
 
 .sectionHeader span {
-  background: #e0e7ff;
+  background: var(--color-indigo-100);
 
-  color: #4338ca;
+  color: var(--color-indigo-700);
 
   font-size: 13px;
 
@@ -315,7 +315,7 @@
   padding: 18px;
 
   border:
-    1px solid #eef2ff;
+    1px solid var(--color-indigo-50);
 
   box-shadow:
     0 10px 24px
@@ -349,7 +349,7 @@
 
   font-weight: 700;
 
-  color: #111827;
+  color: var(--color-gray-900);
 
   letter-spacing: -0.3px;
 }
@@ -359,7 +359,7 @@
 
   font-size: 13px;
 
-  color: #64748b;
+  color: var(--color-slate-500);
 
   font-weight: 500;
 }
@@ -376,7 +376,7 @@
   text-align: center;
 
   border:
-    1px solid #eef2ff;
+    1px solid var(--color-indigo-50);
 
   box-shadow:
     0 10px 24px
@@ -388,13 +388,13 @@
 
   font-weight: 700;
 
-  color: #111827;
+  color: var(--color-gray-900);
 }
 
 .empty p {
   margin-top: 8px;
 
-  color: #64748b;
+  color: var(--color-slate-500);
 
   font-size: 14px;
 
@@ -419,9 +419,9 @@
   background:
     linear-gradient(
       90deg,
-      #f3f4f6 25%,
-      #e5e7eb 50%,
-      #f3f4f6 75%
+      var(--color-gray-100) 25%,
+      var(--color-gray-200) 50%,
+      var(--color-gray-100) 75%
     );
 
   background-size:

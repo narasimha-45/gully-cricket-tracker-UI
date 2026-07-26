@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { api } from "../components/common/api";
+import { api } from "../api";
 
 export function TeamSearch({
   label,
@@ -192,8 +192,8 @@ const miniSpinner = {
   transform: "translateY(-50%)",
   width: 16,
   height: 16,
-  border: "2px solid #e2e8f0",
-  borderTop: "2px solid #4f46e5",
+  border: "2px solid var(--color-slate-200)",
+  borderTop: "2px solid var(--color-indigo-600)",
   borderRadius: "50%",
   animation: "spin 0.6s linear infinite",
 };
@@ -208,7 +208,7 @@ const container = {
 const inputLabel = {
   fontSize: 12,
   fontWeight: 700,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   textTransform: "uppercase",
   letterSpacing: "0.05em",
   marginBottom: 8,
@@ -223,12 +223,12 @@ const searchInput = {
   width: "100%",
   padding: "14px 16px",
   borderRadius: 14,
-  border: "2px solid #f1f5f9",
+  border: "2px solid var(--color-slate-100)",
   fontSize: 15,
   fontWeight: 500,
   outline: "none",
   transition: "all 0.2s",
-  background: "#f8fafc",
+  background: "var(--color-slate-50)",
 };
 
 const checkIcon = {
@@ -236,7 +236,7 @@ const checkIcon = {
   right: 16,
   top: "50%",
   transform: "translateY(-50%)",
-  color: "#10b981",
+  color: "var(--color-emerald-500)",
   fontWeight: 900,
 };
 
@@ -247,7 +247,7 @@ const dropdown = {
   right: 0,
   background: "white",
   borderRadius: 16,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   boxShadow: "0 10px 25px rgba(0,0,0,0.1)",
   zIndex: 100,
   maxHeight: 220,
@@ -260,14 +260,14 @@ const dropItem = {
   gap: 12,
   padding: "12px 16px",
   cursor: "pointer",
-  borderBottom: "1px solid #f8fafc",
+  borderBottom: "1px solid var(--color-slate-50)",
 };
 
 const teamIcon = {
   width: 36,
   height: 36,
   borderRadius: 10,
-  background: "#f1f5f9",
+  background: "var(--color-slate-100)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -279,7 +279,7 @@ const newTeamIcon = {
   height: 36,
   borderRadius: 10,
   background: "#ecfdf5",
-  color: "#059669",
+  color: "var(--color-emerald-600)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -290,10 +290,10 @@ const newTeamIcon = {
 const teamNameStyle = {
   fontSize: 14,
   fontWeight: 700,
-  color: "#0f172a",
+  color: "var(--color-slate-900)",
 };
 
 const teamMeta = {
   fontSize: 11,
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
 };

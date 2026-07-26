@@ -1,4 +1,5 @@
 import { formatName } from "../utils/helpers";
+import { getTeamInningsOrdinal, isTestMatch } from "../utils/matchModel";
 import styles from "./MatchSummaryTab.module.css";
 
 function formatOvers(balls = 0) {
@@ -22,7 +23,7 @@ function getTopBatters(innings) {
       );
 
   return batting
-    .filter((p) => p.balls > 0)
+    .filter((p) => p.balls > 0 || p.runs > 0)
     .sort((a, b) => {
       if (b.runs !== a.runs) {
         return b.runs - a.runs;
@@ -56,7 +57,7 @@ function getTopBowlers(innings) {
       );
 
   return bowling
-    .filter((p) => p.balls > 0)
+    .filter((p) => p.balls > 0 || p.runs > 0 || p.wickets > 0)
     .sort((a, b) => {
       if (b.wickets !== a.wickets) {
         return b.wickets - a.wickets;
@@ -85,12 +86,13 @@ export default function MatchSummaryTab({ match }) {
 
         const topBowlers = getTopBowlers(innings);
 
-        const inningsLabel =
-          index === 0
+        const inningsLabel = isTestMatch(match)
+          ? `${getTeamInningsOrdinal(match, index) === 1 ? "1st" : "2nd"} Innings`
+          : index === 0
             ? "1st Innings"
             : index === 1
-            ? "2nd Innings"
-            : `Super Over ${Math.floor((index - 2) / 2) + 1}`;
+              ? "2nd Innings"
+              : `Super Over ${Math.floor((index - 2) / 2) + 1}`;
 
         return (
           <div
@@ -102,7 +104,7 @@ export default function MatchSummaryTab({ match }) {
             <div className={styles.summaryHeaderRow}>
               <div>
                 <div className={styles.summaryHeading}>
-                  {inningsLabel} • {innings.battingTeam}
+                  {inningsLabel} • {formatName(innings.battingTeam)}
                 </div>
               </div>
 

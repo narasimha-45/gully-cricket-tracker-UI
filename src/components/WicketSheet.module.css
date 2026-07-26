@@ -1,0 +1,112 @@
+.section {
+  margin-bottom: 18px;
+}
+
+.section h4 {
+  margin: 0 0 10px;
+  color: var(--color-slate-700);
+  font-size: 13px;
+}
+
+.typeGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.typeGrid button,
+.runsRow button,
+.playerList button,
+.fielderList button {
+  border: 1px solid var(--color-slate-200);
+  background: var(--color-white);
+  color: var(--color-slate-700);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.typeGrid button {
+  min-height: 42px;
+  padding: 8px 5px;
+  border-radius: 11px;
+  font-size: 10px;
+}
+
+.typeGrid button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.typeGrid button.active,
+.runsRow button.active,
+.playerList button.selectedRow,
+.fielderList button.selectedRow {
+  border-color: var(--color-indigo-600);
+  background: var(--color-indigo-600);
+  color: var(--color-white);
+}
+
+.playerList,
+.fielderList {
+  display: grid;
+  gap: 7px;
+}
+
+.playerList button,
+.fielderList button {
+  min-height: 42px;
+  padding: 9px 12px;
+  border-radius: 11px;
+  text-align: left;
+}
+
+.fielderList {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.spacedHeading {
+  margin-top: 15px !important;
+}
+
+.runsRow {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 7px;
+}
+
+.runsRow button {
+  min-height: 40px;
+  border-radius: 10px;
+}
+
+.errorText {
+  margin: -4px 0 12px;
+  color: var(--color-red-600);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.confirmButton {
+  width: 100%;
+  min-height: 48px;
+  border: none;
+  border-radius: 13px;
+  background: linear-gradient(135deg, var(--color-indigo-600), var(--color-indigo-700));
+  color: var(--color-white);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.confirmButton:disabled {
+  background: var(--color-slate-200);
+  color: var(--color-slate-400);
+  cursor: not-allowed;
+}
+
+@media (max-width: 360px) {
+  .typeGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

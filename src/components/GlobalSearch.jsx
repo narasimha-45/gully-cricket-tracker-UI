@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import styles from "./GlobalSearch.module.css";
-import { api } from "../components/common/api";
+import { api } from "../api";
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");

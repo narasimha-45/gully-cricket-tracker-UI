@@ -2,111 +2,132 @@ import { saveMatch } from "../storage/matchDB";
 import { deepCopy } from "./helpers";
 import { evaluateMatchState } from "./matchStateHandlers";
 import { takeSnapshot } from "./snapShot";
+import {
+  createEmptyInnings,
+  getScheduledTeamsForInnings,
+  getTeamInningsOrdinal,
+} from "./matchModel";
 
-export const retireBatsman = (name, match, setMatch) => {
-  if (!name || match.status === "COMPLETED") return;
+const emptyBattingStats = (position) => ({
+  battingPosition: position,
+  runs: 0,
+  balls: 0,
+  fours: 0,
+  sixes: 0,
+  dismissal: null,
+});
 
-  takeSnapshot(match, "RETIRED");
+const emptyBowlingStats = () => ({
+  balls: 0,
+  runs: 0,
+  wickets: 0,
+  maidens: 0,
+});
 
-  const updated = deepCopy(match);
-  const live = updated.live;
-  const innings = updated.innings[live.inningsIndex];
-
-  innings.ballByBall ||= [];
-
-  // Store retirement event so partnerships can reset
-  innings.ballByBall.push({
-    type: "RETIRE",
-
-    striker: live.striker,
-    nonStriker: live.nonStriker,
-
-    retired: name,
-
-    over: Math.floor(innings.balls / 6),
-    ballInOver: innings.balls % 6,
-    actualBallNum: innings.balls,
-
-    timestamp: Date.now(),
-  });
-
-  // Remove batter from crease
-  if (live.striker === name) {
-    live.striker = null;
-  }
-
-  if (live.nonStriker === name) {
-    live.nonStriker = null;
-  }
-
+const persist = (updated, setMatch) => {
   updated.updatedAt = Date.now();
-
   saveMatch(updated);
   setMatch(updated);
 };
 
+const ensureBatter = (innings, player) => {
+  if (!player) return;
+  innings.battingStats[player] ||= emptyBattingStats(
+    Object.keys(innings.battingStats).length + 1,
+  );
+};
+
+const ensureBowler = (innings, player) => {
+  if (!player) return;
+  innings.bowlingStats[player] ||= emptyBowlingStats();
+};
+
+export const selectLivePlayer = ({
+  role,
+  player,
+  match,
+  setMatch,
+  extraMode = "NORMAL",
+}) => {
+  if (!player || match.status === "COMPLETED") return;
+
+  const updated = deepCopy(match);
+  takeSnapshot(updated, "SELECTION", extraMode);
+
+  const innings = updated.innings[updated.live.inningsIndex];
+  updated.live[role] = player;
+
+  if (role === "striker" || role === "nonStriker") {
+    ensureBatter(innings, player);
+  }
+  if (role === "bowler") ensureBowler(innings, player);
+
+  persist(updated, setMatch);
+};
+
+// Backward-compatible export. New code should use selectLivePlayer.
 export const pushSelectionHistory = (match, extraMode = "NORMAL") => {
-  if (match.status === "COMPLETED") return;
-  takeSnapshot(match, "SELECTION", extraMode);
-  const innings = match.innings[match.live.inningsIndex];
-  if (match.live.striker) {
-    innings.battingStats[match.live.striker] ||= {
-      battingPosition: Object.keys(innings.battingStats).length + 1,
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-      dismissal: null,
-    };
-  }
-  if (match.live.nonStriker) {
-    innings.battingStats[match.live.nonStriker] ||= {
-      battingPosition: Object.keys(innings.battingStats).length + 1,
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-      dismissal: null,
-    };
-  }
-  if (match.live.bowler) {
-    innings.bowlingStats[match.live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-  }
+  const updated = deepCopy(match);
+  takeSnapshot(updated, "SELECTION", extraMode);
+  return updated;
+};
+
+export const switchStrike = ({ match, setMatch, extraMode = "NORMAL" }) => {
+  if (!match.live?.striker || !match.live?.nonStriker) return;
+
+  const updated = deepCopy(match);
+  takeSnapshot(updated, "STRIKE_CHANGE", extraMode);
+  [updated.live.striker, updated.live.nonStriker] = [
+    updated.live.nonStriker,
+    updated.live.striker,
+  ];
+  persist(updated, setMatch);
+};
+
+export const retireBatsman = (name, match, setMatch) => {
+  if (!name || match.status === "COMPLETED") return;
+
+  const updated = deepCopy(match);
+  takeSnapshot(updated, "RETIRED");
+
+  const live = updated.live;
+  const innings = updated.innings[live.inningsIndex];
+  innings.ballByBall ||= [];
+
+  innings.ballByBall.push({
+    type: "RETIRE",
+    striker: live.striker,
+    nonStriker: live.nonStriker,
+    retired: name,
+    over: Math.floor(innings.balls / 6),
+    ballInOver: innings.balls % 6,
+    actualBallNum: innings.balls,
+    timestamp: Date.now(),
+  });
+
+  if (live.striker === name) live.striker = null;
+  if (live.nonStriker === name) live.nonStriker = null;
+
+  persist(updated, setMatch);
 };
 
 export const handleOverEnd = (updated, live, innings) => {
-  if (innings.balls > 0 && innings.balls % 6 === 0) {
-    // Maiden check
-    let isMaiden = true;
-    for (const ball of innings.thisOver) {
-      if (
-        (ball.type === "RUN" && ball.runs > 0) ||
-        ball.type === "WIDE" ||
-        ball.type === "NO_BALL"
-      ) {
-        isMaiden = false;
-        break;
-      }
-    }
+  if (innings.balls <= 0 || innings.balls % 6 !== 0) return;
 
-    innings.bowlingStats[live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-    if (isMaiden) innings.bowlingStats[live.bowler].maidens += 1;
+  const isMaiden = innings.thisOver.every(
+    (ball) =>
+      Number(ball.runs || 0) === 0 &&
+      ball.type !== "WIDE" &&
+      ball.type !== "NO_BALL",
+  );
 
-    live.lastOverBowler = live.bowler;
-    live.bowler = null;
-    [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
-    innings.thisOver = [];
-  }
+  ensureBowler(innings, live.bowler);
+  if (isMaiden) innings.bowlingStats[live.bowler].maidens += 1;
+
+  live.lastOverBowler = live.bowler;
+  live.bowler = null;
+  [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
+  innings.thisOver = [];
 };
 
 export const applyRun = ({
@@ -122,17 +143,30 @@ export const applyRun = ({
     recordBall({ type: "RUN", runs, match, setMatch, extraMode });
     return;
   }
+
   if (extraMode === "WIDE") {
-    const extraRun = match.rules?.wide?.extraRun ? 1 : 0;
-    recordBall({ type: "WIDE", runs: runs + extraRun, match, setMatch });
+    const automaticExtra = match.rules?.wide?.extraRun ? 1 : 0;
+    recordBall({
+      type: "WIDE",
+      runs: runs + automaticExtra,
+      match,
+      setMatch,
+      extraMode,
+    });
     setExtraMode("NORMAL");
     return;
   }
+
   if (extraMode === "NO_BALL") {
-    const extraRun = match.rules?.noBall?.extraRun ? 1 : 0;
-    recordBall({ type: "NO_BALL", runs: runs + extraRun, match, setMatch });
+    const automaticExtra = match.rules?.noBall?.extraRun ? 1 : 0;
+    recordBall({
+      type: "NO_BALL",
+      runs: runs + automaticExtra,
+      match,
+      setMatch,
+      extraMode,
+    });
     setExtraMode("NORMAL");
-    return;
   }
 };
 
@@ -145,23 +179,27 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
 
   if (!live.striker || !live.nonStriker || !live.bowler) return;
 
-  // ── Snapshot for undo ──────────────────────────────────────
   takeSnapshot(updated, type, extraMode);
 
   innings.thisOver ||= [];
   innings.ballByBall ||= [];
+  innings.extras ||= { wides: 0, noBalls: 0 };
 
-  // ── Legal ball flag ────────────────────────────────────────
-  // Only RUN counts toward the over total and bowler ball count.
-  // WIDE and NO_BALL do NOT advance the over.
   const isLegal = type === "RUN";
   const isWide = type === "WIDE";
   const isNoBall = type === "NO_BALL";
+  const automaticExtra =
+    (isWide && match.rules?.wide?.extraRun) ||
+    (isNoBall && match.rules?.noBall?.extraRun)
+      ? 1
+      : 0;
+  const battingRuns = isWide ? 0 : Math.max(0, runs - automaticExtra);
+  const runningRuns = isWide ? Math.max(0, runs - automaticExtra) : battingRuns;
 
-  // ── This over ─────────────────────────────────────────────
+  ensureBatter(innings, live.striker);
+  ensureBowler(innings, live.bowler);
+
   innings.thisOver.push({ type, runs });
-
-  // ── Ball-by-ball record ────────────────────────────────────
   innings.ballByBall.push({
     over: Math.floor(innings.balls / 6),
     ballInOver: isLegal ? (innings.balls % 6) + 1 : innings.balls % 6,
@@ -170,139 +208,70 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
     nonStriker: live.nonStriker,
     bowler: live.bowler,
     runs,
+    battingRuns,
     type,
     isWicket: false,
     timestamp: Date.now(),
   });
 
-  // ── Runs ───────────────────────────────────────────────────
-  if (runs > 0) {
-    innings.totalRuns += runs;
+  innings.totalRuns += runs;
+  innings.bowlingStats[live.bowler].runs += runs;
 
-    // Batter runs: everything except wides (batter didn't hit it)
-    if (!isWide) {
-      innings.battingStats[live.striker] ||= {
-        runs: 0,
-        balls: 0,
-        fours: 0,
-        sixes: 0,
-      };
-
-      const bat = innings.battingStats[live.striker];
-
-      const extraRun = isNoBall && match.rules?.noBall?.extraRun ? 1 : 0;
-
-      const battingRuns = runs - extraRun;
-
-      bat.runs += battingRuns;
-
-      if (battingRuns === 4) bat.fours += 1;
-      if (battingRuns === 6) bat.sixes += 1;
-    }
-
-    innings.bowlingStats[live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-    innings.bowlingStats[live.bowler].runs += runs;
+  if (!isWide) {
+    const batter = innings.battingStats[live.striker];
+    batter.runs += battingRuns;
+    if (battingRuns === 4) batter.fours += 1;
+    if (battingRuns === 6) batter.sixes += 1;
   }
 
-  // ── Batter balls faced ─────────────────────────────────────
-  // A batter faces a ball on:
-  //   - every legal delivery (RUN)
-  //   - every no-ball (batter faced it, regardless of extraBall rule)
-  // A batter does NOT face a wide (ball not delivered to them).
-  if (isLegal || isNoBall) {
-    innings.battingStats[live.striker] ||= {
-      runs: 0,
-      balls: 0,
-      fours: 0,
-      sixes: 0,
-    };
+  if (isLegal) {
     innings.battingStats[live.striker].balls += 1;
   }
 
-  // ── Extras ────────────────────────────────────────────────
-  if (isWide) {
-    innings.extras ||= { wides: 0, noBalls: 0 };
-    innings.extras.wides += 1;
-  }
-  if (isNoBall) {
-    innings.extras ||= { wides: 0, noBalls: 0 };
-    innings.extras.noBalls += 1;
-  }
+  if (isWide) innings.extras.wides += runs;
+  if (isNoBall) innings.extras.noBalls += automaticExtra;
 
-  // ── Over ball count (legal deliveries only) ────────────────
   if (isLegal) {
-    innings.balls++;
-    innings.bowlingStats[live.bowler] ||= {
-      balls: 0,
-      runs: 0,
-      wickets: 0,
-      maidens: 0,
-    };
-    innings.bowlingStats[live.bowler].balls++;
+    innings.balls += 1;
+    innings.bowlingStats[live.bowler].balls += 1;
   }
 
-  // ── Evaluate match state BEFORE over-end rotation ─────────
   const matchResolved = evaluateMatchState(updated, setMatch);
   if (matchResolved || updated.status === "COMPLETED") {
-    updated.updatedAt = Date.now();
-    saveMatch(updated);
-    setMatch(updated);
+    persist(updated, setMatch);
     return;
   }
 
-  // ── Over end ───────────────────────────────────────────────
   if (isLegal && innings.balls > 0 && innings.balls % 6 === 0) {
     handleOverEnd(updated, live, innings);
   }
 
-  // ── Strike rotation ────────────────────────────────────────
-  // Rotate when an odd number of runs are scored, accounting for
-  // whether the extra run from wide/no-ball is included in `runs`.
-  const extraRun =
-    (isWide && match.rules?.wide?.extraRun) ||
-    (isNoBall && match.rules?.noBall?.extraRun)
-      ? 1
-      : 0;
-  const battingRuns = runs - extraRun; // runs actually hit by batter
-
   const shouldRotate =
     (isLegal && runs % 2 === 1) ||
-    (isWide && battingRuns % 2 === 1) ||
-    (isNoBall && battingRuns % 2 === 1);
+    ((isWide || isNoBall) && runningRuns % 2 === 1);
 
   if (shouldRotate) {
     [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
   }
 
-  updated.updatedAt = Date.now();
-  saveMatch(updated);
-  setMatch(updated);
+  persist(updated, setMatch);
 };
 
-export const startSecondInnings = ({ match, setMatch }) => {
+export const startNextInnings = ({ match, setMatch }) => {
   const updated = deepCopy(match);
-  takeSnapshot(updated, "START_SECOND_INNINGS");
+  takeSnapshot(updated, "START_NEXT_INNINGS");
 
-  updated.live.inningsIndex = 1;
+  const nextIndex = updated.live.inningsIndex + 1;
+  const scheduledTeams = getScheduledTeamsForInnings(updated, nextIndex);
+
+  updated.live.inningsIndex = nextIndex;
   updated.live.pendingNextInnings = false;
+  updated.live.pendingNextInningsIndex = null;
 
-  updated.innings[1] = {
-    battingTeam: match.innings[0].bowlingTeam.toLowerCase().trim(),
-    bowlingTeam: match.innings[0].battingTeam.toLowerCase().trim(),
-    totalRuns: 0,
-    balls: 0,
-    wickets: 0,
-    battingStats: {},
-    bowlingStats: {},
-    thisOver: [],
-    ballByBall: [],
-    extras: { wides: 0, noBalls: 0 },
-  };
+  updated.innings[nextIndex] = createEmptyInnings({
+    ...scheduledTeams,
+    inningsNumber: getTeamInningsOrdinal(updated, nextIndex),
+  });
 
   updated.live = {
     ...updated.live,
@@ -313,9 +282,10 @@ export const startSecondInnings = ({ match, setMatch }) => {
     outBatsmen: [],
   };
 
-  saveMatch(updated);
-  setMatch(updated);
+  persist(updated, setMatch);
 };
+
+export const startSecondInnings = startNextInnings;
 
 export const startSuperOver = ({ match, setMatch }) => {
   const updated = deepCopy(match);
@@ -325,32 +295,24 @@ export const startSuperOver = ({ match, setMatch }) => {
   updated.live.inningsIndex = newIndex;
   updated.live.pendingSuperOver = false;
 
-  let battingTeam, bowlingTeam;
+  let battingTeam;
+  let bowlingTeam;
 
   if (newIndex === 2) {
-    // First super over: team that batted second bats first
     battingTeam = updated.innings[1].battingTeam;
     bowlingTeam = updated.innings[1].bowlingTeam;
   } else {
-    // Subsequent super overs: team that batted second in previous SO bats first
-    const prevSOSecond = updated.innings[newIndex - 1];
-    battingTeam = prevSOSecond.battingTeam;
-    bowlingTeam = prevSOSecond.bowlingTeam;
+    const previousSecondSuperOverInnings = updated.innings[newIndex - 1];
+    battingTeam = previousSecondSuperOverInnings.battingTeam;
+    bowlingTeam = previousSecondSuperOverInnings.bowlingTeam;
   }
 
-  updated.innings[newIndex] = {
+  updated.innings[newIndex] = createEmptyInnings({
     battingTeam,
     bowlingTeam,
-    totalRuns: 0,
-    balls: 0,
-    wickets: 0,
-    battingStats: {},
-    bowlingStats: {},
-    thisOver: [],
-    ballByBall: [],
+    inningsNumber: 1,
     isSuperOver: true,
-    extras: { wides: 0, noBalls: 0 },
-  };
+  });
 
   updated.live = {
     ...updated.live,
@@ -361,6 +323,5 @@ export const startSuperOver = ({ match, setMatch }) => {
     outBatsmen: [],
   };
 
-  saveMatch(updated);
-  setMatch(updated);
+  persist(updated, setMatch);
 };

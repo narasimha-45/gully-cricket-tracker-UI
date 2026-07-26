@@ -79,7 +79,7 @@ export default function TeamProfile() {
     return (
       <div style={loadingContainer}>
         <div style={spinnerStyle} />
-        <div style={{ marginTop: 16, color: "#64748b", fontWeight: 500 }}>
+        <div style={{ marginTop: 16, color: "var(--color-slate-500)", fontWeight: 500 }}>
           Fetching team data...
         </div>
       </div>
@@ -89,8 +89,8 @@ export default function TeamProfile() {
     return (
       <div style={errorContainer}>
         <div style={{ fontSize: 64, marginBottom: 16 }}>🛡️</div>
-        <h2 style={{ margin: "0 0 8px", color: "#0f172a" }}>Team not found</h2>
-        <p style={{ margin: "0 0 24px", color: "#64748b", maxWidth: 280, lineHeight: 1.5 }}>
+        <h2 style={{ margin: "0 0 8px", color: "var(--color-slate-900)" }}>Team not found</h2>
+        <p style={{ margin: "0 0 24px", color: "var(--color-slate-500)", maxWidth: 280, lineHeight: 1.5 }}>
           We couldn't find any team with the name "{id}".
         </p>
         <button onClick={() => navigate("/")} style={homeBtn}>
@@ -153,26 +153,26 @@ export default function TeamProfile() {
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginBottom: 18 }}>
           <div style={avatar}>{initials}</div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 20, fontWeight: 500, color: "#0f172a", textTransform: "capitalize" }}>
+            <div style={{ fontSize: 20, fontWeight: 500, color: "var(--color-slate-900)", textTransform: "capitalize" }}>
               {profile?.name}
             </div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "var(--color-slate-500)", marginTop: 2 }}>
               {seasonsPlayed.length} season{seasonsPlayed.length !== 1 ? "s" : ""} 
             </div>
           </div>
           <div style={{ textAlign: "right", flexShrink: 0 }}>
-            <div style={{ fontSize: 26, fontWeight: 500, color: "#0f172a" }}>{stats.played || 0}</div>
-            <div style={{ fontSize: 11, color: "#94a3b8" }}>played</div>
+            <div style={{ fontSize: 26, fontWeight: 500, color: "var(--color-slate-900)" }}>{stats.played || 0}</div>
+            <div style={{ fontSize: 11, color: "var(--color-slate-400)" }}>played</div>
           </div>
         </div>
 
         {/* WIN/LOSS BAR */}
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, fontWeight: 500, marginBottom: 7 }}>
           <span style={{ color: "#27500A" }}>{stats.wins || 0} wins</span>
-          <span style={{ color: "#64748b" }}>{stats.ties || 0} ties</span>
+          <span style={{ color: "var(--color-slate-500)" }}>{stats.ties || 0} ties</span>
           <span style={{ color: "#791F1F" }}>{stats.losses || 0} losses</span>
         </div>
-        <div style={{ height: 7, borderRadius: 99, background: "#f1f5f9", overflow: "hidden", display: "flex" }}>
+        <div style={{ height: 7, borderRadius: 99, background: "var(--color-slate-100)", overflow: "hidden", display: "flex" }}>
           <div style={{ width: `${winPct}%`, background: "#639922" }} />
           <div style={{ flex: 1, background: "#E24B4A" }} />
         </div>
@@ -332,15 +332,15 @@ function RecentMatchCard({ item, teamName }) {
         <div style={{ fontSize: 10, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3, color: isWin ? "#3B6D11" : "#A32D2D" }}>
           {isWin ? "Won" : "Lost"}
         </div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: "#0f172a", textTransform: "capitalize" }}>
+        <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-slate-900)", textTransform: "capitalize" }}>
           {isWin ? "vs" : "lost to"} {opponent}
         </div>
-        <div style={{ fontSize: 11, color: "#94a3b8", marginTop: 3 }}>{modeLabel}</div>
+        <div style={{ fontSize: 11, color: "var(--color-slate-400)", marginTop: 3 }}>{modeLabel}</div>
       </div>
       {margin && (
         <div style={{ padding: "12px 14px", display: "flex", flexDirection: "column", alignItems: "flex-end", justifyContent: "center", flexShrink: 0 }}>
-          <div style={{ fontSize: 13, fontWeight: 500, color: "#0f172a" }}>{margin}</div>
-          <div style={{ fontSize: 10, color: "#94a3b8", marginTop: 1 }}>margin</div>
+          <div style={{ fontSize: 13, fontWeight: 500, color: "var(--color-slate-900)" }}>{margin}</div>
+          <div style={{ fontSize: 10, color: "var(--color-slate-400)", marginTop: 1 }}>margin</div>
         </div>
       )}
     </div>
@@ -350,16 +350,16 @@ function RecentMatchCard({ item, teamName }) {
 /* ── SUB-COMPONENTS ── */
 
 const SectionTitle = ({ children }) => (
-  <div style={{ fontSize: 10, fontWeight: 500, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.08em", margin: "24px 0 10px", paddingLeft: 2 }}>
+  <div style={{ fontSize: 10, fontWeight: 500, color: "var(--color-slate-400)", textTransform: "uppercase", letterSpacing: "0.08em", margin: "24px 0 10px", paddingLeft: 2 }}>
     {children}
   </div>
 );
 
 const StatTile = ({ label, value, sub }) => (
-  <div style={{ background: "white", borderRadius: 12, padding: 14, border: "1px solid #e2e8f0" }}>
-    <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5, color: "#94a3b8" }}>{label}</div>
-    <div style={{ fontSize: 22, fontWeight: 500, color: "#0f172a" }}>{value}</div>
-    {sub && <div style={{ fontSize: 11, color: "#64748b", marginTop: 3 }}>{sub}</div>}
+  <div style={{ background: "white", borderRadius: 12, padding: 14, border: "1px solid var(--color-slate-200)" }}>
+    <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5, color: "var(--color-slate-400)" }}>{label}</div>
+    <div style={{ fontSize: 22, fontWeight: 500, color: "var(--color-slate-900)" }}>{value}</div>
+    {sub && <div style={{ fontSize: 11, color: "var(--color-slate-500)", marginTop: 3 }}>{sub}</div>}
   </div>
 );
 
@@ -369,7 +369,7 @@ const SplitTile = ({ label, value, sub, color }) => {
     <div style={{
       borderRadius: 12,
       padding: 14,
-      border: "1px solid #e2e8f0",
+      border: "1px solid var(--color-slate-200)",
       background: isGreen ? "#EAF3DE" : "#FCEBEB",
     }}>
       <div style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 6, color: isGreen ? "#3B6D11" : "#A32D2D" }}>
@@ -382,9 +382,9 @@ const SplitTile = ({ label, value, sub, color }) => {
 };
 
 const Row = ({ label, value, last }) => (
-  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: last ? "none" : "1px solid #f1f5f9" }}>
-    <span style={{ fontSize: 13, color: "#64748b" }}>{label}</span>
-    <span style={{ fontSize: 14, fontWeight: 500, color: "#0f172a" }}>{value}</span>
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: last ? "none" : "1px solid var(--color-slate-100)" }}>
+    <span style={{ fontSize: 13, color: "var(--color-slate-500)" }}>{label}</span>
+    <span style={{ fontSize: 14, fontWeight: 500, color: "var(--color-slate-900)" }}>{value}</span>
   </div>
 );
 
@@ -397,7 +397,7 @@ const Badge = ({ children, color }) => (
 const badgeColors = {
   green: { background: "#EAF3DE", color: "#27500A" },
   red: { background: "#FCEBEB", color: "#791F1F" },
-  gray: { background: "#f8fafc", color: "#475569" },
+  gray: { background: "var(--color-slate-50)", color: "var(--color-slate-600)" },
 };
 
 /* ── STYLES ── */
@@ -405,7 +405,7 @@ const badgeColors = {
 const card = {
   background: "white",
   borderRadius: 16,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   padding: 18,
 };
 const grid2 = {
@@ -428,20 +428,20 @@ const avatar = {
 const seasonSelect = {
   padding: "6px 10px",
   borderRadius: 8,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   fontSize: 12,
   fontWeight: 500,
-  color: "#475569",
+  color: "var(--color-slate-600)",
   background: "white",
   outline: "none",
 };
 const noStatsBanner = {
   marginTop: 16,
   padding: 14,
-  background: "#fef2f2",
-  border: "1px solid #fee2e2",
+  background: "var(--color-red-50)",
+  border: "1px solid var(--color-red-100)",
   borderRadius: 12,
-  color: "#b91c1c",
+  color: "var(--color-red-700)",
   fontSize: 13,
   textAlign: "center",
   fontWeight: 500,
@@ -456,8 +456,8 @@ const loadingContainer = {
 const spinnerStyle = {
   width: 32,
   height: 32,
-  border: "3px solid #e2e8f0",
-  borderTop: "3px solid #6366f1",
+  border: "3px solid var(--color-slate-200)",
+  borderTop: "3px solid var(--color-indigo-500)",
   borderRadius: "50%",
   animation: "spin 0.8s linear infinite",
 };
@@ -470,7 +470,7 @@ const errorContainer = {
   padding: 20,
 };
 const homeBtn = {
-  background: "#4f46e5",
+  background: "var(--color-indigo-600)",
   color: "white",
   padding: "12px 24px",
   borderRadius: 12,
@@ -482,16 +482,16 @@ const homeBtn = {
 const backBtn = {
   padding: "6px 14px",
   borderRadius: 8,
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   background: "white",
   fontWeight: 500,
   fontSize: 13,
-  color: "#475569",
+  color: "var(--color-slate-600)",
   cursor: "pointer",
 };
 const matchCard = {
   background: "white",
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   borderRadius: 12,
   display: "flex",
   alignItems: "stretch",
@@ -504,10 +504,10 @@ const matchPill = {
 const emptyHint = {
   padding: 16,
   textAlign: "center",
-  color: "#94a3b8",
+  color: "var(--color-slate-400)",
   fontSize: 13,
   fontStyle: "italic",
   background: "white",
-  border: "1px solid #e2e8f0",
+  border: "1px solid var(--color-slate-200)",
   borderRadius: 12,
 };

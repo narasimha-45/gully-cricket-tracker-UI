@@ -1,252 +1,271 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { saveMatch } from "../storage/matchDB";
 import BottomSheetSelector from "./BottomSheetSelector";
 import { formatName } from "../utils/helpers";
+import {
+  TEST_INNINGS_OPTIONS,
+  getTestInningsPerTeam,
+  isTestMatch,
+  normalizeName,
+} from "../utils/matchModel";
+import styles from "./EditMatchSheet.module.css";
+
+const DEFAULT_RULES = {
+  wide: { extraRun: false, extraBall: true },
+  noBall: { extraRun: true, extraBall: true },
+};
 
 export default function EditMatchSheet({ open, onClose, match, onSave }) {
   const { live } = match;
-
   const [openTeam, setOpenTeam] = useState(null);
   const [newPlayer, setNewPlayer] = useState("");
-  const [overs, setOvers] = useState(match.totalOvers || 0);
+  const [overs, setOvers] = useState(Number(match.totalOvers || 1));
+
+  useEffect(() => {
+    if (open) setOvers(Number(match.totalOvers || 1));
+  }, [match.totalOvers, open]);
 
   const innings = match.innings[live.inningsIndex];
+  const testMatch = isTestMatch(match);
+  const canEditTestFormat = testMatch && live.inningsIndex === 0;
+  const testInningsPerTeam = getTestInningsPerTeam(match);
 
-  /* ---------------- PLAYER LOCK ---------------- */
+  const usedPlayers = useMemo(() => {
+    const used = new Set([
+      live.striker,
+      live.nonStriker,
+      live.bowler,
+      ...(live.outBatsmen || []),
+    ].filter(Boolean));
 
-  const isPlayerLocked = (player) => {
-    return (
-      live.striker === player ||
-      live.nonStriker === player ||
-      live.bowler === player ||
-      live.outBatsmen.includes(player) ||
-      innings.battingStats[player] ||
-      innings.bowlingStats[player]
-    );
-  };
+    match.innings.forEach((item) => {
+      Object.keys(item.battingStats || {}).forEach((player) => used.add(player));
+      Object.keys(item.bowlingStats || {}).forEach((player) => used.add(player));
+      Object.keys(item.dismissals || {}).forEach((player) => used.add(player));
+    });
 
-  /* ---------------- SAVE ---------------- */
+    return used;
+  }, [live, match.innings]);
+
+  const isPlayerLocked = (player) => usedPlayers.has(player);
 
   const save = (updated) => {
     saveMatch(updated);
     onSave(updated);
   };
 
-  /* ---------------- OVERS ---------------- */
-
-  const minOversNeeded = Math.ceil(innings.balls / 6);
+  const minOversNeeded = Math.max(1, Math.ceil(innings.balls / 6));
 
   const updateOvers = (delta) => {
-    const next = overs + delta;
-
-    // prevent invalid values
-    if (next < minOversNeeded) return;
-
-    // optional hard cap
-    if (next > 50) return;
-
-    setOvers(next);
+    setOvers((current) => {
+      const next = current + delta;
+      if (next < minOversNeeded || next > 50) return current;
+      return next;
+    });
   };
 
   const applyOvers = () => {
-    if (overs < minOversNeeded) return;
-
-    const updated = {
-      ...match,
-      totalOvers: overs,
-      updatedAt: Date.now(),
-    };
-
-    save(updated);
+    if (testMatch || overs < minOversNeeded) return;
+    save({ ...match, totalOvers: overs, updatedAt: Date.now() });
   };
 
-  /* ---------------- TEAM OPS ---------------- */
+  const updateTestInnings = (inningsPerTeam) => {
+    if (!canEditTestFormat) return;
+    save({
+      ...match,
+      testConfig: { inningsPerTeam },
+      updatedAt: Date.now(),
+    });
+  };
 
   const addPlayer = (teamKey) => {
-    if (!newPlayer.trim()) return;
+    const player = normalizeName(newPlayer);
+    if (!player) return;
 
-    const updated = {
+    const currentPlayers = match.teams[teamKey].players || [];
+    if (currentPlayers.some((item) => normalizeName(item) === player)) {
+      setNewPlayer("");
+      return;
+    }
+
+    save({
       ...match,
       teams: {
         ...match.teams,
         [teamKey]: {
           ...match.teams[teamKey],
-          players: [...match.teams[teamKey].players, newPlayer.trim()],
+          players: [...currentPlayers, player],
         },
       },
       updatedAt: Date.now(),
-    };
-
-    save(updated);
-
+    });
     setNewPlayer("");
   };
 
   const removePlayer = (teamKey, player) => {
     if (isPlayerLocked(player)) return;
 
-    const updated = {
+    save({
       ...match,
       teams: {
         ...match.teams,
         [teamKey]: {
           ...match.teams[teamKey],
-          players: match.teams[teamKey].players.filter((p) => p !== player),
+          players: match.teams[teamKey].players.filter((item) => item !== player),
         },
       },
       updatedAt: Date.now(),
-    };
-
-    save(updated);
+    });
   };
 
-  /* ---------------- RULES ---------------- */
-
-  const rules = match.rules || {
-    wide: {
-      extraRun: false,
-      extraBall: true,
-    },
-    noBall: {
-      extraRun: true,
-      extraBall: true,
-    },
+  const rules = {
+    wide: { ...DEFAULT_RULES.wide, ...(match.rules?.wide || {}) },
+    noBall: { ...DEFAULT_RULES.noBall, ...(match.rules?.noBall || {}) },
   };
 
   const updateRules = (partial) => {
-    const updated = {
+    save({
       ...match,
-      rules: {
-        ...rules,
-        ...partial,
-      },
+      rules: { ...rules, ...partial },
       updatedAt: Date.now(),
-    };
-
-    save(updated);
+    });
   };
 
-  /* ---------------- UI ---------------- */
-
   return (
-    <BottomSheetSelector open={open} title="Match Settings" onClose={onClose}>
-      {/* OVERS */}
-      <div style={sectionCard}>
-        <div style={sectionTitleRow}>
-          <h3 style={sectionTitle}>Overs</h3>
-
-          <span style={helperText}>Minimum: {minOversNeeded}</span>
-        </div>
-
-        <div style={oversContainer}>
-          <button style={circleBtn} onClick={() => updateOvers(-1)}>
-            −
-          </button>
-
-          <div style={oversBox}>
-            <span style={oversValue}>{overs}</span>
-            {/* <span style={oversLabel}>Overs</span> */}
-          </div>
-
-          <button style={circleBtn} onClick={() => updateOvers(1)}>
-            +
-          </button>
-        </div>
-
-        <button style={primaryBtn} onClick={applyOvers}>
-          Update Overs
-        </button>
-      </div>
-
-      {/* RULES */}
-      <div style={sectionCard}>
-        <h3 style={sectionTitle}>Extras Rules</h3>
-
-        <div style={settingsRow}>
+    <BottomSheetSelector open={open} title="Match settings" onClose={onClose}>
+      <section className={styles.sectionCard}>
+        <div className={styles.sectionTitleRow}>
           <div>
-            <div style={settingTitle}>Wide gives run</div>
-            <div style={settingDesc}>Add automatic extra run on wide</div>
+            <h3>{testMatch ? "Test format" : "Overs"}</h3>
+            <p>
+              {testMatch
+                ? "Test matches have no over limit."
+                : `Minimum allowed now: ${minOversNeeded} overs`}
+            </p>
           </div>
-
-          <input
-            type="checkbox"
-            style={{
-              width: 20,
-              height: 20,
-              accentColor: "#4f46e5",
-              cursor: "pointer",
-            }}
-            checked={rules.wide.extraRun}
-            onChange={(e) =>
-              updateRules({
-                wide: {
-                  ...rules.wide,
-                  extraRun: e.target.checked,
-                },
-              })
-            }
-          />
         </div>
 
-        <div style={divider}></div>
+        {testMatch ? (
+          <>
+            <div className={styles.segmentedControl}>
+              <button
+                type="button"
+                className={
+                  testInningsPerTeam === TEST_INNINGS_OPTIONS.SINGLE
+                    ? styles.active
+                    : ""
+                }
+                disabled={!canEditTestFormat}
+                onClick={() => updateTestInnings(TEST_INNINGS_OPTIONS.SINGLE)}
+              >
+                Single innings
+              </button>
+              <button
+                type="button"
+                className={
+                  testInningsPerTeam === TEST_INNINGS_OPTIONS.DOUBLE
+                    ? styles.active
+                    : ""
+                }
+                disabled={!canEditTestFormat}
+                onClick={() => updateTestInnings(TEST_INNINGS_OPTIONS.DOUBLE)}
+              >
+                Double innings
+              </button>
+            </div>
+            <p className={styles.helperNote}>
+              {canEditTestFormat
+                ? "This option remains editable throughout the first innings."
+                : "The innings format is locked after the second innings starts."}
+            </p>
+          </>
+        ) : (
+          <>
+            <div className={styles.oversContainer}>
+              <button
+                type="button"
+                onClick={() => updateOvers(-1)}
+                disabled={overs <= minOversNeeded}
+                aria-label="Decrease overs"
+              >
+                −
+              </button>
+              <strong>{overs}</strong>
+              <button
+                type="button"
+                onClick={() => updateOvers(1)}
+                disabled={overs >= 50}
+                aria-label="Increase overs"
+              >
+                +
+              </button>
+            </div>
+            <button type="button" className={styles.primaryButton} onClick={applyOvers}>
+              Update overs
+            </button>
+          </>
+        )}
+      </section>
 
-        <div style={settingsRow}>
+      <section className={styles.sectionCard}>
+        <div className={styles.sectionTitleRow}>
           <div>
-            <div style={settingTitle}>No Ball gives run</div>
-            <div style={settingDesc}>Add automatic extra run on no ball</div>
+            <h3>Extras rules</h3>
+            <p>Control automatic penalty runs.</p>
           </div>
-
-          <input
-            type="checkbox"
-            style={{
-              width: 20,
-              height: 20,
-              accentColor: "#4f46e5",
-              cursor: "pointer",
-            }}
-            checked={rules.noBall.extraRun}
-            onChange={(e) =>
-              updateRules({
-                noBall: {
-                  ...rules.noBall,
-                  extraRun: e.target.checked,
-                },
-              })
-            }
-          />
         </div>
-      </div>
 
-      {/* TEAM A */}
-      <TeamEditor
-        teamKey="teamA"
-        openTeam={openTeam}
-        setOpenTeam={setOpenTeam}
-        match={match}
-        isPlayerLocked={isPlayerLocked}
-        removePlayer={removePlayer}
-        addPlayer={addPlayer}
-        newPlayer={newPlayer}
-        setNewPlayer={setNewPlayer}
-      />
+        <RuleToggle
+          title="Wide gives a run"
+          description="Automatically add one penalty run for a wide."
+          checked={rules.wide.extraRun}
+          onChange={(checked) =>
+            updateRules({ wide: { ...rules.wide, extraRun: checked } })
+          }
+        />
+        <RuleToggle
+          title="No-ball gives a run"
+          description="Automatically add one penalty run for a no-ball."
+          checked={rules.noBall.extraRun}
+          onChange={(checked) =>
+            updateRules({ noBall: { ...rules.noBall, extraRun: checked } })
+          }
+        />
+      </section>
 
-      {/* TEAM B */}
-      <TeamEditor
-        teamKey="teamB"
-        openTeam={openTeam}
-        setOpenTeam={setOpenTeam}
-        match={match}
-        isPlayerLocked={isPlayerLocked}
-        removePlayer={removePlayer}
-        addPlayer={addPlayer}
-        newPlayer={newPlayer}
-        setNewPlayer={setNewPlayer}
-      />
+      {(["teamA", "teamB"]).map((teamKey) => (
+        <TeamEditor
+          key={teamKey}
+          teamKey={teamKey}
+          openTeam={openTeam}
+          setOpenTeam={setOpenTeam}
+          match={match}
+          isPlayerLocked={isPlayerLocked}
+          removePlayer={removePlayer}
+          addPlayer={addPlayer}
+          newPlayer={newPlayer}
+          setNewPlayer={setNewPlayer}
+        />
+      ))}
     </BottomSheetSelector>
   );
 }
 
-/* ---------------- TEAM EDITOR ---------------- */
+function RuleToggle({ title, description, checked, onChange }) {
+  return (
+    <label className={styles.settingsRow}>
+      <span>
+        <strong>{title}</strong>
+        <small>{description}</small>
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onChange(event.target.checked)}
+      />
+    </label>
+  );
+}
 
 function TeamEditor({
   teamKey,
@@ -260,274 +279,60 @@ function TeamEditor({
   setNewPlayer,
 }) {
   const team = match.teams[teamKey];
-
   const isOpen = openTeam === teamKey;
 
   return (
-    <div style={sectionCard}>
-      <div
-        style={teamHeader}
+    <section className={styles.sectionCard}>
+      <button
+        type="button"
+        className={styles.teamHeader}
         onClick={() => setOpenTeam(isOpen ? null : teamKey)}
       >
-        <div>
-          <div style={teamTitle}>{formatName(team.name)}</div>
-
-          <div style={teamSubText}>{team.players.length} players</div>
-        </div>
-
-        <span style={arrow}>{isOpen ? "▲" : "▼"}</span>
-      </div>
+        <span>
+          <strong>{formatName(team.name)}</strong>
+          <small>{team.players.length} players</small>
+        </span>
+        <span aria-hidden="true">{isOpen ? "▲" : "▼"}</span>
+      </button>
 
       {isOpen && (
-        <>
-          <div style={{ marginTop: 12 }}>
-            {team.players.map((p) => {
-              const locked = isPlayerLocked(p);
-
+        <div className={styles.teamBody}>
+          <div className={styles.playerList}>
+            {team.players.map((player) => {
+              const locked = isPlayerLocked(player);
               return (
-                <div key={p} style={playerRow}>
-                  <div>
-                    <div
-                      style={{
-                        fontWeight: 600,
-                        opacity: locked ? 0.6 : 1,
-                      }}
-                    >
-                      {p}
-                    </div>
-
-                    {locked && (
-                      <div style={lockedText}>Currently used in match</div>
-                    )}
-                  </div>
-
-                  {locked ? (
-                    <span style={lockBadge}>🔒 Locked</span>
-                  ) : (
-                    <button
-                      style={removeBtn}
-                      onClick={() => removePlayer(teamKey, p)}
-                    >
-                      Remove
-                    </button>
-                  )}
+                <div key={player} className={styles.playerRow}>
+                  <span>
+                    <strong>{formatName(player)}</strong>
+                    {locked && <small>Used in this match</small>}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removePlayer(teamKey, player)}
+                    disabled={locked}
+                  >
+                    {locked ? "Locked" : "Remove"}
+                  </button>
                 </div>
               );
             })}
           </div>
 
-          <div style={addRow}>
+          <div className={styles.addRow}>
             <input
-              style={input}
-              placeholder="Add new player"
               value={newPlayer}
-              onChange={(e) => setNewPlayer(e.target.value)}
+              placeholder="Add a player"
+              onChange={(event) => setNewPlayer(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter") addPlayer(teamKey);
+              }}
             />
-
-            <button style={addBtn} onClick={() => addPlayer(teamKey)}>
+            <button type="button" onClick={() => addPlayer(teamKey)}>
               Add
             </button>
           </div>
-        </>
+        </div>
       )}
-    </div>
+    </section>
   );
 }
-
-/* ---------------- STYLES ---------------- */
-
-const sectionCard = {
-  background: "#f8fafc",
-  borderRadius: 18,
-  padding: 12,
-  marginBottom: 14,
-  border: "1px solid #e5e7eb",
-};
-
-const sectionTitleRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 12,
-};
-
-const sectionTitle = {
-  margin: 0,
-  fontSize: 17,
-  fontWeight: 700,
-};
-
-const helperText = {
-  fontSize: 12,
-  color: "#6b7280",
-};
-
-const oversContainer = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 16,
-  marginBottom: 16,
-};
-
-const circleBtn = {
-  width: 30,
-  height: 30,
-  borderRadius: "50%",
-  border: "none",
-  background: "#4f46e5",
-  color: "#fff",
-  fontSize: 24,
-  fontWeight: 700,
-  cursor: "pointer",
-};
-
-const oversBox = {
-  minWidth: 40,
-  padding: "10px 14px",
-  borderRadius: 16,
-  background: "#eef2ff",
-  textAlign: "center",
-};
-
-const oversValue = {
-  fontSize: 18,
-  fontWeight: 800,
-  color: "#312e81",
-  lineHeight: 1,
-};
-
-const oversLabel = {
-  fontSize: 10,
-  color: "#6b7280",
-  marginTop: 4,
-};
-
-const primaryBtn = {
-  display: "block",
-
-  width: "85%",
-
-  margin: "0 auto",
-
-  padding: "8px 12px",
-
-  borderRadius: 12,
-
-  border: "none",
-
-  background:
-    "linear-gradient(135deg, #4f46e5, #4338ca)",
-
-  color: "#fff",
-
-  fontWeight: 500,
-
-  fontSize: 14,
-
-  cursor: "pointer",
-};
-
-const settingsRow = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "space-between",
-  gap: 12,
-  padding: "6px 0",
-};
-
-const settingTitle = {
-  fontWeight: 600,
-  fontSize: 14,
-};
-
-const settingDesc = {
-  fontSize: 12,
-  color: "#6b7280",
-  marginTop: 2,
-};
-
-const divider = {
-  height: 1,
-  background: "#e5e7eb",
-  margin: "10px 0",
-};
-
-const teamHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  cursor: "pointer",
-};
-
-const teamTitle = {
-  fontSize: 16,
-  fontWeight: 700,
-};
-
-const teamSubText = {
-  fontSize: 12,
-  color: "#6b7280",
-  marginTop: 2,
-};
-
-const arrow = {
-  fontSize: 14,
-  color: "#6b7280",
-};
-
-const playerRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "10px 0",
-  borderBottom: "1px solid #e5e7eb",
-};
-
-const lockedText = {
-  fontSize: 11,
-  color: "#ef4444",
-  marginTop: 2,
-};
-
-const lockBadge = {
-  fontSize: 12,
-  fontWeight: 600,
-  color: "#6b7280",
-};
-
-const removeBtn = {
-  border: "none",
-  background: "#fee2e2",
-  color: "#b91c1c",
-  padding: "7px 12px",
-  borderRadius: 10,
-  fontWeight: 600,
-  cursor: "pointer",
-};
-
-const addRow = {
-  display: "flex",
-  gap: 10,
-  marginTop: 14,
-};
-
-const input = {
-  flex: 1,
-  padding: "12px 14px",
-  borderRadius: 12,
-  border: "1px solid #d1d5db",
-  outline: "none",
-  fontSize: 14,
-  background: "#fff",
-};
-
-const addBtn = {
-  border: "none",
-  background: "#4f46e5",
-  color: "#fff",
-  borderRadius: 12,
-  padding: "0 18px",
-  fontWeight: 700,
-  cursor: "pointer",
-};

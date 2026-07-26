@@ -10,7 +10,7 @@
 .modal {
   width: 90%;
   max-width: 360px;
-  background-color: #ffffff;
+  background-color: var(--color-white);
   border-radius: 14px;
   padding: 16px;
 }
@@ -31,14 +31,14 @@
 }
 
 .cancel {
-  background-color: #e5e7eb;
+  background-color: var(--color-gray-200);
   border: none;
   padding: 8px 14px;
   border-radius: 8px;
 }
 
 .create {
-  background-color: #4f46e5;
+  background-color: var(--color-indigo-600);
   color: white;
   border: none;
   padding: 8px 14px;

@@ -87,14 +87,14 @@ export function derivePartnerships(innings) {
     // Runs
     current.runs += runs;
 
-    const isLegal  = type === "RUN";
     const isNoBall = type === "NO_BALL";
-    const isWide   = type === "WIDE";
-
-    const extraRun =
-      (isWide || isNoBall) ? 1 : 0;
-
-    const battingRuns = Math.max(0, runs - extraRun);
+    const isWide = type === "WIDE";
+    const isLegal = !isWide && !isNoBall;
+    const battingRuns = Number.isFinite(ball.battingRuns)
+      ? ball.battingRuns
+      : isWide
+        ? 0
+        : Math.max(0, runs - (isNoBall ? 1 : 0));
 
     // Batter runs
     if (!isWide && battingRuns > 0) {
@@ -102,7 +102,7 @@ export function derivePartnerships(innings) {
     }
 
     // Batter balls
-    if (isLegal || isNoBall) {
+    if (isLegal) {
       current.balls += 1;
       current.contributions[striker].balls += 1;
     }
@@ -124,5 +124,8 @@ export function derivePartnerships(innings) {
 export function getCurrentPartnership(innings) {
   const all = derivePartnerships(innings);
 
-  return all.findLast((p) => p.isActive) ?? null;
+  for (let index = all.length - 1; index >= 0; index -= 1) {
+    if (all[index].isActive) return all[index];
+  }
+  return null;
 }

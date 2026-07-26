@@ -1,5 +1,6 @@
 // components/Scorecard.jsx
 import { formatName } from "../utils/helpers";
+import { isTestMatch, sameName, getTeamInningsOrdinal } from "../utils/matchModel";
 import { derivePartnerships } from "../utils/partnerships";
 
 export default function Scorecard({ match }) {
@@ -23,8 +24,12 @@ export default function Scorecard({ match }) {
     );
   }
 
-  const mainInnings = visibleInnings.slice(0, 2);
-  const superOverInnings = visibleInnings.slice(2);
+  const mainInnings = isTestMatch(match)
+    ? visibleInnings.filter((innings) => !innings.isSuperOver)
+    : visibleInnings.slice(0, 2);
+  const superOverInnings = isTestMatch(match)
+    ? []
+    : visibleInnings.slice(2);
 
   const superOverGroups = [];
   for (let i = 0; i < superOverInnings.length; i += 2) {
@@ -41,8 +46,12 @@ export default function Scorecard({ match }) {
           key={idx}
           innings={inn}
           teams={teams}
-          label={`Innings ${idx + 1} - ${inn.battingTeam}`}
-          headerColor="linear-gradient(135deg, #312e81, #4338ca)"
+          label={
+            isTestMatch(match)
+              ? `${formatName(inn.battingTeam)} · ${getTeamInningsOrdinal(match, idx) === 1 ? "1st" : "2nd"} innings`
+              : `Innings ${idx + 1} - ${formatName(inn.battingTeam)}`
+          }
+          headerColor="linear-gradient(135deg, var(--color-indigo-900), var(--color-indigo-700))"
         />
       ))}
 
@@ -55,7 +64,7 @@ export default function Scorecard({ match }) {
               innings={inn}
               teams={teams}
               label={inn.battingTeam}
-              headerColor="linear-gradient(135deg, #b91c1c, #dc2626)"
+              headerColor="linear-gradient(135deg, var(--color-red-700), var(--color-red-600))"
             />
           ))}
         </div>
@@ -68,16 +77,18 @@ export default function Scorecard({ match }) {
    InningsCard
 ───────────────────────────────────────────────────────────── */
 function InningsCard({ innings, teams, label, headerColor }) {
-  if (!innings || innings.balls === 0) return null;
+  if (!innings || (innings.balls === 0 && innings.totalRuns === 0 && Object.keys(innings.battingStats || {}).length === 0)) return null;
 
   const battingPlayers =
-    innings.battingTeam === teams.teamA.name
+    sameName(innings.battingTeam, teams.teamA.name)
       ? teams.teamA.players
       : teams.teamB.players;
 
   const battedPlayers = Object.keys(innings.battingStats || {});
 
-  const didNotBat = battingPlayers.filter((p) => !battedPlayers.includes(p));
+  const didNotBat = battingPlayers.filter(
+    (player) => !battedPlayers.some((batted) => sameName(batted, player)),
+  );
 
   const overs = `${Math.floor(innings.balls / 6)}.${innings.balls % 6}`;
   const rr =
@@ -122,7 +133,11 @@ function InningsCard({ innings, teams, label, headerColor }) {
               <div>
                 <div style={playerStyle}>{formatName(p)}</div>
                 <div style={dismissalStyle}>
-                  {s.dismissal ? formatDismissal(s.dismissal) : "batting"}
+                  {s.dismissal
+                    ? formatDismissal(s.dismissal)
+                    : innings.completed
+                      ? "not out"
+                      : "batting"}
                 </div>
               </div>
               <span style={runsStyle}>{s.runs}</span>
@@ -212,7 +227,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
                 key={`${b1}-${b2}-${idx}`}
                 style={{
                   ...partnershipRowStyle,
-                  background: isActive ? "#f0fdf4" : "#fff",
+                  background: isActive ? "#f0fdf4" : "var(--color-white)",
                 }}
               >
                 {/* Header row: wkt label + total */}
@@ -220,7 +235,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
                   <span
                     style={{
                       ...partnershipWktStyle,
-                      color: isActive ? "#15803d" : "#94a3b8",
+                      color: isActive ? "var(--color-green-700)" : "var(--color-slate-400)",
                     }}
                   >
                     {isActive ? "Current" : `Wkt ${idx + 1}`}
@@ -228,7 +243,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
                   <span
                     style={{
                       ...partnershipTotalStyle,
-                      color: isActive ? "#15803d" : "#1e293b",
+                      color: isActive ? "var(--color-green-700)" : "var(--color-slate-800)",
                     }}
                   >
                     {p.runs}{" "}
@@ -303,21 +318,21 @@ const pageStyle = { display: "flex", flexDirection: "column", gap: 14 };
 const soSectionHeaderStyle = {
   fontSize: 12,
   fontWeight: 700,
-  color: "#b91c1c",
+  color: "var(--color-red-700)",
   textTransform: "uppercase",
   letterSpacing: "0.06em",
   padding: "8px 4px 4px",
 };
 
 const inningsCardStyle = {
-  background: "#fff",
+  background: "var(--color-white)",
   borderRadius: 14,
   overflow: "hidden",
-  border: "1px solid #e5e7eb",
+  border: "1px solid var(--color-gray-200)",
   boxShadow: "0 2px 10px rgba(15,23,42,0.04)",
 };
 const headerStyle = {
-  color: "#fff",
+  color: "var(--color-white)",
   padding: "14px 16px",
   display: "flex",
   justifyContent: "space-between",
@@ -331,12 +346,12 @@ const tableHeaderStyle = {
   display: "grid",
   gridTemplateColumns: "2.8fr repeat(5, 1fr)",
   alignItems: "center",
-  background: "#eef2ff",
+  background: "var(--color-indigo-50)",
   padding: "10px 14px",
   fontSize: 12,
   fontWeight: 700,
-  color: "#4338ca",
-  borderBottom: "1px solid #e0e7ff",
+  color: "var(--color-indigo-700)",
+  borderBottom: "1px solid var(--color-indigo-100)",
 };
 const rowStyle = {
   display: "grid",
@@ -344,42 +359,42 @@ const rowStyle = {
   alignItems: "center",
   padding: "12px 14px",
   fontSize: 14,
-  color: "#111827",
-  borderBottom: "1px solid #f3f4f6",
-  background: "#fff",
+  color: "var(--color-gray-900)",
+  borderBottom: "1px solid var(--color-gray-100)",
+  background: "var(--color-white)",
 };
 const playerStyle = {
   fontSize: 14,
   fontWeight: 500,
-  color: "#312e81",
+  color: "var(--color-indigo-900)",
   lineHeight: 1.4,
 };
-const dismissalStyle = { marginTop: 2, fontSize: 11, color: "#6b7280" };
-const runsStyle = { fontWeight: 800, color: "#111827" };
+const dismissalStyle = { marginTop: 2, fontSize: 11, color: "var(--color-gray-500)" };
+const runsStyle = { fontWeight: 800, color: "var(--color-gray-900)" };
 
 const infoRowStyle = {
   display: "flex",
   justifyContent: "space-between",
   gap: 14,
   padding: "12px 14px",
-  borderBottom: "1px solid #f3f4f6",
+  borderBottom: "1px solid var(--color-gray-100)",
   fontSize: 13,
-  color: "#111827",
+  color: "var(--color-gray-900)",
   background: "#fafafa",
 };
-const infoLabelStyle = { fontWeight: 700, minWidth: 90, color: "#111827" };
-const yetToBatStyle = { color: "#4338ca", lineHeight: 1.6, fontWeight: 500 };
+const infoLabelStyle = { fontWeight: 700, minWidth: 90, color: "var(--color-gray-900)" };
+const yetToBatStyle = { color: "var(--color-indigo-700)", lineHeight: 1.6, fontWeight: 500 };
 const bowlingTitleStyle = {
   padding: "16px 14px 8px",
   fontSize: 15,
   fontWeight: 700,
-  color: "#111827",
+  color: "var(--color-gray-900)",
 };
 
 /* Partnership styles — horizontal bar design */
 const partnershipRowStyle = {
   padding: "10px 14px 12px",
-  borderBottom: "1px solid #f3f4f6",
+  borderBottom: "1px solid var(--color-gray-100)",
 };
 
 const partnershipTopRowStyle = {
@@ -405,7 +420,7 @@ const partnershipTotalStyle = {
 const partnershipTotalBallsStyle = {
   fontSize: 12,
   fontWeight: 600,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
 };
 
 const partnershipBarWrapStyle = {
@@ -426,7 +441,7 @@ const partnershipBarB1Style = {
 
 const partnershipBarB2Style = {
   height: "100%",
-  background: "#f59e0b",
+  background: "var(--color-amber-500)",
   borderRadius: 999,
   transition: "width 0.3s ease",
 };
@@ -452,26 +467,26 @@ const partnershipNameRightStyle = {
 const partnershipBatterNameStyle = {
   fontSize: 13,
   fontWeight: 600,
-  color: "#1e293b",
+  color: "var(--color-slate-800)",
 };
 
 const partnershipBatterContribStyle = {
   fontSize: 11,
-  color: "#64748b",
+  color: "var(--color-slate-500)",
   fontVariantNumeric: "tabular-nums",
 };
 
 const emptyWrapStyle = {
-  background: "#fff",
+  background: "var(--color-white)",
   borderRadius: 14,
   padding: "48px 24px",
   textAlign: "center",
-  border: "1px solid #e5e7eb",
+  border: "1px solid var(--color-gray-200)",
 };
 const emptyTitleStyle = {
   marginBottom: 8,
   fontSize: 18,
   fontWeight: 700,
-  color: "#111827",
+  color: "var(--color-gray-900)",
 };
-const emptySubStyle = { fontSize: 13, color: "#64748b" };
+const emptySubStyle = { fontSize: 13, color: "var(--color-slate-500)" };

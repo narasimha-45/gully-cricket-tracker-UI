@@ -111,7 +111,7 @@ const accentBar = {
   margin: "18px auto 24px",
 
   background:
-    "linear-gradient(90deg,#4f46e5,#6366f1)",
+    "linear-gradient(90deg,var(--color-indigo-600),var(--color-indigo-500))",
 };
 
 const titleStyle = {
@@ -123,7 +123,7 @@ const titleStyle = {
 
   letterSpacing: -0.8,
 
-  color: "#0f172a",
+  color: "var(--color-slate-900)",
 
   lineHeight: 1.2,
 };
@@ -137,7 +137,7 @@ const subtitleStyle = {
 
   fontWeight: 500,
 
-  color: "#475569",
+  color: "var(--color-slate-600)",
 
   lineHeight: 1.6,
 };
@@ -154,9 +154,9 @@ const primaryBtn = {
   borderRadius: 18,
 
   background:
-    "linear-gradient(135deg,#4f46e5,#4338ca)",
+    "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
 
-  color: "#fff",
+  color: "var(--color-white)",
 
   fontSize: 15,
 
@@ -177,7 +177,7 @@ const secondaryBtn = {
 
   background: "transparent",
 
-  color: "#64748b",
+  color: "var(--color-slate-500)",
 
   fontSize: 14,
 
@@ -204,7 +204,7 @@ const spinner = {
   border:
     "2px solid rgba(255,255,255,0.35)",
 
-  borderTop: "2px solid #fff",
+  borderTop: "2px solid var(--color-white)",
 
   borderRadius: "50%",
 

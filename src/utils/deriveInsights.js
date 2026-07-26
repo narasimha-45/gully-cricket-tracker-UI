@@ -1,4 +1,13 @@
 /** Convert ball count → overs string: 7 balls → "1.1", 12 → "2.0" */
+const BOWLER_WICKET_TYPES = new Set([
+  "BOWLED",
+  "CAUGHT",
+  "LBW",
+  "STUMPED",
+  "HIT_WICKET",
+  "SPECIAL",
+]);
+
 function ballsToOvers(balls) {
   const fullOvers = Math.floor(balls / 6);
   const rem = balls % 6;
@@ -6,7 +15,17 @@ function ballsToOvers(balls) {
 }
 
 export function deriveInsights(match) {
-  const { live, innings: allInnings, totalOvers = 20 } = match;
+  const { live, innings: allInnings } = match;
+
+  const configuredOvers = Number(match.totalOvers);
+  const longestInningsOvers = Math.max(
+    1,
+    ...allInnings.map((innings) => Math.max(1, Math.ceil((innings.balls || 0) / 6))),
+  );
+  const totalOvers =
+    Number.isFinite(configuredOvers) && configuredOvers > 0
+      ? configuredOvers
+      : longestInningsOvers;
 
   const visibleInnings = live
     ? allInnings.slice(0, live.inningsIndex + 1)
@@ -73,6 +92,10 @@ export function deriveInsights(match) {
       const isNoBall = type === "NO_BALL";
 
       const isLegal = !isWide && !isNoBall;
+      const wicketType = ball.wicket?.type;
+      const isBowlerWicket = Boolean(
+        isWicket && !isNoBall && BOWLER_WICKET_TYPES.has(wicketType),
+      );
 
       ensureBatter(striker);
       ensureBowler(bowler);
@@ -97,7 +120,7 @@ export function deriveInsights(match) {
       if (isWicket) overMap[overKey].wickets += 1;
 
       /* ── Batter stats ── */
-      if (isLegal || isNoBall) {
+      if (isLegal) {
         batterMap[striker].balls += 1;
         h2h[hk].balls += 1;
 
@@ -108,8 +131,9 @@ export function deriveInsights(match) {
       }
 
       if (!isWide) {
-        const penalty = isNoBall ? 1 : 0;
-        const batRuns = runs - penalty;
+        const batRuns = Number.isFinite(ball.battingRuns)
+          ? ball.battingRuns
+          : runs - (isNoBall && match.rules?.noBall?.extraRun ? 1 : 0);
 
         if (batRuns > 0) {
           batterMap[striker].runs += batRuns;
@@ -135,7 +159,7 @@ export function deriveInsights(match) {
               The original bug was excluding wickets from dot count — we fix by
               removing the `&& !isWicket` guard.
       ── */
-      if (isWicket) {
+      if (isBowlerWicket) {
         bowlerMap[bowler].wickets += 1;
         h2h[hk].wickets += 1;
       }
@@ -157,7 +181,7 @@ export function deriveInsights(match) {
   ───────────────────────────────────────────── */
 
   const batters = Object.entries(batterMap)
-    .filter(([, s]) => s.balls > 0)
+    .filter(([, s]) => s.balls > 0 || s.runs > 0)
     .map(([name, s]) => ({
       name,
       runs: s.runs,
@@ -175,7 +199,7 @@ export function deriveInsights(match) {
   ───────────────────────────────────────────── */
 
   const bowlers = Object.entries(bowlerMap)
-    .filter(([, s]) => s.balls > 0)
+    .filter(([, s]) => s.balls > 0 || s.runs > 0 || s.wickets > 0)
     .map(([name, s]) => ({
       name,
       runs: s.runs,
@@ -243,7 +267,7 @@ export function deriveInsights(match) {
   ───────────────────────────────────────────── */
 
   const h2hList = Object.values(h2h)
-    .filter((r) => r.balls > 0)
+    .filter((r) => r.balls > 0 || r.runs > 0 || r.wickets > 0)
     .map((r) => ({
       ...r,
       sr: r.balls ? +((r.runs / r.balls) * 100).toFixed(1) : 0,
@@ -282,7 +306,7 @@ export function deriveInsights(match) {
       value: mostRuns.runs,
       sub: mostRuns.name,
       detail: `${mostRuns.balls}b · SR ${mostRuns.sr}`,
-      color: "#4f46e5",
+      color: "var(--color-indigo-600)",
     },
 
     highestSR && {
@@ -290,7 +314,7 @@ export function deriveInsights(match) {
       value: highestSR.sr,
       sub: highestSR.name,
       detail: `${highestSR.runs}(${highestSR.balls})`,
-      color: "#16a34a",
+      color: "var(--color-green-600)",
     },
 
     mostFours && {
@@ -306,7 +330,7 @@ export function deriveInsights(match) {
       value: mostSixes.sixes,
       sub: mostSixes.name,
       detail: `${mostSixes.runs} runs`,
-      color: "#7c3aed",
+      color: "var(--color-violet-600)",
     },
 
     mostDotsBat && {
@@ -314,7 +338,7 @@ export function deriveInsights(match) {
       value: mostDotsBat.dots,
       sub: mostDotsBat.name,
       detail: `${mostDotsBat.dotPct}% of balls`,
-      color: "#f59e0b",
+      color: "var(--color-amber-500)",
     },
 
     mostWickets && {
@@ -323,7 +347,7 @@ export function deriveInsights(match) {
       sub: mostWickets.name,
       // FIX: show overs instead of balls
       detail: `${mostWickets.overs} ov · Eco ${mostWickets.eco}`,
-      color: "#dc2626",
+      color: "var(--color-red-600)",
     },
 
     bestEco && {
@@ -341,7 +365,7 @@ export function deriveInsights(match) {
       sub: mostExpensive.name,
       // FIX: show overs instead of balls
       detail: `${mostExpensive.runs}r in ${mostExpensive.overs} ov`,
-      color: "#dc2626",
+      color: "var(--color-red-600)",
     },
 
     mostDotsBowl && {
@@ -357,7 +381,7 @@ export function deriveInsights(match) {
       value: `${biggestOver.runs}`,
       sub: `${biggestOver.batterNames} vs ${biggestOver.bowler}`,
       detail: `${biggestOver.label} • ${biggestOver.wickets}W`,
-      color: "#16a34a",
+      color: "var(--color-green-600)",
     },
   ].filter(Boolean);
 

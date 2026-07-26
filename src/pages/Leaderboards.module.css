@@ -24,8 +24,8 @@
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #4338ca
+      var(--color-indigo-600),
+      var(--color-indigo-700)
     );
 
   color: white;
@@ -44,7 +44,7 @@
 
   letter-spacing: 0.8px;
 
-  color: #64748b;
+  color: var(--color-slate-500);
 
   margin: 0;
 }
@@ -60,7 +60,7 @@
 
   letter-spacing: -1.6px;
 
-  color: #0f172a;
+  color: var(--color-slate-900);
 }
 
 .topBar {
@@ -83,8 +83,8 @@
   background:
     linear-gradient(
       135deg,
-      #312e81,
-      #4338ca
+      var(--color-indigo-900),
+      var(--color-indigo-700)
     );
 
   border-radius: 24px;
@@ -102,7 +102,7 @@
 
   font-weight: 700;
 
-  color: #c7d2fe;
+  color: var(--color-indigo-200);
 
   margin-bottom: 8px;
 }
@@ -174,17 +174,17 @@
 .tab {
   background: white;
 
-  color: #475569;
+  color: var(--color-slate-600);
 
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--color-slate-200);
 }
 
 .activeTab {
   background:
     linear-gradient(
       135deg,
-      #4f46e5,
-      #4338ca
+      var(--color-indigo-600),
+      var(--color-indigo-700)
     );
 
   color: white;
@@ -221,7 +221,7 @@
 
   background: white;
 
-  color: #4338ca;
+  color: var(--color-indigo-700);
 
   font-size: 22px;
 

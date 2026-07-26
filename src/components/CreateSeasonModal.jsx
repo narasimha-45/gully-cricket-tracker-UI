@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styles from "./CreateSeasonModal.module.css";
-import { API_ENDPOINTS } from "../config/apiEndPoints";
+import { api, ApiError } from "../api";
 
 export default function CreateSeasonModal({ open, onClose, onCreated, existingSeasons = [] }) {
   const [name, setName] = useState("");
@@ -15,25 +15,14 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
     if (!name.trim() || isDuplicate) return;
 
     try {
-      const res = await fetch(API_ENDPOINTS.CREATE_SEASON, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ seasonName: name })
-      });
-
-      const json = await res.json();
-
-
-      if (!res.status == 201 || !res.ok) {
-        alert(json.message || "Failed to create season");
-        return;
-      }
+      await api.seasons.createSeason(name);
 
       setName("");
       onClose();
       onCreated();
     } catch (err) {
-      alert("Something went wrong. Please try again.");
+      const message = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
+      alert(message);
     }
   };
 
@@ -46,7 +35,7 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
           <input
             className={styles.input}
             style={{ 
-              borderColor: isDuplicate ? "#ef4444" : undefined,
+              borderColor: isDuplicate ? "var(--color-red-500)" : undefined,
               marginBottom: isDuplicate ? 20 : 10
             }}
             placeholder="e.g. Summer 2026"
@@ -58,7 +47,7 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
               position: "absolute", 
               bottom: 0, 
               left: 0, 
-              color: "#ef4444", 
+              color: "var(--color-red-500)", 
               fontSize: 11, 
               fontWeight: 600 
             }}>
