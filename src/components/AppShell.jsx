@@ -16,7 +16,7 @@ export default function AppShell({ title, children, bottomAction }) {
           </div>
         </header>
 
-        <main className={`${styles.content} motion-page`}>{children}</main>
+        <main className={styles.content}>{children}</main>
 
         {bottomAction && (
           <footer className={styles.footer}>{bottomAction}</footer>

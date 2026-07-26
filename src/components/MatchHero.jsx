@@ -26,7 +26,7 @@ export default function MatchHero({ match, onAction }) {
           </h1>
           <span className={styles.formatPill}>
             {testMatch
-              ? `Test · ${getTestInningsPerTeam(match)} innings`
+              ? `Test · ${getTestInningsPerTeam(match)} inn/team`
               : `${match.totalOvers} Ov`}
           </span>
         </div>

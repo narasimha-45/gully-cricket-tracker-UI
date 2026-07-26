@@ -20,13 +20,9 @@ export default function BottomSheetSelector({
 
       {/* Sheet */}
       <div className="sheet">
-        <div className="sheet-drag-handle" />
-
         <div className="sheet-header">
           <h3>{title}</h3>
-          <button className="sheet-close" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          <button onClick={onClose}>✕</button>
         </div>
 
         <div className="sheet-body">

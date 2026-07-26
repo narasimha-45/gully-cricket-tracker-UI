@@ -6,7 +6,7 @@ const normalizedBaseUrl = configuredBaseUrl.replace(/\/+$/, "");
 // The backend routes used by this frontend live under /api. Supporting both
 // `http://host:port` and `http://host:port/api` in VITE_API_BASE_URL avoids
 // accidental `/api/api/...` or missing-prefix requests.
-export const BASE_URL = configuredBaseUrl;
+export const BASE_URL = normalizedBaseUrl;
 
 export class ApiError extends Error {
   constructor(message, status, body) {

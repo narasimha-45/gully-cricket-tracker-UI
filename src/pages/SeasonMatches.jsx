@@ -11,7 +11,6 @@ import {
 import { formatName } from "../utils/helpers";
 import { sameName } from "../utils/matchModel";
 import { api } from "../api";
-import MatchPopup from "../components/MatchPopup";
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
@@ -75,25 +74,17 @@ export default function SeasonMatches() {
   const [sortOrder, setSortOrder] = useState("NEWEST");
   const [teamFilter, setTeamFilter] = useState("ALL");
   const [resultFilter, setResultFilter] = useState("ALL");
-  const [pendingDeleteId, setPendingDeleteId] = useState(null);
-  const [deleting, setDeleting] = useState(false);
 
   /* ---------------------------------------
      ACTIONS
   --------------------------------------- */
 
-  const deleteLocalMatch = (e, matchId) => {
+  const deleteLocalMatch = async (e, matchId) => {
     e.stopPropagation();
-    setPendingDeleteId(matchId);
-  };
 
-  const confirmDeleteMatch = async () => {
-    if (!pendingDeleteId) return;
+    if (!window.confirm("Delete this match?")) return;
 
-    setDeleting(true);
-    await deleteLocalMatchDB(pendingDeleteId);
-    setDeleting(false);
-    setPendingDeleteId(null);
+    await deleteLocalMatchDB(matchId);
 
     loadLocalMatches();
   };
@@ -438,18 +429,6 @@ export default function SeasonMatches() {
           )}
         </>
       )}
-
-      <MatchPopup
-        open={!!pendingDeleteId}
-        title="Delete this match?"
-        subtitle="This can't be undone. The match and its scorecard will be removed."
-        primaryText="Delete match"
-        primaryLoadingText="Deleting..."
-        loading={deleting}
-        onPrimary={confirmDeleteMatch}
-        secondaryText="Cancel"
-        onSecondary={() => setPendingDeleteId(null)}
-      />
     </div>
   );
 }

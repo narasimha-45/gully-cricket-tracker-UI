@@ -18,14 +18,14 @@ export default function AnalyticsOverview() {
       const seasonId =
         globalFilter && globalFilter !== "all" ? globalFilter : undefined;
 
-      const [battingLeaderboard, bowlingLeaderboard] = await Promise.all([
+      const [batJson, bowlJson] = await Promise.all([
         api.stats.getBattingLeaderboard({ seasonId }),
         api.stats.getBowlingLeaderboard({ seasonId }),
       ]);
 
       setData({
-        topBatters: (battingLeaderboard || []).slice(0, 3),
-        topBowlers: (bowlingLeaderboard || []).slice(0, 3),
+        topBatters: (batJson.data || []).slice(0, 3),
+        topBowlers: (bowlJson.data || []).slice(0, 3),
       });
     } catch (err) {
       console.error("Failed to fetch overview", err);
@@ -55,7 +55,7 @@ export default function AnalyticsOverview() {
         <div style={podiumRow}>
           {data?.topBatters.map((p, i) => (
             <div
-              key={p.playerId}
+              key={p.name}
               style={{
                 ...podiumCard,
                 borderTopColor:
@@ -65,15 +65,13 @@ export default function AnalyticsOverview() {
                       ? "var(--color-slate-400)"
                       : "#b45309",
               }}
-              onClick={() =>
-                navigate(`/player/${encodeURIComponent(p.playerId)}`)
-              }
+              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
             >
               <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.playerName}</div>
-              <div style={statLabel}>{p.totalRuns} runs</div>
+              <div style={playerName}>{p.name}</div>
+              <div style={statLabel}>{p.runs} runs</div>
               <div style={subStat}>
-                {p.inningsPlayed} inn · {p.strikeRate?.toFixed(1)} SR
+                {p.innings} inn · {p.derived?.strikeRate} SR
               </div>
             </div>
           ))}
@@ -89,7 +87,7 @@ export default function AnalyticsOverview() {
         <div style={podiumRow}>
           {data?.topBowlers.map((p, i) => (
             <div
-              key={p.playerId}
+              key={p.name}
               style={{
                 ...podiumCard,
                 borderTopColor:
@@ -99,15 +97,13 @@ export default function AnalyticsOverview() {
                       ? "var(--color-slate-400)"
                       : "#b45309",
               }}
-              onClick={() =>
-                navigate(`/player/${encodeURIComponent(p.playerId)}`)
-              }
+              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
             >
               <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.playerName}</div>
-              <div style={statLabel}>{p.totalWickets} wkts</div>
+              <div style={playerName}>{p.name}</div>
+              <div style={statLabel}>{p.wickets} wkts</div>
               <div style={subStat}>
-                {p.economyRate?.toFixed(2)} econ · {p.average?.toFixed(1)} avg
+                {p.derived?.economy} econ · {p.derived?.bowlingAverage} avg
               </div>
             </div>
           ))}

@@ -17,8 +17,8 @@ export default function MatchPopup({
   if (!open) return null;
 
   return (
-    <div style={overlay} className="motion-backdrop">
-      <div style={card} className="motion-modal">
+    <div style={overlay}>
+      <div style={card}>
         {/* TOP ACCENT */}
         <div style={accentBar} />
 
@@ -167,7 +167,7 @@ const primaryBtn = {
 
   boxShadow: "0 10px 30px rgba(79,70,229,0.28)",
 
-  transition: "transform 0.15s ease, box-shadow 0.15s ease",
+  transition: "all 0.2s ease",
 };
 
 const secondaryBtn = {

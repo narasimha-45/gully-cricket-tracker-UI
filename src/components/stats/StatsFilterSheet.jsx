@@ -1,6 +1,10 @@
-import { useEffect } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { ChevronDown, X } from "lucide-react";
 
-import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import styles from "./StatsFilterSheet.module.css";
+
+const ALL_VALUE = "All";
 
 export default function StatsFilterSheet({
   open,
@@ -8,200 +12,180 @@ export default function StatsFilterSheet({
   filters,
   selectedFilters,
   onChange,
+  title = "Filter leaderboard",
 }) {
+  const titleId = useId();
+  const [draftFilters, setDraftFilters] = useState(selectedFilters);
+
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "auto";
+      setDraftFilters(selectedFilters);
     }
+  }, [open, selectedFilters]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
+
+    document.body.style.overflow = "hidden";
+    document.body.style.overscrollBehavior = "none";
+
+    const handleKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
 
     return () => {
-      document.body.style.overflow = "auto";
+      document.body.style.overflow = previousOverflow;
+      document.body.style.overscrollBehavior = previousOverscrollBehavior;
+      window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open]);
+  }, [open, onClose]);
 
-  if (!open) return null;
+  const activeFilterCount = useMemo(
+    () =>
+      filters.reduce((count, filter) => {
+        const value = draftFilters?.[filter.key];
+        return value && value !== ALL_VALUE ? count + 1 : count;
+      }, 0),
+    [draftFilters, filters],
+  );
+
+  if (!open || typeof document === "undefined") return null;
 
   const handleSelect = (key, value) => {
-    onChange((prev) => ({
-      ...prev,
+    setDraftFilters((previous) => ({
+      ...previous,
       [key]: value,
     }));
   };
 
   const resetFilters = () => {
-    const reset = {};
+    const reset = filters.reduce((result, filter) => {
+      result[filter.key] = ALL_VALUE;
+      return result;
+    }, {});
 
-    filters.forEach((f) => {
-      reset[f.key] = "All";
-    });
-
-    onChange(reset);
+    setDraftFilters(reset);
   };
 
-  return (
-    <div style={backdrop} className="motion-backdrop" onClick={onClose}>
-      <div
-        style={sheet}
-        className="motion-sheet"
-        onClick={(e) => e.stopPropagation()}
+  const applyFilters = () => {
+    onChange(draftFilters);
+    onClose();
+  };
+
+  return createPortal(
+    <div
+      className={styles.backdrop}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className={styles.sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
       >
-        {/* Handle */}
-        <div style={handle} />
+        <div className={styles.handle} aria-hidden="true" />
 
-        {/* Header */}
-        <div style={header}>
-          <div style={headerLeft}>
-            <SlidersHorizontal size={22} />
-
-            <h2 style={title}>Filter</h2>
+        <header className={styles.header}>
+          <div className={styles.heading}>
+            <div className={styles.titleRow}>
+              <h2 id={titleId} className={styles.title}>
+                {title}
+              </h2>
+              {activeFilterCount > 0 && (
+                <span className={styles.activeCount}>
+                  {activeFilterCount} active
+                </span>
+              )}
+            </div>
+            <p className={styles.subtitle}>Refine the stats shown below.</p>
           </div>
 
-          <button style={resetBtn} onClick={resetFilters}>
-            <RotateCcw size={16} />
-            Reset
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close filters"
+          >
+            <X size={19} strokeWidth={2.25} />
           </button>
+        </header>
+
+        <div className={styles.filtersGrid}>
+          {filters.map((filter) => {
+            const selectId = `${titleId}-${filter.key}`;
+
+            return (
+              <div key={filter.key} className={styles.field}>
+                <label className={styles.label} htmlFor={selectId}>
+                  {filter.label}
+                </label>
+
+                <div className={styles.selectWrap}>
+                  <select
+                    id={selectId}
+                    value={draftFilters[filter.key] ?? ALL_VALUE}
+                    onChange={(event) =>
+                      handleSelect(filter.key, event.target.value)
+                    }
+                    className={styles.select}
+                  >
+                    {filter.options.map((option) => {
+                      const value =
+                        typeof option === "string" ? option : option.value;
+
+                      const label =
+                        typeof option === "string" ? option : option.label;
+
+                      return (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <ChevronDown
+                    className={styles.selectIcon}
+                    size={17}
+                    strokeWidth={2.25}
+                    aria-hidden="true"
+                  />
+                </div>
+              </div>
+            );
+          })}
         </div>
 
-        {/* Filters */}
-        <div style={filtersWrap}>
-          {filters.map((filter) => (
-            <div key={filter.key} style={filterRow}>
-              <label style={label}>{filter.label}</label>
-
-              <select
-                value={selectedFilters[filter.key]}
-                onChange={(e) => handleSelect(filter.key, e.target.value)}
-                style={select}
-              >
-                {filter.options.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-
-        {/* Footer */}
-        <div style={footer}>
-          <button style={applyBtn} onClick={onClose}>
-            Apply Filters
+        <footer className={styles.footer}>
+          <button
+            type="button"
+            className={styles.clearButton}
+            onClick={resetFilters}
+            disabled={activeFilterCount === 0}
+          >
+            Clear all
           </button>
-        </div>
-      </div>
-    </div>
+
+          <button
+            type="button"
+            className={styles.applyButton}
+            onClick={applyFilters}
+          >
+            Show results
+          </button>
+        </footer>
+      </section>
+    </div>,
+    document.body,
   );
 }
-
-/* ================= STYLES ================= */
-
-const backdrop = {
-  position: "fixed",
-  inset: 0,
-  background: "rgba(15,23,42,0.45)",
-  backdropFilter: "blur(5px)",
-  zIndex: 999,
-  display: "flex",
-  alignItems: "flex-end",
-};
-
-const sheet = {
-  width: "100%",
-  background: "var(--color-white)",
-  borderTopLeftRadius: 30,
-  borderTopRightRadius: 30,
-  padding: "10px 18px 18px",
-};
-
-const handle = {
-  width: 64,
-  height: 6,
-  borderRadius: 999,
-  background: "#d4d4d8",
-  margin: "0 auto 18px",
-};
-
-const header = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginBottom: 20,
-};
-
-const headerLeft = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-};
-
-const title = {
-  fontSize: 22,
-  fontWeight: 800,
-  color: "var(--color-gray-900)",
-};
-
-const resetBtn = {
-  border: "none",
-  background: "transparent",
-  display: "flex",
-  alignItems: "center",
-  gap: 6,
-  color: "var(--color-indigo-700)",
-  fontWeight: 700,
-  fontSize: 15,
-};
-
-const filtersWrap = {
-  display: "flex",
-  flexDirection: "column",
-};
-
-const filterRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  padding: "18px 0",
-  borderBottom: "1px solid var(--color-slate-100)",
-};
-
-const label = {
-  fontSize: 16,
-  fontWeight: 700,
-  color: "var(--color-gray-900)",
-};
-
-const select = {
-  minWidth: 120,
-  height: 42,
-  borderRadius: 12,
-  border: "1px solid var(--color-gray-200)",
-  background: "var(--color-slate-50)",
-  padding: "0 14px",
-  fontSize: 15,
-  fontWeight: 700,
-  color: "var(--color-indigo-700)",
-  outline: "none",
-};
-
-const footer = {
-  position: "sticky",
-  bottom: 0,
-  background: "var(--color-white)",
-  paddingTop: 18,
-};
-
-const applyBtn = {
-  width: "100%",
-  height: 56,
-  border: "none",
-  borderRadius: 18,
-  background:
-    "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
-  color: "var(--color-white)",
-  fontSize: 18,
-  fontWeight: 800,
-  boxShadow: "0 10px 24px rgba(79,70,229,0.25)",
-};

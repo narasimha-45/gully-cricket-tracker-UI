@@ -11,11 +11,8 @@ export default function InsightsHub() {
 
   useEffect(() => {
     window.scrollTo(0, 0);
-  }, [location.pathname]);
-
-  useEffect(() => {
     loadSeasons();
-  }, []);
+  }, [location.pathname]);
 
   const loadSeasons = async () => {
     try {
@@ -125,11 +122,9 @@ export default function InsightsHub() {
       </div>
 
       {/* CONTENT */}
-      <div className={styles.content} key={location.pathname}>
+      <div className={styles.content}>
         {/* Pass filter down via context to child routes so they know which season to load */}
-        <div className="motion-tab">
-          <Outlet context={{ globalFilter: filter }} />
-        </div>
+        <Outlet context={{ globalFilter: filter }} />
       </div>
     </div>
   );
