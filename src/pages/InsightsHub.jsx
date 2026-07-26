@@ -9,11 +9,13 @@ export default function InsightsHub() {
   const [filter, setFilter] = useState("all"); // "all" or specific seasonId
   const [seasons, setSeasons] = useState([]);
 
-
   useEffect(() => {
     window.scrollTo(0, 0);
-    loadSeasons();
   }, [location.pathname]);
+
+  useEffect(() => {
+    loadSeasons();
+  }, []);
 
   const loadSeasons = async () => {
     try {
@@ -47,7 +49,7 @@ export default function InsightsHub() {
 
         {/* UNIVERSAL FILTER */}
         <div className={styles.filterWrapper}>
-          <select 
+          <select
             className={styles.filterSelect}
             value={filter}
             onChange={(e) => setFilter(e.target.value)}
@@ -111,7 +113,7 @@ export default function InsightsHub() {
         >
           Misc
         </NavLink>
-        
+
         <NavLink
           to="matchups"
           className={({ isActive }) =>
@@ -123,9 +125,11 @@ export default function InsightsHub() {
       </div>
 
       {/* CONTENT */}
-      <div className={styles.content}>
+      <div className={styles.content} key={location.pathname}>
         {/* Pass filter down via context to child routes so they know which season to load */}
-        <Outlet context={{ globalFilter: filter }} />
+        <div className="motion-tab">
+          <Outlet context={{ globalFilter: filter }} />
+        </div>
       </div>
     </div>
   );

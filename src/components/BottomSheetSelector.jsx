@@ -9,7 +9,7 @@ export default function BottomSheetSelector({
   disabledItems = [],
   onSelect,
   onClose,
-  children
+  children,
 }) {
   if (!open) return null;
 
@@ -20,9 +20,13 @@ export default function BottomSheetSelector({
 
       {/* Sheet */}
       <div className="sheet">
+        <div className="sheet-drag-handle" />
+
         <div className="sheet-header">
           <h3>{title}</h3>
-          <button onClick={onClose}>✕</button>
+          <button className="sheet-close" onClick={onClose} aria-label="Close">
+            ✕
+          </button>
         </div>
 
         <div className="sheet-body">
@@ -32,7 +36,7 @@ export default function BottomSheetSelector({
                 <p className="muted">No players available</p>
               )}
 
-              {items.map(player => {
+              {items.map((player) => {
                 const disabled = disabledItems.includes(player);
 
                 return (
@@ -49,9 +53,7 @@ export default function BottomSheetSelector({
             </>
           ) : (
             // Render custom children if items is not provided
-            <>
-              {React.Children.map(children, child => child)}
-            </>
+            <>{React.Children.map(children, (child) => child)}</>
           )}
         </div>
       </div>

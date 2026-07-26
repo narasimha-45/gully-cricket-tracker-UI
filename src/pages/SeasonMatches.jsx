@@ -11,6 +11,7 @@ import {
 import { formatName } from "../utils/helpers";
 import { sameName } from "../utils/matchModel";
 import { api } from "../api";
+import MatchPopup from "../components/MatchPopup";
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
@@ -67,7 +68,6 @@ export default function SeasonMatches() {
     refetchOnWindowFocus: false,
   });
 
-
   /* ---------------------------------------
      FILTER + SORT STATE
   --------------------------------------- */
@@ -75,17 +75,25 @@ export default function SeasonMatches() {
   const [sortOrder, setSortOrder] = useState("NEWEST");
   const [teamFilter, setTeamFilter] = useState("ALL");
   const [resultFilter, setResultFilter] = useState("ALL");
+  const [pendingDeleteId, setPendingDeleteId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   /* ---------------------------------------
      ACTIONS
   --------------------------------------- */
 
-  const deleteLocalMatch = async (e, matchId) => {
+  const deleteLocalMatch = (e, matchId) => {
     e.stopPropagation();
+    setPendingDeleteId(matchId);
+  };
 
-    if (!window.confirm("Delete this match?")) return;
+  const confirmDeleteMatch = async () => {
+    if (!pendingDeleteId) return;
 
-    await deleteLocalMatchDB(matchId);
+    setDeleting(true);
+    await deleteLocalMatchDB(pendingDeleteId);
+    setDeleting(false);
+    setPendingDeleteId(null);
 
     loadLocalMatches();
   };
@@ -126,9 +134,9 @@ export default function SeasonMatches() {
     (m) => m.status === "setup" || m.status === "LIVE",
   );
 
-  const completedMatches = (Array.isArray(serverMatches) ? serverMatches : []).filter(
-    (match) => match.matchStatus === "COMPLETED",
-  );
+  const completedMatches = (
+    Array.isArray(serverMatches) ? serverMatches : []
+  ).filter((match) => match.matchStatus === "COMPLETED");
 
   /* ---------------------------------------
      HELPERS
@@ -167,7 +175,9 @@ export default function SeasonMatches() {
 
   const isWinner = (teamName, match) => sameName(match.winner, teamName);
   const isDraw = (match) =>
-    match.winner === "DRAW" || match.resultType === "DRAW" || match.result?.type === "DRAW";
+    match.winner === "DRAW" ||
+    match.resultType === "DRAW" ||
+    match.result?.type === "DRAW";
 
   /* ---------------------------------------
      FILTERED + SORTED COMPLETED MATCHES
@@ -428,6 +438,18 @@ export default function SeasonMatches() {
           )}
         </>
       )}
+
+      <MatchPopup
+        open={!!pendingDeleteId}
+        title="Delete this match?"
+        subtitle="This can't be undone. The match and its scorecard will be removed."
+        primaryText="Delete match"
+        primaryLoadingText="Deleting..."
+        loading={deleting}
+        onPrimary={confirmDeleteMatch}
+        secondaryText="Cancel"
+        onSecondary={() => setPendingDeleteId(null)}
+      />
     </div>
   );
 }

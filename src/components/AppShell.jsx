@@ -1,10 +1,6 @@
 import styles from "./AppShell.module.css";
 
-export default function AppShell({
-  title,
-  children,
-  bottomAction,
-}) {
+export default function AppShell({ title, children, bottomAction }) {
   return (
     <div className={styles.page}>
       <div className={styles.app}>
@@ -16,20 +12,14 @@ export default function AppShell({
               className={styles.logo}
             />
 
-            <span className={styles.title}>
-              Gully Cricket
-            </span>
+            <span className={styles.title}>Gully Cricket</span>
           </div>
         </header>
 
-        <main className={styles.content}>
-          {children}
-        </main>
+        <main className={`${styles.content} motion-page`}>{children}</main>
 
         {bottomAction && (
-          <footer className={styles.footer}>
-            {bottomAction}
-          </footer>
+          <footer className={styles.footer}>{bottomAction}</footer>
         )}
       </div>
     </div>

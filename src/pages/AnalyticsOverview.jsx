@@ -8,7 +8,6 @@ export default function AnalyticsOverview() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-
   useEffect(() => {
     fetchSummary();
   }, [globalFilter]);
@@ -16,16 +15,17 @@ export default function AnalyticsOverview() {
   const fetchSummary = async () => {
     try {
       setLoading(true);
-      const seasonId = globalFilter && globalFilter !== "all" ? globalFilter : undefined;
+      const seasonId =
+        globalFilter && globalFilter !== "all" ? globalFilter : undefined;
 
-      const [batJson, bowlJson] = await Promise.all([
+      const [battingLeaderboard, bowlingLeaderboard] = await Promise.all([
         api.stats.getBattingLeaderboard({ seasonId }),
         api.stats.getBowlingLeaderboard({ seasonId }),
       ]);
 
       setData({
-        topBatters: (batJson.data || []).slice(0, 3),
-        topBowlers: (bowlJson.data || []).slice(0, 3)
+        topBatters: (battingLeaderboard || []).slice(0, 3),
+        topBowlers: (bowlingLeaderboard || []).slice(0, 3),
       });
     } catch (err) {
       console.error("Failed to fetch overview", err);
@@ -34,12 +34,15 @@ export default function AnalyticsOverview() {
     }
   };
 
-  if (loading) return (
-    <div style={center}>
-      <div style={spinner}></div>
-      <p style={{ marginTop: 12, color: "var(--color-slate-500)" }}>Generating analytics summary...</p>
-    </div>
-  );
+  if (loading)
+    return (
+      <div style={center}>
+        <div style={spinner}></div>
+        <p style={{ marginTop: 12, color: "var(--color-slate-500)" }}>
+          Generating analytics summary...
+        </p>
+      </div>
+    );
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -51,15 +54,27 @@ export default function AnalyticsOverview() {
         </div>
         <div style={podiumRow}>
           {data?.topBatters.map((p, i) => (
-            <div 
-              key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "var(--color-slate-400)" : "#b45309" }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+            <div
+              key={p.playerId}
+              style={{
+                ...podiumCard,
+                borderTopColor:
+                  i === 0
+                    ? "#fbbf24"
+                    : i === 1
+                      ? "var(--color-slate-400)"
+                      : "#b45309",
+              }}
+              onClick={() =>
+                navigate(`/player/${encodeURIComponent(p.playerId)}`)
+              }
             >
               <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.runs} runs</div>
-              <div style={subStat}>{p.innings} inn · {p.derived?.strikeRate} SR</div>
+              <div style={playerName}>{p.playerName}</div>
+              <div style={statLabel}>{p.totalRuns} runs</div>
+              <div style={subStat}>
+                {p.inningsPlayed} inn · {p.strikeRate?.toFixed(1)} SR
+              </div>
             </div>
           ))}
         </div>
@@ -73,15 +88,27 @@ export default function AnalyticsOverview() {
         </div>
         <div style={podiumRow}>
           {data?.topBowlers.map((p, i) => (
-            <div 
-              key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "var(--color-slate-400)" : "#b45309" }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+            <div
+              key={p.playerId}
+              style={{
+                ...podiumCard,
+                borderTopColor:
+                  i === 0
+                    ? "#fbbf24"
+                    : i === 1
+                      ? "var(--color-slate-400)"
+                      : "#b45309",
+              }}
+              onClick={() =>
+                navigate(`/player/${encodeURIComponent(p.playerId)}`)
+              }
             >
               <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.wickets} wkts</div>
-              <div style={subStat}>{p.derived?.economy} econ · {p.derived?.bowlingAverage} avg</div>
+              <div style={playerName}>{p.playerName}</div>
+              <div style={statLabel}>{p.totalWickets} wkts</div>
+              <div style={subStat}>
+                {p.economyRate?.toFixed(2)} econ · {p.average?.toFixed(1)} avg
+              </div>
             </div>
           ))}
         </div>
@@ -94,30 +121,83 @@ export default function AnalyticsOverview() {
   );
 }
 
-const center = { display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 0" };
-const spinner = { width: 32, height: 32, border: "3px solid var(--color-slate-200)", borderTop: "3px solid var(--color-indigo-600)", borderRadius: "50%", animation: "spin 0.8s linear infinite" };
+const center = {
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  padding: "60px 0",
+};
+const spinner = {
+  width: 32,
+  height: 32,
+  border: "3px solid var(--color-slate-200)",
+  borderTop: "3px solid var(--color-indigo-600)",
+  borderRadius: "50%",
+  animation: "spin 0.8s linear infinite",
+};
 
-const sectionHeader = { display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingLeft: 4 };
-const sectionTitle = { fontSize: 16, fontWeight: 700, color: "var(--color-slate-800)", margin: 0 };
+const sectionHeader = {
+  display: "flex",
+  alignItems: "center",
+  gap: 10,
+  marginBottom: 16,
+  paddingLeft: 4,
+};
+const sectionTitle = {
+  fontSize: 16,
+  fontWeight: 700,
+  color: "var(--color-slate-800)",
+  margin: 0,
+};
 
 const podiumRow = { display: "flex", gap: 10 };
-const podiumCard = { 
-  flex: 1, 
-  background: "white", 
-  borderRadius: 16, 
-  padding: "16px 12px", 
-  border: "1px solid var(--color-slate-200)", 
-  borderTopWidth: 4, 
+const podiumCard = {
+  flex: 1,
+  background: "white",
+  borderRadius: 16,
+  padding: "16px 12px",
+  border: "1px solid var(--color-slate-200)",
+  borderTopWidth: 4,
   textAlign: "center",
   boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
   cursor: "pointer",
-  transition: "transform 0.2s"
+  transition: "transform 0.2s",
 };
 
-const rankBadge = { fontSize: 10, fontWeight: 800, background: "var(--color-slate-100)", color: "var(--color-slate-500)", width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" };
-const playerName = { fontSize: 14, fontWeight: 700, color: "var(--color-slate-900)", marginBottom: 4, textTransform: "capitalize", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
-const statLabel = { fontSize: 16, fontWeight: 800, color: "var(--color-indigo-600)", marginBottom: 4 };
-const subStat = { fontSize: 10, color: "var(--color-slate-400)", fontWeight: 500 };
+const rankBadge = {
+  fontSize: 10,
+  fontWeight: 800,
+  background: "var(--color-slate-100)",
+  color: "var(--color-slate-500)",
+  width: 20,
+  height: 20,
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  margin: "0 auto 10px",
+};
+const playerName = {
+  fontSize: 14,
+  fontWeight: 700,
+  color: "var(--color-slate-900)",
+  marginBottom: 4,
+  textTransform: "capitalize",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+};
+const statLabel = {
+  fontSize: 16,
+  fontWeight: 800,
+  color: "var(--color-indigo-600)",
+  marginBottom: 4,
+};
+const subStat = {
+  fontSize: 10,
+  color: "var(--color-slate-400)",
+  fontWeight: 500,
+};
 
 const fullLeaderboardBtn = {
   background: "white",
@@ -128,5 +208,5 @@ const fullLeaderboardBtn = {
   fontWeight: 600,
   color: "var(--color-slate-600)",
   cursor: "pointer",
-  marginTop: 10
+  marginTop: 10,
 };

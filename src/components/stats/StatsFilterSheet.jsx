@@ -1,9 +1,6 @@
 import { useEffect } from "react";
 
-import {
-  RotateCcw,
-  SlidersHorizontal,
-} from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
 
 export default function StatsFilterSheet({
   open,
@@ -44,9 +41,10 @@ export default function StatsFilterSheet({
   };
 
   return (
-    <div style={backdrop} onClick={onClose}>
+    <div style={backdrop} className="motion-backdrop" onClick={onClose}>
       <div
         style={sheet}
+        className="motion-sheet"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Handle */}
@@ -60,10 +58,7 @@ export default function StatsFilterSheet({
             <h2 style={title}>Filter</h2>
           </div>
 
-          <button
-            style={resetBtn}
-            onClick={resetFilters}
-          >
+          <button style={resetBtn} onClick={resetFilters}>
             <RotateCcw size={16} />
             Reset
           </button>
@@ -72,31 +67,16 @@ export default function StatsFilterSheet({
         {/* Filters */}
         <div style={filtersWrap}>
           {filters.map((filter) => (
-            <div
-              key={filter.key}
-              style={filterRow}
-            >
-              <label style={label}>
-                {filter.label}
-              </label>
+            <div key={filter.key} style={filterRow}>
+              <label style={label}>{filter.label}</label>
 
               <select
-                value={
-                  selectedFilters[filter.key]
-                }
-                onChange={(e) =>
-                  handleSelect(
-                    filter.key,
-                    e.target.value
-                  )
-                }
+                value={selectedFilters[filter.key]}
+                onChange={(e) => handleSelect(filter.key, e.target.value)}
                 style={select}
               >
                 {filter.options.map((option) => (
-                  <option
-                    key={option}
-                    value={option}
-                  >
+                  <option key={option} value={option}>
                     {option}
                   </option>
                 ))}
@@ -107,10 +87,7 @@ export default function StatsFilterSheet({
 
         {/* Footer */}
         <div style={footer}>
-          <button
-            style={applyBtn}
-            onClick={onClose}
-          >
+          <button style={applyBtn} onClick={onClose}>
             Apply Filters
           </button>
         </div>
@@ -137,7 +114,6 @@ const sheet = {
   borderTopLeftRadius: 30,
   borderTopRightRadius: 30,
   padding: "10px 18px 18px",
-  animation: "slideUp 0.25s ease",
 };
 
 const handle = {
@@ -227,6 +203,5 @@ const applyBtn = {
   color: "var(--color-white)",
   fontSize: 18,
   fontWeight: 800,
-  boxShadow:
-    "0 10px 24px rgba(79,70,229,0.25)",
+  boxShadow: "0 10px 24px rgba(79,70,229,0.25)",
 };

@@ -1,0 +1,98 @@
+/*
+ * Motion system
+ * -------------
+ * Every sheet, modal, and page transition in the app pulls its entrance
+ * animation from here so they feel like one consistent product instead of
+ * a pile of components that each snap into place differently.
+ *
+ * Usage: apply the class alongside the component's own styling, e.g.
+ *   <div className={`sheet-backdrop ${styles.backdrop}`} />
+ * or just add `animation: sheetSlideUp .32s cubic-bezier(.16,1,.3,1) both;`
+ * directly in a CSS module using these keyframes.
+ */
+
+@keyframes backdropFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheetSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes contentFadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes tabFadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.motion-backdrop {
+  animation: backdropFadeIn 0.22s ease both;
+}
+
+.motion-sheet {
+  animation: sheetSlideUp 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-modal {
+  animation: modalScaleIn 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-page {
+  animation: contentFadeUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.motion-tab {
+  animation: tabFadeIn 0.18s ease both;
+}
+
+/* Respect people who've asked their OS for less motion. */
+@media (prefers-reduced-motion: reduce) {
+
+  .motion-backdrop,
+  .motion-sheet,
+  .motion-modal,
+  .motion-page,
+  .motion-tab {
+    animation: none;
+  }
+}

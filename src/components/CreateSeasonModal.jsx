@@ -2,71 +2,95 @@ import { useState } from "react";
 import styles from "./CreateSeasonModal.module.css";
 import { api, ApiError } from "../api";
 
-export default function CreateSeasonModal({ open, onClose, onCreated, existingSeasons = [] }) {
+export default function CreateSeasonModal({
+  open,
+  onClose,
+  onCreated,
+  existingSeasons = [],
+}) {
   const [name, setName] = useState("");
+  const [submitError, setSubmitError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   if (!open) return null;
 
-  const isDuplicate = existingSeasons.some(s => 
-    s.seasonName.toLowerCase() === name.trim().toLowerCase()
+  const isDuplicate = existingSeasons.some(
+    (s) => s.seasonName.toLowerCase() === name.trim().toLowerCase(),
   );
 
+  const handleClose = () => {
+    setName("");
+    setSubmitError(null);
+    onClose();
+  };
+
   const createSeason = async () => {
-    if (!name.trim() || isDuplicate) return;
+    if (!name.trim() || isDuplicate || submitting) return;
 
     try {
+      setSubmitting(true);
+      setSubmitError(null);
       await api.seasons.createSeason(name);
 
       setName("");
       onClose();
       onCreated();
     } catch (err) {
-      const message = err instanceof ApiError ? err.message : "Something went wrong. Please try again.";
-      alert(message);
+      setSubmitError(
+        err instanceof ApiError
+          ? err.message
+          : "Something went wrong. Please try again.",
+      );
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <h3>Create Season</h3>
+    <div className={`${styles.overlay} motion-backdrop`} onClick={handleClose}>
+      <div
+        className={`${styles.modal} motion-modal`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className={styles.accentBar} />
 
-        <div style={{ position: "relative" }}>
+        <h3 className={styles.heading}>Create Season</h3>
+        <p className={styles.subheading}>
+          Give this season a name to get started
+        </p>
+
+        <div className={styles.fieldWrap}>
           <input
-            className={styles.input}
-            style={{ 
-              borderColor: isDuplicate ? "var(--color-red-500)" : undefined,
-              marginBottom: isDuplicate ? 20 : 10
-            }}
+            className={`${styles.input} ${isDuplicate ? styles.inputError : ""}`}
             placeholder="e.g. Summer 2026"
             value={name}
-            onChange={(e) => setName(e.target.value)}
+            autoFocus
+            onChange={(e) => {
+              setName(e.target.value);
+              if (submitError) setSubmitError(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && createSeason()}
           />
           {isDuplicate && (
-            <div style={{ 
-              position: "absolute", 
-              bottom: 0, 
-              left: 0, 
-              color: "var(--color-red-500)", 
-              fontSize: 11, 
-              fontWeight: 600 
-            }}>
-              ⚠️ This season already exists
+            <div className={styles.fieldError}>
+              ⚠ This season already exists
             </div>
+          )}
+          {submitError && !isDuplicate && (
+            <div className={styles.fieldError}>{submitError}</div>
           )}
         </div>
 
         <div className={styles.actions}>
-          <button className={styles.cancel} onClick={onClose}>
+          <button className={styles.cancel} onClick={handleClose}>
             Cancel
           </button>
-          <button 
-            className={styles.create} 
+          <button
+            className={styles.create}
             onClick={createSeason}
-            disabled={!name.trim() || isDuplicate}
-            style={{ opacity: (!name.trim() || isDuplicate) ? 0.5 : 1, cursor: (!name.trim() || isDuplicate) ? "not-allowed" : "pointer" }}
+            disabled={!name.trim() || isDuplicate || submitting}
           >
-            Create
+            {submitting ? "Creating..." : "Create"}
           </button>
         </div>
       </div>

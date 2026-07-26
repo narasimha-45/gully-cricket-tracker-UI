@@ -69,8 +69,10 @@ export default function SeasonStats() {
         </NavLink>
       </div>{" "}
       {/* CONTENT */}
-      <div className={styles.content}>
-        <Outlet context={{ globalFilter: seasonId }} />
+      <div className={styles.content} key={location.pathname}>
+        <div className="motion-tab">
+          <Outlet context={{ globalFilter: seasonId }} />
+        </div>
       </div>
     </div>
   );
