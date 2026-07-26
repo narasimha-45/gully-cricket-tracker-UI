@@ -260,7 +260,7 @@ export default function LiveMatch() {
           marginBottom: 12,
         }}
       >
-        ← Go Back 
+        ← Go Back
       </button>
 
       {/* ── HERO CARD ──────────────────────────────────────── */}
@@ -460,7 +460,9 @@ export default function LiveMatch() {
                     !name && setSheet(idx === 0 ? "striker" : "nonStriker")
                   }
                 >
-                  {name ? `${formatName(name)}${idx === 0 ? " *" : ""}` : "Select"}
+                  {name
+                    ? `${formatName(name)}${idx === 0 ? " *" : ""}`
+                    : "Select"}
                 </span>
                 {renderBatStats(innings, name)}
               </div>
@@ -521,7 +523,7 @@ export default function LiveMatch() {
                 }
                 onClick={() => !live.bowler && setSheet("bowler")}
               >
-                {live.bowler ? `${live.bowler} *` : "Select bowler"}
+                {live.bowler ? `${formatName(live.bowler)} *` : "Select bowler"}
               </span>
               {renderBowlStats(innings, live.bowler)}
             </div>

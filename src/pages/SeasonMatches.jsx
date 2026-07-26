@@ -55,17 +55,25 @@ export default function SeasonMatches() {
     queryKey: ["seasonMatches", seasonId],
 
     queryFn: async () => {
-      const res = await fetch(`${API}/api/matches/season/${seasonId}`);
+      const res = await fetch(`${API}/seasons/matches/${seasonId}`);
 
       const json = await res.json();
-
-      return json.data || [];
+      return json || [];
     },
 
     staleTime: 1000 * 60 * 5,
 
     refetchOnWindowFocus: false,
   });
+
+
+  /* ---------------------------------------
+     FILTER + SORT STATE
+  --------------------------------------- */
+
+  const [sortOrder, setSortOrder] = useState("NEWEST");
+  const [teamFilter, setTeamFilter] = useState("ALL");
+  const [resultFilter, setResultFilter] = useState("ALL");
 
   /* ---------------------------------------
      ACTIONS
@@ -118,7 +126,7 @@ export default function SeasonMatches() {
   );
 
   const completedMatches = serverMatches.filter(
-    (m) => m.status === "COMPLETED",
+    (m) => m.matchStatus === "COMPLETED",
   );
 
   /* ---------------------------------------
@@ -156,7 +164,33 @@ export default function SeasonMatches() {
     )})`;
   };
 
-  const isWinner = (teamName, match) => match.result?.winner === teamName;
+  const isWinner = (teamName, match) => match.winner === teamName;
+
+  /* ---------------------------------------
+     FILTERED + SORTED COMPLETED MATCHES
+  --------------------------------------- */
+
+  const teamOptions = [
+    ...new Set(
+      serverMatches.flatMap((m) => [m.teamA, m.teamB]).filter(Boolean),
+    ),
+  ].sort();
+
+  const filteredCompletedMatches = completedMatches
+    .filter((m) => {
+      if (teamFilter === "ALL") return true;
+      return m.teamA === teamFilter || m.teamB === teamFilter;
+    })
+    .filter((m) => {
+      if (teamFilter === "ALL" || resultFilter === "ALL") return true;
+      const won = isWinner(teamFilter, m);
+      return resultFilter === "WON" ? won : !won;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.completedAt || a.createdAt).getTime();
+      const dateB = new Date(b.completedAt || b.createdAt).getTime();
+      return sortOrder === "NEWEST" ? dateB - dateA : dateA - dateB;
+    });
 
   /* ---------------------------------------
      UI
@@ -216,7 +250,8 @@ export default function SeasonMatches() {
                 >
                   <div style={cardHeader}>
                     <strong>
-                      {formatName(match.teams.teamA.name)} vs {formatName(match.teams.teamB.name)}
+                      {formatName(match.teams.teamA.name)} vs{" "}
+                      {formatName(match.teams.teamB.name)}
                     </strong>
 
                     <button
@@ -241,21 +276,63 @@ export default function SeasonMatches() {
 
       {tab === "COMPLETED" && (
         <>
+          <div style={filterBar}>
+            <select
+              style={filterSelect}
+              value={teamFilter}
+              onChange={(e) => {
+                setTeamFilter(e.target.value);
+                setResultFilter("ALL");
+              }}
+            >
+              <option value="ALL">All Teams</option>
+              {teamOptions.map((team) => (
+                <option key={team} value={team}>
+                  {formatName(team)}
+                </option>
+              ))}
+            </select>
+
+            <select
+              style={filterSelect}
+              value={resultFilter}
+              disabled={teamFilter === "ALL"}
+              onChange={(e) => setResultFilter(e.target.value)}
+            >
+              <option value="ALL">Won & Lost</option>
+              <option value="WON">Won</option>
+              <option value="LOST">Lost</option>
+            </select>
+
+            <select
+              style={filterSelect}
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+            >
+              <option value="NEWEST">Newest First</option>
+              <option value="OLDEST">Oldest First</option>
+            </select>
+          </div>
+
           {serverLoading ? (
             <div style={emptyState}>
               <div style={spinner}></div>
 
               <p style={muted}>Loading completed matches...</p>
             </div>
-          ) : completedMatches.length === 0 ? (
+          ) : filteredCompletedMatches.length === 0 ? (
             <div style={emptyState}>
-              <p style={emptyTitle}>No completed matches</p>
+              <p style={emptyTitle}>No matches found</p>
 
-              <p style={muted}>Finished matches will appear here</p>
+              <p style={muted}>
+                {teamFilter === "ALL"
+                  ? "Finished matches will appear here"
+                  : "Try a different team or result filter"}
+              </p>
             </div>
           ) : (
             <div style={list}>
-              {completedMatches.map((match) => {
+              {filteredCompletedMatches.map((match) => {
                 const innings1 = match.innings?.[0];
 
                 const innings2 = match.innings?.[1];
@@ -269,7 +346,7 @@ export default function SeasonMatches() {
                     {/* DATE */}
 
                     <div style={dateText}>
-                      {formatDateTime(match.startTime || match.createdAt)}
+                      {formatDateTime(match.completedAt || match.createdAt)}
                     </div>
 
                     {/* TEAM 1 */}
@@ -279,32 +356,30 @@ export default function SeasonMatches() {
                         style={{
                           ...teamLeft,
 
-                          fontWeight: isWinner(innings1?.battingTeam, match)
-                            ? 700
-                            : 500,
+                          fontWeight: isWinner(match.teamA, match) ? 700 : 500,
 
-                          color: isWinner(innings1?.battingTeam, match)
+                          color: isWinner(match.teamA, match)
                             ? "#111827"
                             : "#6b7280",
                         }}
                       >
-                        {formatName(innings1?.battingTeam)}
+                        {formatName(match.teamA)}
                       </div>
 
                       <div
                         style={{
                           ...scoreText,
 
-                          fontWeight: isWinner(innings1?.battingTeam, match)
-                            ? 700
-                            : 500,
+                          fontWeight: isWinner(match.teamA, match) ? 700 : 500,
 
-                          color: isWinner(innings1?.battingTeam, match)
+                          color: isWinner(match.teamA, match)
                             ? "#111827"
                             : "#6b7280",
                         }}
                       >
-                        {innings1 ? getScoreLine(innings1) : "-"}
+                        {match.teamAScore
+                          ? `${match.teamAScore}-${match.teamAWickets} (${ballsToOvers(match.teamABallsFaced)})`
+                          : "-"}
                       </div>
                     </div>
 
@@ -315,44 +390,36 @@ export default function SeasonMatches() {
                         style={{
                           ...teamLeft,
 
-                          fontWeight: isWinner(innings2?.battingTeam, match)
-                            ? 700
-                            : 500,
+                          fontWeight: isWinner(match.teamB, match) ? 700 : 500,
 
-                          color: isWinner(innings2?.battingTeam, match)
+                          color: isWinner(match.teamB, match)
                             ? "#111827"
                             : "#6b7280",
                         }}
                       >
-                        {formatName(innings2?.battingTeam)}
+                        {formatName(match.teamB)}
                       </div>
 
                       <div
                         style={{
                           ...scoreText,
 
-                          fontWeight: isWinner(innings2?.battingTeam, match)
-                            ? 700
-                            : 500,
+                          fontWeight: isWinner(match.teamB, match) ? 700 : 500,
 
-                          color: isWinner(innings2?.battingTeam, match)
+                          color: isWinner(match.teamB, match)
                             ? "#111827"
                             : "#6b7280",
                         }}
                       >
-                        {innings2 ? getScoreLine(innings2) : "-"}
+                        {match.teamBScore
+                          ? `${match.teamBScore}-${match.teamBWickets} (${ballsToOvers(match.teamBBallsFaced)})`
+                          : "-"}
                       </div>
                     </div>
 
                     {/* RESULT */}
 
-                    <div style={resultLine}>
-                      {match.result?.type === "TIE"
-                        ? "Match Tied"
-                        : `${formatName(match.result?.winner)} won by ${match.result?.margin} ${
-                            match.result?.type === "RUNS" ? "runs" : "wkts"
-                          }`}
-                    </div>
+                    <div style={resultLine}>{match.wonBy}</div>
                   </div>
                 );
               })}
@@ -413,10 +480,17 @@ const emptyTitle = {
 
 const spinner = {
   width: 28,
+
   height: 28,
-  border: "3px solid #e5e7eb",
-  borderTop: "3px solid #4f46e5",
+
+  border: "3px solid #e0e7ff",
+
+  borderTop: "3px solid #4338ca",
+
   borderRadius: "50%",
+
+  animation: "spin 0.8s linear infinite",
+
   margin: "0 auto 14px",
 };
 
@@ -466,6 +540,23 @@ const activeTab = {
   ...tabBtn,
   background: "#4f46e5",
   color: "#fff",
+};
+
+const filterBar = {
+  display: "flex",
+  gap: 8,
+  marginBottom: 14,
+};
+
+const filterSelect = {
+  flex: 1,
+  padding: "8px 10px",
+  borderRadius: 10,
+  border: "1px solid #e5e7eb",
+  background: "#fff",
+  fontSize: 13,
+  color: "#374151",
+  cursor: "pointer",
 };
 
 const list = {

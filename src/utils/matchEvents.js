@@ -51,6 +51,7 @@ export const pushSelectionHistory = (match, extraMode = "NORMAL") => {
   const innings = match.innings[match.live.inningsIndex];
   if (match.live.striker) {
     innings.battingStats[match.live.striker] ||= {
+      battingPosition: Object.keys(innings.battingStats).length + 1,
       runs: 0,
       balls: 0,
       fours: 0,
@@ -60,6 +61,7 @@ export const pushSelectionHistory = (match, extraMode = "NORMAL") => {
   }
   if (match.live.nonStriker) {
     innings.battingStats[match.live.nonStriker] ||= {
+      battingPosition: Object.keys(innings.battingStats).length + 1,
       runs: 0,
       balls: 0,
       fours: 0,
@@ -290,8 +292,8 @@ export const startSecondInnings = ({ match, setMatch }) => {
   updated.live.pendingNextInnings = false;
 
   updated.innings[1] = {
-    battingTeam: match.innings[0].bowlingTeam,
-    bowlingTeam: match.innings[0].battingTeam,
+    battingTeam: match.innings[0].bowlingTeam.toLowerCase().trim(),
+    bowlingTeam: match.innings[0].battingTeam.toLowerCase().trim(),
     totalRuns: 0,
     balls: 0,
     wickets: 0,

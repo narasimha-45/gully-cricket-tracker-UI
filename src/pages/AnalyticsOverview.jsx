@@ -7,7 +7,6 @@ export default function AnalyticsOverview() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     fetchSummary();
@@ -19,8 +18,8 @@ export default function AnalyticsOverview() {
       const suffix = globalFilter && globalFilter !== "all" ? `/${globalFilter}` : "";
       
       const [batRes, bowlRes] = await Promise.all([
-        fetch(`${API}/api/stats/leaderboard/batting${suffix}`),
-        fetch(`${API}/api/stats/leaderboard/bowling${suffix}`)
+        fetch(`${API_ENDPOINTS.BATTING_LEADERBOARD}${suffix}`),
+        fetch(`${API_ENDPOINTS.BOWLING_LEADERBOARD}${suffix}`)
       ]);
 
       const [batJson, bowlJson] = await Promise.all([batRes.json(), bowlRes.json()]);

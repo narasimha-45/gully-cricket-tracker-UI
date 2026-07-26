@@ -1,3 +1,4 @@
+import { API_ENDPOINTS } from "../config/apiEndPoints";
 import { saveMatch } from "../storage/matchDB";
 import { deepCopy } from "./helpers";
 import { deriveFieldingStats, calculateManOfTheMatch } from "./statsCalculator";
@@ -56,9 +57,7 @@ export const acknowledgeMatchResult = async (
 
   try {
 
-    console.log(JSON.stringify(payload));
-    console.log(payload);
-    await fetch(`${API}/api/matches/complete`, {
+    await fetch(`${API_ENDPOINTS.SUBMIT_MATCH}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

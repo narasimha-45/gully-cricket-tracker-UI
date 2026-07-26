@@ -34,23 +34,23 @@ export default function MatchSummary() {
     const newMatch = {
       id: newMatchId,
 
-      seasonId: match.matchInfo.seasonId,
+      seasonId: match.matchData.seasonId,
 
-      matchType: match.matchInfo.matchType,
+      matchType: match.matchData.matchType,
 
-      totalOvers: match.matchInfo.totalOvers,
+      totalOvers: match.matchData.totalOvers,
 
-      rules: match.matchInfo.rules,
+      rules: match.matchData.rules,
 
       teams: {
         teamA: {
-          name: match.matchInfo.teams.teamA.name,
-          players: [...match.matchInfo.teams.teamA.players],
+          name: match.matchData.teams.teamA.name,
+          players: [...match.matchData.teams.teamA.players],
         },
 
         teamB: {
-          name: match.matchInfo.teams.teamB.name,
-          players: [...match.matchInfo.teams.teamB.players],
+          name: match.matchData.teams.teamB.name,
+          players: [...match.matchData.teams.teamB.players],
         },
       },
 
@@ -71,7 +71,7 @@ export default function MatchSummary() {
 
     await saveMatch(newMatch);
 
-    navigate(`/season/${match.matchInfo.seasonId}/match/${newMatchId}/toss`);
+    navigate(`/season/${match.matchData.seasonId}/match/${newMatchId}/toss`);
   };
 
   /* =====================================
@@ -81,14 +81,12 @@ export default function MatchSummary() {
   useEffect(() => {
     const loadMatch = async () => {
       try {
-        const res = await fetch(`${API}/api/matches/${matchId}`);
-
+        const res = await fetch(`${API}/matches/${matchId}`);
         const data = await res.json();
 
-        console.log("Match Data", data);
         window.scrollTo(0, 0);
 
-        setMatch(data.data);
+        setMatch(data);
       } catch (err) {
         console.error("Failed to load match", err);
       } finally {
@@ -139,11 +137,12 @@ export default function MatchSummary() {
     );
   }
 
-  const { matchInfo, innings } = match;
+  const matchData  = match.matchData ;
+  const innings = match.matchData.innings;
 
-  const result = match.result || match.matchInfo.result;
+  const result = match.result || match.matchData.result;
 
-  const { teams } = matchInfo;
+  const { teams } = matchData;
 
   /* =====================================
      HELPERS
@@ -154,7 +153,7 @@ export default function MatchSummary() {
   };
 
   const completedMatch = {
-    ...match.matchInfo,
+    ...match.matchData,
     innings,
     result,
     live: match.live || null,
@@ -200,9 +199,9 @@ export default function MatchSummary() {
             </h2>
 
             <span className={styles.heroFormatPill}>
-              {matchInfo.matchType === "TEST"
+              {matchData.matchType === "TEST"
                 ? "Test"
-                : `${matchInfo.totalOvers} Overs`}
+                : `${matchData.totalOvers} Overs`}
             </span>
           </div>
         </div>

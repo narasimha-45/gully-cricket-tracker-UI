@@ -1,6 +1,6 @@
 import { useState } from "react";
 import styles from "./CreateSeasonModal.module.css";
-const API = import.meta.env.VITE_API_BASE_URL;
+import { API_ENDPOINTS } from "../config/apiEndPoints";
 
 export default function CreateSeasonModal({ open, onClose, onCreated, existingSeasons = [] }) {
   const [name, setName] = useState("");
@@ -15,7 +15,7 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
     if (!name.trim() || isDuplicate) return;
 
     try {
-      const res = await fetch(`${API}/api/seasons`, {
+      const res = await fetch(API_ENDPOINTS.CREATE_SEASON, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ seasonName: name })
@@ -23,7 +23,8 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
 
       const json = await res.json();
 
-      if (!res.ok || !json.success) {
+
+      if (!res.status == 201 || !res.ok) {
         alert(json.message || "Failed to create season");
         return;
       }

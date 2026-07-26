@@ -16,7 +16,6 @@ export async function saveMatch(match) {
 
 export async function getMatch(matchId) {
   const db = await dbPromise;
-  console.log("DB:",db)
   return db.get("matches", matchId);
 }
 

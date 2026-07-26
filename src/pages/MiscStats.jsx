@@ -2,21 +2,22 @@ import { useEffect, useState } from "react";
 import { useParams, useOutletContext, useNavigate } from "react-router-dom";
 import { useSeasonStats } from "../context/SeasonStatsContext";
 import { formatName } from "../utils/helpers";
+import LoadingState from "../components/common/LoadingState";
+import EmptyState from "../components/common/EmptyState";
+import { api } from "../components/common/api";
 
 export default function MiscStats({ isOverall = false }) {
   const { seasonId } = useParams();
   const navigate = useNavigate();
 
   const outletContext = useOutletContext();
-  const globalFilter = isOverall ? (outletContext?.globalFilter || "all") : null;
+  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
 
   const context = useSeasonStats();
 
   const miscStats = !isOverall ? context?.miscStats : null;
 
   const setMiscStats = !isOverall ? context?.setMiscStats : null;
-
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   /* =====================================
      OVERALL LOCAL STATE
@@ -50,26 +51,18 @@ export default function MiscStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      let endpoint;
+      const json = await api.stats.getFieldingLeaderboard({
+        seasonId: isOverall
+          ? globalFilter !== "all"
+            ? globalFilter
+            : undefined
+          : seasonId,
+      });
+
       if (isOverall) {
-        endpoint = globalFilter === "all" 
-          ? `${API}/api/stats/leaderboard/fielding`
-          : `${API}/api/stats/leaderboard/fielding/${globalFilter}`;
+        setOverallStats(json || []);
       } else {
-        endpoint = `${API}/api/stats/leaderboard/fielding/${seasonId}`;
-      }
-
-      const res = await fetch(endpoint);
-
-      
-
-      const json = await res.json();
-
-      console.log(json);
-      if (isOverall) {
-        setOverallStats(json.data || []);
-      } else {
-        setMiscStats(json.data || []);
+        setMiscStats(json || []);
       }
     } catch (e) {
       console.error("Failed to load misc stats", e);
@@ -88,24 +81,24 @@ export default function MiscStats({ isOverall = false }) {
 
     switch (sortKey) {
       case "catches":
-        av = a.catches || 0;
-        bv = b.catches || 0;
+        av = a.totalCatches || 0;
+        bv = b.totalCatches || 0;
         break;
 
       case "stumpings":
-        av = a.stumpings || 0;
-        bv = b.stumpings || 0;
+        av = a.totalStumpings || 0;
+        bv = b.totalStumpings || 0;
         break;
 
       case "runOuts":
-        av = a.runOuts || 0;
-        bv = b.runOuts || 0;
+        av = a.totalRunOuts || 0;
+        bv = b.totalRunOuts || 0;
         break;
 
       case "manOfTheMatch":
-        av = a.manOfTheMatch || 0;
+        av = a.manOfTheMatchAwards || 0;
 
-        bv = b.manOfTheMatch || 0;
+        bv = b.manOfTheMatchAwards || 0;
 
         break;
 
@@ -145,13 +138,7 @@ export default function MiscStats({ isOverall = false }) {
   ===================================== */
 
   if (loading && players.length === 0) {
-    return (
-      <div style={loadingWrap}>
-        <div style={spinner}></div>
-
-        <p style={loadingText}>Loading misc stats...</p>
-      </div>
-    );
+    return <LoadingState label="Loading misc stats..." />;
   }
 
   /* =====================================
@@ -183,37 +170,38 @@ export default function MiscStats({ isOverall = false }) {
 
       {sortedPlayers.map((p) => (
         <div
-          key={p.name}
+          key={p.playerId}
           style={{
             ...rowBase,
             ...dataRow,
           }}
         >
-          <span 
+          <span
             style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
-            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+            onClick={() =>
+              navigate(`/player/${encodeURIComponent(p.playerId)}`)
+            }
           >
-            {formatName(p.name)}
+            {formatName(p.playerName)}
           </span>
 
-          <span style={center}>{p.catches || 0}</span>
+          <span style={center}>{p.totalCatches || 0}</span>
 
-          <span style={center}>{p.stumpings || 0}</span>
+          <span style={center}>{p.totalStumpings || 0}</span>
 
-          <span style={center}>{p.runOuts || 0}</span>
+          <span style={center}>{p.totalRunOuts || 0}</span>
 
-          <span style={mom}>{p.manOfTheMatch || 0}</span>
+          <span style={mom}>{p.manOfTheMatchAwards || 0}</span>
         </div>
       ))}
 
       {/* EMPTY */}
 
       {players.length === 0 && (
-        <div style={emptyWrap}>
-          <p style={emptyTitle}>No misc stats</p>
-
-          <p style={emptySub}>Completed matches will appear here</p>
-        </div>
+        <EmptyState
+          title="No misc stats"
+          subtitle="Completed matches will appear here"
+        />
       )}
     </div>
   );
@@ -309,60 +297,4 @@ const mom = {
   fontWeight: 800,
 
   color: "#4338ca",
-};
-
-const loadingWrap = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  marginTop: 50,
-};
-
-const loadingText = {
-  marginTop: 14,
-
-  color: "#64748b",
-
-  fontSize: 14,
-};
-
-const spinner = {
-  width: 28,
-
-  height: 28,
-
-  border: "3px solid #e0e7ff",
-
-  borderTop: "3px solid #4338ca",
-
-  borderRadius: "50%",
-
-  animation: "spin 0.8s linear infinite",
-};
-
-const emptyWrap = {
-  marginTop: 40,
-
-  textAlign: "center",
-};
-
-const emptyTitle = {
-  fontSize: 16,
-
-  fontWeight: 700,
-
-  color: "#111827",
-};
-
-const emptySub = {
-  marginTop: 6,
-
-  color: "#64748b",
-
-  fontSize: 14,
 };

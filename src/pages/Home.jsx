@@ -4,6 +4,7 @@ import GlobalSearch from "../components/GlobalSearch";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
 import { formatName } from "../utils/helpers";
+import { API_ENDPOINTS } from "../config/apiEndPoints";
 
 
 export default function Home({ open, onClose }) {
@@ -13,13 +14,11 @@ export default function Home({ open, onClose }) {
 
   const navigate = useNavigate();
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
   const loadSeasons = async () => {
     try {
       setLoading(true);
 
-      const res = await fetch(`${API}/api/seasons`);
+      const res = await fetch(`${API_ENDPOINTS.GET_SEASONS}`);
 
       if (!res.ok) {
         throw new Error("Failed to fetch seasons");
@@ -27,9 +26,8 @@ export default function Home({ open, onClose }) {
 
       const result = await res.json();
 
-      console.log("Fetched seasons:", result);
 
-      setSeasons(result.data || []);
+      setSeasons(result || []);
     } catch (err) {
       console.error(err);
       setSeasons([]);
@@ -129,18 +127,18 @@ export default function Home({ open, onClose }) {
             <div className={styles.list}>
               {seasons.map((season) => (
                 <div
-                  key={season._id}
+                  key={season.id}
                   className={styles.card}
                   onClick={() => {
                     const stored = JSON.parse(
                       sessionStorage.getItem("seasons") || "{}",
                     );
 
-                    stored[season._id] = season.seasonName;
+                    stored[season.id] = season.seasonName;
 
                     sessionStorage.setItem("seasons", JSON.stringify(stored));
 
-                    navigate(`/season/${season._id}`);
+                    navigate(`/season/${season.id}`);
                   }}
                 >
                   <div className={styles.cardTop}>
@@ -148,7 +146,7 @@ export default function Home({ open, onClose }) {
                   </div>
 
                   <div className={styles.meta}>
-                    {season.matchesCount || 0} matches
+                    {season.matchesPlayed || 0} matches
                   </div>
                 </div>
               ))}

@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { saveMatch } from "../storage/matchDB";
+import {TeamSearch} from "../components/TeamSearch.jsx";
 
 export default function CreateMatch() {
   const navigate = useNavigate();
@@ -30,26 +31,6 @@ export default function CreateMatch() {
   const [matchType, setMatchType] = useState("OVERS");
   const [overs, setOvers] = useState(6);
 
-  useEffect(() => {
-    const loadTeams = async () => {
-      try {
-        setLoading(true);
-
-        const res = await fetch(`${API}/api/teams/season/${seasonId}`);
-
-        const json = await res.json();
-
-        setTeams(json.data || []);
-      } catch (err) {
-        console.error("Failed to load teams", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadTeams();
-  }, [seasonId]);
-
   const canCreate =
     teamA.query.trim() &&
     teamB.query.trim() &&
@@ -76,7 +57,8 @@ export default function CreateMatch() {
       seasonId,
       status: "setup",
 
-      matchType,
+      matchType: matchType,
+
 
       totalOvers: matchType === "OVERS" ? Number(overs) : null,
 
@@ -125,6 +107,7 @@ export default function CreateMatch() {
               value={teamA}
               setValue={setTeamA}
               otherSelectedId={teamB.name}
+              seasonId={seasonId}
             />
 
             <div style={vsDivider}>VS</div>
@@ -134,6 +117,7 @@ export default function CreateMatch() {
               value={teamB}
               setValue={setTeamB}
               otherSelectedId={teamA.name}
+              seasonId={seasonId}
             />
           </div>
         </div>
@@ -196,202 +180,7 @@ export default function CreateMatch() {
   );
 }
 
-function TeamSearch({ label, value, setValue, otherSelectedId }) {
-  const [isOpen, setIsOpen] = useState(false);
 
-  const [results, setResults] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-
-  const containerRef = useRef(null);
-
-  const API = import.meta.env.VITE_API_BASE_URL;
-
-  // IMPORTANT FIX
-  // ALWAYS RETURN STRING
-  const normalizePlayerName = (player) => {
-    if (!player) return "";
-
-    // already string
-    if (typeof player === "string") {
-      return player.trim();
-    }
-
-    // object
-    if (typeof player === "object") {
-      return (
-        player.displayName ||
-        player.name ||
-        player.playerName ||
-        ""
-      ).trim();
-    }
-
-    return "";
-  };
-
-  useEffect(() => {
-    if (!value.query.trim()) {
-      setResults([]);
-      return;
-    }
-
-    const fetchTeams = async () => {
-      try {
-        setLoading(true);
-
-        const res = await fetch(
-          `${API}/api/search?q=${encodeURIComponent(value.query)}`,
-        );
-
-        const json = await res.json();
-
-        if (json.success) {
-          const filtered = (json.data.teams || []).filter(
-            (t) => t.name !== otherSelectedId,
-          );
-
-          setResults(filtered);
-        }
-      } catch (err) {
-        console.error("Team search failed", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const timer = setTimeout(fetchTeams, 300);
-
-    return () => clearTimeout(timer);
-  }, [value.query, otherSelectedId]);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (containerRef.current && !containerRef.current.contains(e.target)) {
-        setIsOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", clickOut);
-
-    return () => document.removeEventListener("mousedown", clickOut);
-  }, []);
-
-  return (
-    <div
-      style={{
-        position: "relative",
-        flex: 1,
-      }}
-      ref={containerRef}
-    >
-      <label style={inputLabel}>{label}</label>
-
-      <div style={inputWrapper}>
-        <input
-          style={searchInput}
-          placeholder="Search team name..."
-          value={value.query}
-          onFocus={() => setIsOpen(true)}
-          onChange={(e) => {
-            setValue({
-              id: "",
-              name: "",
-              query: e.target.value,
-              players: [],
-            });
-
-            setIsOpen(true);
-          }}
-        />
-
-        {value.name && !loading && <span style={checkIcon}>✓</span>}
-
-        {loading && <div style={miniSpinner}></div>}
-      </div>
-
-      {isOpen && value.query.trim() && (
-        <div style={dropdown}>
-          {results.length > 0 ? (
-            results.map((t) => (
-              <div
-                key={t.id}
-                style={dropItem}
-                onClick={async () => {
-                  setValue({
-                    id: t.id,
-                    name: t.name,
-                    query: t.name,
-                    players: [],
-                  });
-
-                  setLoading(true);
-
-                  try {
-                    const res = await fetch(
-                      `${API}/api/teams/${t.teamId}/getPlayers`,
-                    );
-
-                    const json = await res.json();
-
-                    if (json.success && json.data) {
-                      const team = json.data.team;
-                      const players = json.data.players || [];
-
-                      setValue({
-                        id: team._id,
-                        name: team.name,
-                        query: team.name,
-
-                        // CONVERT API RESPONSE -> STRING ARRAY
-                        players: players
-                          .map((p) => {
-                            if (typeof p === "string") {
-                              return p.trim();
-                            }
-
-                            if (typeof p === "object" && p !== null) {
-                              return (p.displayName || p.name || "").trim();
-                            }
-
-                            return "";
-                          })
-                          .filter(Boolean),
-                      });
-                    }
-                  } catch (err) {
-                    console.error("Failed to fetch team details", err);
-                  } finally {
-                    setLoading(false);
-                    setIsOpen(false);
-                  }
-                }}
-              >
-                <div style={teamIcon}>🛡️</div>
-
-                <div>
-                  <div style={teamNameStyle}>{t.name}</div>
-
-                  <div style={teamMeta}>{t.totalMatches} matches played</div>
-                </div>
-              </div>
-            ))
-          ) : !loading ? (
-            <div style={dropItem} onClick={() => setIsOpen(false)}>
-              <div style={newTeamIcon}>+</div>
-
-              <div>
-                <div style={teamNameStyle}>New Team: "{value.query}"</div>
-
-                <div style={teamMeta}>Will be created for this match</div>
-              </div>
-            </div>
-          ) : null}
-        </div>
-      )}
-    </div>
-  );
-}
 
 /* ---------------- STYLES ---------------- */
 

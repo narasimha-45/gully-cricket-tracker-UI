@@ -101,7 +101,6 @@ export default function TeamProfile() {
 
   const { profile, stats: rootStats, derived: rootDerived, seasons = [] } = data || {};
 
-  console.log(seasons)
 
   const activeSeason =
     selectedSeason === "overall"

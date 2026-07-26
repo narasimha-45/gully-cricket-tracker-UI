@@ -68,14 +68,16 @@ export default function TossPage() {
       status: "LIVE",
 
       toss: {
-        winner: wonBy,
+        winner: wonBy.toLowerCase().trim(),
         decision,
       },
 
+
+
       innings: [
         {
-          battingTeam: battingFirst,
-          bowlingTeam: bowlingFirst,
+          battingTeam: battingFirst.toLowerCase().trim(),
+          bowlingTeam: bowlingFirst.toLowerCase().trim(),
 
           totalRuns: 0,
           wickets: 0,

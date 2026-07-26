@@ -50,7 +50,7 @@ export const endMatch = (updated, type, setMatch) => {
   } else {
     // DEFEND — batting-first team successfully defended target
     updated.result = {
-      winner: i1.battingTeam,
+      winner: i1.battingTeam.toLowerCase().trim(),
       type: isSO ? "SUPER_OVER" : "RUNS",
       margin: i1.totalRuns - i2.totalRuns,
     };

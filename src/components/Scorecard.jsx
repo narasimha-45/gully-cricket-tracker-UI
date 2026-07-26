@@ -76,6 +76,7 @@ function InningsCard({ innings, teams, label, headerColor }) {
       : teams.teamB.players;
 
   const battedPlayers = Object.keys(innings.battingStats || {});
+
   const didNotBat = battingPlayers.filter((p) => !battedPlayers.includes(p));
 
   const overs = `${Math.floor(innings.balls / 6)}.${innings.balls % 6}`;
@@ -95,7 +96,6 @@ function InningsCard({ innings, teams, label, headerColor }) {
           <span style={oversStyle}> ({overs} Ov)</span>
         </div>
       </div>
-
       {/* Batting header */}
       <div style={tableHeaderStyle}>
         <span style={{ textAlign: "left" }}>Batter</span>
@@ -107,26 +107,32 @@ function InningsCard({ innings, teams, label, headerColor }) {
       </div>
 
       {/* Batting rows */}
-      {Object.keys(innings.battingStats || {}).map((p) => {
-        const s = innings.battingStats[p];
-        const sr =
-          s.balls === 0 ? "0.00" : ((s.runs / s.balls) * 100).toFixed(2);
-        return (
-          <div key={p} style={rowStyle}>
-            <div>
-              <div style={playerStyle}>{formatName(p)}</div>
-              <div style={dismissalStyle}>
-                {s.dismissal ? formatDismissal(s.dismissal) : "batting"}
+      {Object.entries(innings.battingStats || {})
+        .sort(([, a], [, b]) => {
+          const posA = a.battingPosition ?? Number.MAX_SAFE_INTEGER;
+          const posB = b.battingPosition ?? Number.MAX_SAFE_INTEGER;
+          return posA - posB;
+        })
+        .map(([p, s]) => {
+          const sr =
+            s.balls === 0 ? "0.00" : ((s.runs / s.balls) * 100).toFixed(2);
+
+          return (
+            <div key={p} style={rowStyle}>
+              <div>
+                <div style={playerStyle}>{formatName(p)}</div>
+                <div style={dismissalStyle}>
+                  {s.dismissal ? formatDismissal(s.dismissal) : "batting"}
+                </div>
               </div>
+              <span style={runsStyle}>{s.runs}</span>
+              <span>{s.balls}</span>
+              <span>{s.fours}</span>
+              <span>{s.sixes}</span>
+              <span>{sr}</span>
             </div>
-            <span style={runsStyle}>{s.runs}</span>
-            <span>{s.balls}</span>
-            <span>{s.fours}</span>
-            <span>{s.sixes}</span>
-            <span>{sr}</span>
-          </div>
-        );
-      })}
+          );
+        })}
 
       {/* Extras */}
       <div style={infoRowStyle}>
@@ -136,7 +142,6 @@ function InningsCard({ innings, teams, label, headerColor }) {
           {innings.extras?.wides || 0}, Nb {innings.extras?.noBalls || 0})
         </span>
       </div>
-
       {/* Total */}
       <div style={infoRowStyle}>
         <span style={infoLabelStyle}>Total</span>
@@ -144,15 +149,15 @@ function InningsCard({ innings, teams, label, headerColor }) {
           {innings.totalRuns}-{innings.wickets} ({overs} Overs, RR: {rr})
         </span>
       </div>
-
       {/* Yet to bat */}
       {didNotBat.length > 0 && (
         <div style={infoRowStyle}>
           <span style={infoLabelStyle}>Yet to Bat</span>
-          <span style={yetToBatStyle}>{didNotBat.map((p) => formatName(p)).join(", ")}</span>
+          <span style={yetToBatStyle}>
+            {didNotBat.map((p) => formatName(p)).join(", ")}
+          </span>
         </div>
       )}
-
       {/* Bowling */}
       <div style={bowlingTitleStyle}>Bowling</div>
       <div style={tableHeaderStyle}>
@@ -179,7 +184,6 @@ function InningsCard({ innings, teams, label, headerColor }) {
           </div>
         );
       })}
-
       {/* ── Partnerships ────────────────────────────────────── */}
       {partnerships.length > 0 && (
         <>
@@ -191,7 +195,6 @@ function InningsCard({ innings, teams, label, headerColor }) {
             const c1 = p.contributions[b1] || { runs: 0, balls: 0 };
             const c2 = b2 ? p.contributions[b2] || { runs: 0, balls: 0 } : null;
             const total = p.runs || 0;
-            
 
             // Bar widths — split proportionally by runs, min 8% so name is readable
             const b1Pct =

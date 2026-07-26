@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
 import { formatName } from "../utils/helpers";
+import LoadingState from "../components/common/LoadingState";
+import { api } from "../components/common/api";
 
 export default function TeamStats() {
   const { globalFilter } = useOutletContext();
   const navigate = useNavigate();
   const [standings, setStandings] = useState([]);
   const [loading, setLoading] = useState(true);
-
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     fetchStandings();
@@ -17,16 +17,11 @@ export default function TeamStats() {
   const fetchStandings = async () => {
     try {
       setLoading(true);
-      let url = `${API}/api/teams/standings`;
-      if (globalFilter && globalFilter !== "all") {
-        url += `?seasonId=${globalFilter}`;
-      }
-      
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.success) {
-        setStandings(json.data);
-      }
+      const json = await api.stats.getTeamLeaderboard({
+        seasonId:
+          globalFilter && globalFilter !== "all" ? globalFilter : undefined,
+      });
+      setStandings(json || []);
     } catch (err) {
       console.error("Failed to fetch standings", err);
     } finally {
@@ -34,12 +29,7 @@ export default function TeamStats() {
     }
   };
 
-  if (loading) return (
-    <div style={loadingWrap}>
-      <div style={spinner}></div>
-      <p style={loadingText}>Loading standings...</p>
-    </div>
-  );
+  if (loading) return <LoadingState label="Loading standings..." />;
 
   return (
     <div style={container}>
@@ -56,20 +46,34 @@ export default function TeamStats() {
       {/* ROWS */}
       {standings.length > 0 ? (
         standings.map((t, i) => (
-          <div 
-            key={t.name} 
+          <div
+            key={t.name}
             style={row}
             onClick={() => navigate(`/team/${encodeURIComponent(t.name)}`)}
           >
-            <div style={{ flex: 2, display: "flex", alignItems: "center", gap: 10 }}>
+            <div
+              style={{
+                flex: 2,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+              }}
+            >
               <span style={rank}>{i + 1}</span>
               <span style={teamName}>{formatName(t.name)}</span>
             </div>
-            <span style={centerCol}>{t.stats.played}</span>
-            <span style={centerCol}>{t.stats.wins}</span>
-            <span style={centerCol}>{t.stats.losses}</span>
-            <span style={{ ...centerCol, color: t.derived.netRunRate >= 0 ? "#16a34a" : "#dc2626", fontWeight: 600 }}>
-              {t.derived.netRunRate > 0 ? "+" : ""}{t.derived.netRunRate}
+            <span style={centerCol}>{t.matchesPlayed}</span>
+            <span style={centerCol}>{t.matchesWon}</span>
+            <span style={centerCol}>{t.matchesLost}</span>
+            <span
+              style={{
+                ...centerCol,
+                color: t.derived.netRunRate >= 0 ? "#16a34a" : "#dc2626",
+                fontWeight: 600,
+              }}
+            >
+              {t.derived.netRunRate > 0 ? "+" : ""}
+              {t.derived.netRunRate}
             </span>
             {/* <span style={{ ...centerCol, fontWeight: 800, color: "#1e293b" }}>{t.stats.points}</span> */}
           </div>

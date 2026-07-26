@@ -62,6 +62,9 @@ export function deriveInsights(match) {
   visibleInnings.forEach((inn, inningsIdx) => {
     for (const ball of inn.ballByBall ?? []) {
       const { striker, bowler, runs, type, isWicket, over } = ball;
+      if (ball.type === "RETIRE") {
+        continue;
+      }
 
       if (!striker || !bowler) continue;
 
@@ -209,7 +212,7 @@ export function deriveInsights(match) {
       ];
 
       for (const o of overNums) {
-        const overBalls = balls.filter((b) => b.over === o);
+        const overBalls = balls.filter((b) => b.over === o && b.type !== "RETIRE");
 
         const runs = overBalls.reduce((s, b) => s + b.runs, 0);
 

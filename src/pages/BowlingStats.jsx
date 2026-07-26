@@ -5,8 +5,10 @@ import { formatName } from "../utils/helpers";
 import { Filter } from "lucide-react";
 
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
+import LoadingState from "../components/common/LoadingState";
+import EmptyState from "../components/common/EmptyState";
 
-import { buildBowlingEndpoint } from "../utils/buildBowlingEndpoint";
+import { api } from "../components/common/api";
 
 export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
@@ -15,13 +17,9 @@ export default function BowlingStats({ isOverall = false }) {
   const outletContext = useOutletContext();
   const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
   /* =====================================
      OVERALL LOCAL STATE
   ===================================== */
-
-  const [overallStats, setOverallStats] = useState(null);
 
   const [players, setPlayers] = useState([]);
 
@@ -58,19 +56,22 @@ export default function BowlingStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      const endpoint = buildBowlingEndpoint({
-        API,
-        isOverall,
-        globalFilter,
-        seasonId,
-        filters: selectedFilters,
+      // NOTE: team/opponent filters are still team *names* here, but
+      // StatsController expects teamId/opponentTeamId - see the matching
+      // note in BattingStats.jsx.
+      const json = await api.stats.getBowlingLeaderboard({
+        seasonId: isOverall
+          ? globalFilter !== "all"
+            ? globalFilter
+            : undefined
+          : seasonId,
+        inningsNumber: { First: 1, Second: 2 }[selectedFilters.innings],
+        result: { Won: "WIN", Lost: "LOSS" }[selectedFilters.result],
+        teamId: selectedFilters.team,
+        opponentTeamId: selectedFilters.opponent,
       });
 
-      const res = await fetch(endpoint);
-
-      const json = await res.json();
-
-      setPlayers(json.data || []);
+      setPlayers(json || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -80,19 +81,11 @@ export default function BowlingStats({ isOverall = false }) {
 
   const loadFilterOptions = async () => {
     try {
-      let endpoint;
-
-      if (isOverall) {
-        endpoint = `${API}/api/teams`;
-      } else {
-        endpoint = `${API}/api/teams/season/${seasonId}`;
-      }
-
-      const res = await fetch(endpoint);
-
-      const json = await res.json();
-
-      const teams = json.data?.map((team) => team.name) || [];
+      // NOTE: TeamController has no "list all teams" endpoint - reusing
+      // team search with an empty query as a best-effort stand-in until one
+      // exists (see api/teams.js).
+      const json = await api.teams.searchTeams("");
+      const teams = (json || []).map((team) => team.teamName);
 
       setFilterOptions({
         teams,
@@ -101,7 +94,7 @@ export default function BowlingStats({ isOverall = false }) {
     } catch (err) {
       console.error(err);
     }
-  };  
+  };
 
   const [showFilters, setShowFilters] = useState(false);
 
@@ -137,18 +130,6 @@ export default function BowlingStats({ isOverall = false }) {
   ];
 
   /* =====================================
-     HELPERS
-  ===================================== */
-
-  const ballsToOvers = (balls = 0) => {
-    const overs = Math.floor(balls / 6);
-
-    const rem = balls % 6;
-
-    return `${overs}.${rem}`;
-  };
-
-  /* =====================================
      SORT
   ===================================== */
 
@@ -157,38 +138,37 @@ export default function BowlingStats({ isOverall = false }) {
     let bv = 0;
 
     switch (sortKey) {
-      case "best":
-        av = (a.bestBowling?.wickets || 0) * 1000 - (a.bestBowling?.runs || 0);
-
-        bv = (b.bestBowling?.wickets || 0) * 1000 - (b.bestBowling?.runs || 0);
-
+      case "five":
+        av = a.fiveWicketHauls || 0;
+        bv = b.fiveWicketHauls || 0;
         break;
+
       case "innings":
-        av = a.innings || 0;
-        bv = b.innings || 0;
+        av = a.inningsBowled || 0;
+        bv = b.inningsBowled || 0;
         break;
 
       case "wickets":
-        av = a.wickets || 0;
-        bv = b.wickets || 0;
+        av = a.totalWickets || 0;
+        bv = b.totalWickets || 0;
         break;
 
       case "balls":
-        av = a.balls || 0;
-        bv = b.balls || 0;
+        av = a.totalOversBowled || 0;
+        bv = b.totalOversBowled || 0;
         break;
 
       case "eco":
-        av = Number(a.derived?.economy || 0);
+        av = Number(a.economyRate || 0);
 
-        bv = Number(b.derived?.economy || 0);
+        bv = Number(b.economyRate || 0);
 
         break;
 
       case "avg":
-        av = Number(a.derived?.bowlingAverage || 0);
+        av = Number(a.average || 0);
 
-        bv = Number(b.derived?.bowlingAverage || 0);
+        bv = Number(b.average || 0);
 
         break;
 
@@ -228,13 +208,7 @@ export default function BowlingStats({ isOverall = false }) {
   ===================================== */
 
   if (loading && players.length === 0) {
-    return (
-      <div style={loadingWrap}>
-        <div style={spinner}></div>
-
-        <p style={loadingText}>Loading bowling stats...</p>
-      </div>
-    );
+    return <LoadingState label="Loading bowling stats..." />;
   }
 
   /* =====================================
@@ -280,14 +254,14 @@ export default function BowlingStats({ isOverall = false }) {
 
         <SortHeader label="Avg" col="avg" />
 
-        <SortHeader label="Best" col="best" />
+        <SortHeader label="5W" col="five" />
       </div>
 
       {/* ROWS */}
 
       {sortedPlayers.map((p) => (
         <div
-          key={p.name}
+          key={p.playerId}
           style={{
             ...rowBase,
             ...dataRow,
@@ -295,35 +269,34 @@ export default function BowlingStats({ isOverall = false }) {
         >
           <span
             style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
-            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+            onClick={() =>
+              navigate(`/player/${encodeURIComponent(p.playerId)}`)
+            }
           >
-            {formatName(p.name)}
+            {formatName(p.playerName)}
           </span>
 
-          <span style={center}>{p.innings || 0}</span>
+          <span style={center}>{p.inningsBowled || 0}</span>
 
-          <span style={wickets}>{p.wickets}</span>
+          <span style={wickets}>{p.totalWickets || 0}</span>
 
-          <span style={center}>{ballsToOvers(p.balls)}</span>
+          <span style={center}>{p.totalOversBowled || 0}</span>
 
-          <span style={eco}>{p.derived?.economy || "0.00"}</span>
+          <span style={eco}>{p.economyRate?.toFixed(2) || "0.00"}</span>
 
-          <span style={avg}>{p.derived?.bowlingAverage || "0.00"}</span>
+          <span style={avg}>{p.average?.toFixed(2) || "0.00"}</span>
 
-          <span style={best}>
-            {p.bestBowling?.wickets || 0}/{p.bestBowling?.runs || 0}
-          </span>
+          <span style={best}>{p.fiveWicketHauls || 0}</span>
         </div>
       ))}
 
       {/* EMPTY */}
 
       {players.length === 0 && (
-        <div style={emptyWrap}>
-          <p style={emptyTitle}>No bowling stats</p>
-
-          <p style={emptySub}>Completed matches will appear here</p>
-        </div>
+        <EmptyState
+          title="No bowling stats"
+          subtitle="Completed matches will appear here"
+        />
       )}
       <StatsFilterSheet
         open={showFilters}
@@ -494,60 +467,4 @@ const best = {
   fontWeight: 800,
 
   color: "#7c3aed",
-};
-
-const loadingWrap = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  marginTop: 50,
-};
-
-const loadingText = {
-  marginTop: 14,
-
-  color: "#64748b",
-
-  fontSize: 14,
-};
-
-const spinner = {
-  width: 28,
-
-  height: 28,
-
-  border: "3px solid #e0e7ff",
-
-  borderTop: "3px solid #4338ca",
-
-  borderRadius: "50%",
-
-  animation: "spin 0.8s linear infinite",
-};
-
-const emptyWrap = {
-  marginTop: 40,
-
-  textAlign: "center",
-};
-
-const emptyTitle = {
-  fontSize: 16,
-
-  fontWeight: 700,
-
-  color: "#111827",
-};
-
-const emptySub = {
-  marginTop: 6,
-
-  color: "#64748b",
-
-  fontSize: 14,
 };

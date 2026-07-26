@@ -91,7 +91,7 @@ const OversTimeline = ({ match }) => {
       </div>
 
       {/* ── Ball-by-ball timeline ─────────────────────────── */}
-      <InningsTimeline innings={currentInnings} />
+      <InningsTimeline  rules={match.rules} innings={currentInnings} />
     </div>
   );
 };
@@ -99,7 +99,7 @@ const OversTimeline = ({ match }) => {
 /* ─────────────────────────────────────────────────────────────
    InningsTimeline — renders one innings' over list
 ───────────────────────────────────────────────────────────── */
-function InningsTimeline({ innings }) {
+function InningsTimeline({ rules,innings }) {
   const [expandedOver, setExpandedOver] = useState(null);
 
   if (!innings.ballByBall || innings.ballByBall.length === 0) {
@@ -115,6 +115,9 @@ function InningsTimeline({ innings }) {
   let cumulativeWickets = 0;
 
   const groupedOvers = innings.ballByBall.reduce((acc, ball) => {
+    if (ball.type === "RETIRE") {
+      return acc;
+    }
     const overNum = ball.over;
     if (!acc[overNum]) {
       acc[overNum] = {
@@ -189,7 +192,7 @@ function InningsTimeline({ innings }) {
                       key={bIdx}
                       className={`${styles.miniChip} ${getChipClass(ball, styles)}`}
                     >
-                      {formatMiniResult(ball)}
+                      {formatMiniResult(rules,ball)}
                     </span>
                   ))}
                 </div>
@@ -238,7 +241,7 @@ function InningsTimeline({ innings }) {
                       <div
                         className={`${styles.detailChip} ${getChipClass(ball, styles)}`}
                       >
-                        {formatMiniResult(ball)}
+                        {formatMiniResult(rules,ball)}
                       </div>
                     </div>
                   ))}
@@ -254,11 +257,23 @@ function InningsTimeline({ innings }) {
 /* ─────────────────────────────────────────────────────────────
    Helpers
 ───────────────────────────────────────────────────────────── */
-const formatMiniResult = (ball) => {
+const formatMiniResult = (rules,ball) => {
   if (ball.isWicket) return "W";
-  if (ball.type === "WIDE") return "Wd";
-  if (ball.type === "NO_BALL") return "Nb";
+
+  if (ball.type === "WIDE") {
+    let wideRuns = ball.runs - (rules.wide.extraRun ? 1 : 0);
+
+    return wideRuns > 0 ? `${wideRuns}Wd` : "Wd";
+  }
+
+  if (ball.type === "NO_BALL") {
+
+    let noBallRuns = ball.runs - (rules.noBall.extraRun ? 1 : 0);
+    return noBallRuns > 0 ? `${noBallRuns}Nb` : "Nb";
+  }
+
   if (ball.runs === 0) return "•";
+
   return ball.runs;
 };
 

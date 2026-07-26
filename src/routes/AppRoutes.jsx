@@ -17,8 +17,7 @@ import MatchupsPlaceholder from "../pages/MatchupsPlaceholder";
 import PlayerProfilePlaceholder from "../pages/PlayerProfilePlaceholder";
 import TeamProfilePlaceholder from "../pages/TeamProfilePlaceholder";
 import CreateMatchType from "../pages/CreateMatch";
-import TeamAPlayers from "../pages/TeamAPlayers";
-import TeamBPlayers from "../pages/TeamBPlayers";
+import TeamPlayers from "../pages/TeamPlayers";
 import TossPage from "../pages/TossPage";
 import LiveMatch from "../pages/LiveMatch";
 import MatchSummary from "../pages/MatchSummary";
@@ -164,7 +163,7 @@ export default function AppRoutes() {
           path="/season/:seasonId/match/:matchId/team-a"
           element={
             <AppShell title="Gully Cricket">
-              <TeamAPlayers />
+              <TeamPlayers teamKey="teamA" />
             </AppShell>
           }
         />
@@ -175,7 +174,7 @@ export default function AppRoutes() {
           path="/season/:seasonId/match/:matchId/team-b"
           element={
             <AppShell title="Gully Cricket">
-              <TeamBPlayers />
+              <TeamPlayers teamKey="teamB" />
             </AppShell>
           }
         />

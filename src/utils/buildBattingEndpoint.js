@@ -26,10 +26,10 @@ export const buildBattingEndpoint = ({
   if (isOverall) {
     endpoint =
       globalFilter === "all"
-        ? `${API}/api/stats/leaderboard/batting`
-        : `${API}/api/stats/leaderboard/batting/${globalFilter}`;
+        ? `${API}/stats/leaderboard/batting`
+        : `${API}/stats/leaderboard/batting/${globalFilter}`;
   } else {
-    endpoint = `${API}/api/stats/leaderboard/batting/${seasonId}`;
+    endpoint = `${API}/stats/leaderboard/batting/${seasonId}`;
   }
 
   return query

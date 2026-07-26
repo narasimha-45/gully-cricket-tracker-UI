@@ -6,8 +6,10 @@ import { useSeasonStats } from "../context/SeasonStatsContext";
 import { formatName } from "../utils/helpers";
 
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
+import LoadingState from "../components/common/LoadingState";
+import EmptyState from "../components/common/EmptyState";
 
-import { buildBattingEndpoint } from "../utils/buildBattingEndpoint";
+import { api } from "../components/common/api";
 
 export default function BattingStats({ isOverall = false }) {
   const { seasonId } = useParams();
@@ -16,8 +18,6 @@ export default function BattingStats({ isOverall = false }) {
   // Attempt to get globalFilter from InsightsHub outlet context
   const outletContext = useOutletContext();
   const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
-
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   const context = useSeasonStats();
 
@@ -29,11 +29,7 @@ export default function BattingStats({ isOverall = false }) {
 
   /* ---------------- LOCAL STATE ---------------- */
 
-  const [overallStats, setOverallStats] = useState(null);
-
   const [players, setPlayers] = useState([]);
-
-  // const players = isOverall ? overallStats || [] : battingStats || [];
 
   const [loading, setLoading] = useState(false);
 
@@ -72,19 +68,22 @@ export default function BattingStats({ isOverall = false }) {
     try {
       setLoading(true);
 
-      const endpoint = buildBattingEndpoint({
-        API,
-        isOverall,
-        globalFilter,
-        seasonId,
-        filters: selectedFilters,
+      // NOTE: team/opponent filters below are still team *names* in the UI,
+      // but StatsController expects teamId/opponentTeamId. There's no
+      // name->id lookup available from here yet, so those two filters are
+      // sent through as-is and won't actually narrow results on the backend
+      // until that lookup exists.
+      const json = await api.stats.getBattingLeaderboard({
+        seasonId: isOverall ? (globalFilter !== "all" ? globalFilter : undefined) : seasonId,
+        inningsNumber: { First: 1, Second: 2 }[selectedFilters.innings],
+        result: { Won: "WIN", Lost: "LOSS" }[selectedFilters.result],
+        battingPosition:
+          selectedFilters.position === "Opening" ? 1 : Number(selectedFilters.position) || undefined,
+        teamId: selectedFilters.team,
+        opponentTeamId: selectedFilters.opponent,
       });
 
-      const res = await fetch(endpoint);
-
-      const json = await res.json();
-
-      setPlayers(json.data || []);
+      setPlayers(json || []);
     } catch (err) {
       console.error(err);
     } finally {
@@ -93,30 +92,21 @@ export default function BattingStats({ isOverall = false }) {
   };
 
   const loadFilterOptions = async () => {
-  try {
-    let endpoint;
+    try {
+      // NOTE: TeamController has no "list all teams" endpoint - reusing
+      // team search with an empty query as a best-effort stand-in until one
+      // exists (see api/teams.js).
+      const json = await api.teams.searchTeams("");
+      const teams = (json || []).map((team) => team.teamName);
 
-    if (isOverall) {
-      endpoint = `${API}/api/teams`;
-    } else {
-      endpoint = `${API}/api/teams/season/${seasonId}`;
+      setFilterOptions({
+        teams,
+        opponents: teams,
+      });
+    } catch (err) {
+      console.error(err);
     }
-
-    const res = await fetch(endpoint);
-
-    const json = await res.json();
-
-    const teams =
-      json.data?.map((team) => team.name) || [];
-
-    setFilterOptions({
-      teams,
-      opponents: teams,
-    });
-  } catch (err) {
-    console.error(err);
-  }
-};
+  };
 
   /* ---------------- SORT ---------------- */
 
@@ -126,13 +116,13 @@ export default function BattingStats({ isOverall = false }) {
 
     switch (sortKey) {
       case "innings":
-        av = a.innings || 0;
-        bv = b.innings || 0;
+        av = a.inningsPlayed || 0;
+        bv = b.inningsPlayed || 0;
         break;
 
       case "runs":
-        av = a.runs || 0;
-        bv = b.runs || 0;
+        av = a.totalRuns || 0;
+        bv = b.totalRuns || 0;
         break;
 
       case "hs":
@@ -141,22 +131,22 @@ export default function BattingStats({ isOverall = false }) {
         break;
 
       case "sr":
-        av = Number(a.derived?.strikeRate || 0);
+        av = Number(a.strikeRate || 0);
 
-        bv = Number(b.derived?.strikeRate || 0);
+        bv = Number(b.strikeRate || 0);
 
         break;
 
       case "avg":
-        av = Number(a.derived?.battingAverage || 0);
+        av = Number(a.average || 0);
 
-        bv = Number(b.derived?.battingAverage || 0);
+        bv = Number(b.average || 0);
 
         break;
 
       case "fours":
-        av = a.fours || 0;
-        bv = b.fours || 0;
+        av = a.totalFours || 0;
+        bv = b.totalFours || 0;
         break;
 
       case "ducks":
@@ -196,13 +186,7 @@ export default function BattingStats({ isOverall = false }) {
   /* ---------------- LOADING ---------------- */
 
   if (loading && players.length === 0) {
-    return (
-      <div style={loadingWrap}>
-        <div style={spinner}></div>
-
-        <p style={loadingText}>Loading batting stats...</p>
-      </div>
-    );
+    return <LoadingState label="Loading batting stats..." />;
   }
 
   const battingFilters = [
@@ -299,7 +283,7 @@ export default function BattingStats({ isOverall = false }) {
 
       {sortedPlayers.map((p) => (
         <div
-          key={p.name}
+          key={p.playerId}
           style={{
             ...rowBase,
             ...dataRow,
@@ -307,20 +291,20 @@ export default function BattingStats({ isOverall = false }) {
         >
           <span
             style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
-            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
+            onClick={() => navigate(`/player/${encodeURIComponent(p.playerId)}`)}
           >
-            {formatName(p.name)}
+            {formatName(p.playerName)}
           </span>
 
-          <span style={center}>{p.innings || 0}</span>
+          <span style={center}>{p.inningsPlayed || 0}</span>
 
-          <span style={runs}>{p.runs || 0}</span>
+          <span style={runs}>{p.totalRuns || 0}</span>
 
           <span style={hs}>{p.highestScore || 0}</span>
 
-          <span style={sr}>{p.derived?.strikeRate || "0.00"}</span>
+          <span style={sr}>{p.strikeRate?.toFixed(2) || "0.00"}</span>
 
-          <span style={center}>{p.fours || 0}</span>
+          <span style={center}>{p.totalFours || 0}</span>
 
           <span style={center}>{p.ducks || 0}</span>
         </div>
@@ -329,11 +313,7 @@ export default function BattingStats({ isOverall = false }) {
       {/* EMPTY */}
 
       {players.length === 0 && (
-        <div style={emptyWrap}>
-          <p style={emptyTitle}>No batting stats</p>
-
-          <p style={emptySub}>Completed matches will appear here</p>
-        </div>
+        <EmptyState title="No batting stats" subtitle="Completed matches will appear here" />
       )}
 
       <StatsFilterSheet
@@ -496,60 +476,4 @@ const sr = {
   fontWeight: 700,
 
   color: "#1d4ed8",
-};
-
-const loadingWrap = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  marginTop: 50,
-};
-
-const loadingText = {
-  marginTop: 14,
-
-  color: "#64748b",
-
-  fontSize: 14,
-};
-
-const spinner = {
-  width: 28,
-
-  height: 28,
-
-  border: "3px solid #e0e7ff",
-
-  borderTop: "3px solid #4338ca",
-
-  borderRadius: "50%",
-
-  animation: "spin 0.8s linear infinite",
-};
-
-const emptyWrap = {
-  marginTop: 40,
-
-  textAlign: "center",
-};
-
-const emptyTitle = {
-  fontSize: 16,
-
-  fontWeight: 700,
-
-  color: "#111827",
-};
-
-const emptySub = {
-  marginTop: 6,
-
-  color: "#64748b",
-
-  fontSize: 14,
 };
