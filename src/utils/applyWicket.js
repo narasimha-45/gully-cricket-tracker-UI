@@ -83,6 +83,7 @@ export const applyWicket = ({
     helper,
     extra: extraMode,
     runs: totalRuns,
+    bowler: live.bowler,
   });
 
   innings.ballByBall.push({

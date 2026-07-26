@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-const API = import.meta.env.VITE_API_BASE_URL;
+import { api, unwrapApiData } from "../api";
 
 export default function TeamProfile() {
   const { id } = useParams();
@@ -18,69 +17,23 @@ export default function TeamProfile() {
   const loadTeam = async () => {
     try {
       setLoading(true);
-      const res = await fetch(`${API}/api/stats/team/${encodeURIComponent(id)}`);
-      const json = await res.json();
-      if (json.success) {
-        setData(json.data);
-        // await loadRecentMatches(json.data);
-      } else {
-        setData(null);
-      }
+      const response = await api.stats.getTeamProfile(id);
+      setData(unwrapApiData(response) || null);
     } catch (err) {
       console.error("Failed to load team stats", err);
+      setData(null);
     } finally {
       setLoading(false);
     }
   };
 
-  // const loadRecentMatches = async (teamData) => {
-  //   // Collect the last 3 match IDs from wonBattingFirst, lostBattingFirst,
-  //   // wonBowlingFirst, lostBowlingFirst — merge and sort by recency (order in array).
-  //   // The API returns recentMatches arrays in reverse-chron order.
-  //   const stats = teamData?.stats || {};
-
-  //   const tagged = [
-  //     ...(stats.wonBattingFirst?.recentMatches || []).map((id) => ({ id, result: "won", mode: "bat first" })),
-  //     ...(stats.lostBattingFirst?.recentMatches || []).map((id) => ({ id, result: "lost", mode: "bat first" })),
-  //     ...(stats.wonBowlingFirst?.recentMatches || []).map((id) => ({ id, result: "won", mode: "bowl first" })),
-  //     ...(stats.lostBowlingFirst?.recentMatches || []).map((id) => ({ id, result: "lost", mode: "bowl first" })),
-  //   ];
-
-  //   // Fetch individual match details for the first 3 unique IDs
-  //   const seen = new Set();
-  //   const unique = [];
-  //   for (const m of tagged) {
-  //     if (!seen.has(m.id)) {
-  //       seen.add(m.id);
-  //       unique.push(m);
-  //     }
-  //     if (unique.length === 3) break;
-  //   }
-
-  //   try {
-  //     const fetched = await Promise.all(
-  //       unique.map(async (m) => {
-  //         try {
-  //           const r = await fetch(`${API}/api/matches/${m.id}`);
-  //           const j = await r.json();
-  //           return { ...m, match: j.success ? j.data : null };
-  //         } catch {
-  //           return { ...m, match: null };
-  //         }
-  //       })
-  //     );
-  //     setRecentMatches(fetched);
-  //   } catch {
-  //     setRecentMatches(unique.map((m) => ({ ...m, match: null })));
-  //   }
-  // };
 
   if (loading && !data)
     return (
       <div style={loadingContainer}>
         <div style={spinnerStyle} />
         <div style={{ marginTop: 16, color: "var(--color-slate-500)", fontWeight: 500 }}>
-          Fetching team data...
+          Loading team data...
         </div>
       </div>
     );

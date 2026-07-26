@@ -49,7 +49,7 @@ export default function TeamStats() {
           <div
             key={t.name}
             style={row}
-            onClick={() => navigate(`/team/${encodeURIComponent(t.name)}`)}
+            onClick={() => navigate(`/team/${encodeURIComponent(t.teamName)}`)}
           >
             <div
               style={{
@@ -60,12 +60,12 @@ export default function TeamStats() {
               }}
             >
               <span style={rank}>{i + 1}</span>
-              <span style={teamName}>{formatName(t.name)}</span>
+              <span style={teamName}>{formatName(t.teamName)}</span>
             </div>
             <span style={centerCol}>{t.matchesPlayed}</span>
             <span style={centerCol}>{t.matchesWon}</span>
             <span style={centerCol}>{t.matchesLost}</span>
-            <span
+            {/* <span
               style={{
                 ...centerCol,
                 color: t.derived.netRunRate >= 0 ? "var(--color-green-600)" : "var(--color-red-600)",
@@ -74,7 +74,7 @@ export default function TeamStats() {
             >
               {t.derived.netRunRate > 0 ? "+" : ""}
               {t.derived.netRunRate}
-            </span>
+            </span> */}
             {/* <span style={{ ...centerCol, fontWeight: 800, color: "var(--color-slate-800)" }}>{t.stats.points}</span> */}
           </div>
         ))

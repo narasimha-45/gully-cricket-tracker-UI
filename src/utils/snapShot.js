@@ -20,6 +20,7 @@ export const takeSnapshot = (match, type, extraMode = "NORMAL") => {
       pendingNextInnings: Boolean(live.pendingNextInnings),
       pendingNextInningsIndex: live.pendingNextInningsIndex ?? null,
       pendingSuperOver: Boolean(live.pendingSuperOver),
+      testConfig: deepCopy(match.testConfig || null),
 
       balls: innings.balls,
       totalRuns: innings.totalRuns,
@@ -30,6 +31,7 @@ export const takeSnapshot = (match, type, extraMode = "NORMAL") => {
       bowlingStats: deepCopy(innings.bowlingStats || {}),
       dismissals: deepCopy(innings.dismissals || {}),
       thisOver: deepCopy(innings.thisOver || []),
+      thisOverBowlerChanged: Boolean(innings.thisOverBowlerChanged),
       ballByBall: deepCopy(innings.ballByBall || []),
       extras: deepCopy(innings.extras || { wides: 0, noBalls: 0 }),
 

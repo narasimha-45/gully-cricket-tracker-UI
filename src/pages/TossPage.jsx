@@ -111,9 +111,7 @@ export default function TossPage() {
 
         <button
           type="button"
-          className={`${styles.coin} ${isFlipping ? styles.flipping : ""} ${
-            flipResult === "tails" ? styles.tails : ""
-          }`}
+          className={`${styles.coin} ${isFlipping ? styles.flipping : ""}`}
           onClick={flipCoin}
           disabled={isFlipping}
           aria-label="Flip coin"

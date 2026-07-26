@@ -1,12 +1,35 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../api";
+import { api, unwrapApiData } from "../api";
 import { getMatch, saveMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
 import { normalizeName } from "../utils/matchModel";
 import styles from "./TeamPlayers.module.css";
 
 const MIN_PLAYERS = 2;
+
+const getPlayerName = (player) => {
+  if (typeof player === "string") return normalizeName(player);
+  if (!player || typeof player !== "object") return "";
+  return normalizeName(
+    player.playerName ||
+      player.displayName ||
+      player.name ||
+      player.player?.playerName ||
+      player.player?.name ||
+      "",
+  );
+};
+
+const toArray = (response) => {
+  const payload = unwrapApiData(response);
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.content)) return payload.content;
+  if (Array.isArray(payload?.players)) return payload.players;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.suggestions)) return payload.suggestions;
+  return [];
+};
 
 export default function TeamPlayers({ teamKey }) {
   const otherTeamKey = teamKey === "teamA" ? "teamB" : "teamA";
@@ -26,21 +49,69 @@ export default function TeamPlayers({ teamKey }) {
   useEffect(() => {
     let active = true;
 
-    getMatch(matchId)
-      .then((storedMatch) => {
+    const loadMatchAndSquad = async () => {
+      try {
+        let storedMatch = await getMatch(matchId);
+        const storedTeam = storedMatch?.teams?.[teamKey];
+
+        if (
+          storedMatch &&
+          storedTeam?.id &&
+          storedTeam.seasonSquadLoaded !== true
+        ) {
+          try {
+            const response = await api.teams.getTeamSeasonPlayers(
+              storedTeam.id,
+              seasonId,
+            );
+            const loadedPlayers = [
+              ...new Set(toArray(response).map(getPlayerName).filter(Boolean)),
+            ];
+
+            storedMatch = {
+              ...storedMatch,
+              teams: {
+                ...storedMatch.teams,
+                [teamKey]: {
+                  ...storedTeam,
+                  players: loadedPlayers,
+                  seasonSquadLoaded: true,
+                },
+              },
+              updatedAt: Date.now(),
+            };
+            await saveMatch(storedMatch);
+          } catch (error) {
+            storedMatch = {
+              ...storedMatch,
+              teams: {
+                ...storedMatch.teams,
+                [teamKey]: {
+                  ...storedTeam,
+                  seasonSquadLoaded: true,
+                },
+              },
+            };
+            setFeedback(
+              "Saved squad could not be loaded. Add players manually below.",
+            );
+          }
+        }
+
         if (active) setMatch(storedMatch || null);
-      })
-      .catch(() => {
+      } catch {
         if (active) setMatch(null);
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    loadMatchAndSquad();
 
     return () => {
       active = false;
     };
-  }, [matchId]);
+  }, [matchId, seasonId, teamKey]);
 
   useEffect(() => {
     const normalizedQuery = query.trim();
@@ -59,7 +130,7 @@ export default function TeamPlayers({ teamKey }) {
         setSearchLoading(true);
         const response = await api.players.searchPlayers(normalizedQuery);
         if (latestSearchRef.current === requestId) {
-          setResults(Array.isArray(response) ? response : []);
+          setResults(toArray(response));
         }
       } catch (error) {
         if (latestSearchRef.current === requestId) {
@@ -137,11 +208,6 @@ export default function TeamPlayers({ teamKey }) {
     if (players.includes(player)) {
       setFeedback(`${formatName(player)} is already in this squad.`);
       closeSearch();
-      return;
-    }
-
-    if (opponentPlayers.has(player)) {
-      setFeedback(`${formatName(player)} is already in the opponent squad.`);
       return;
     }
 
@@ -225,12 +291,12 @@ export default function TeamPlayers({ teamKey }) {
         {isOpen && query.trim() && (
           <div className={styles.dropdown} role="listbox">
             {results.map((player, index) => {
-              const name = normalizeName(player.playerName);
-              const disabled = opponentPlayers.has(name) || players.includes(name);
+              const name = getPlayerName(player);
+              const disabled = players.includes(name);
               return (
                 <button
                   type="button"
-                  key={player.id || `${name}-${index}`}
+                  key={player.id || player._id || `${name}-${index}`}
                   className={styles.dropdownItem}
                   disabled={disabled}
                   onClick={() => addPlayer(name)}
@@ -238,11 +304,11 @@ export default function TeamPlayers({ teamKey }) {
                   <span className={styles.playerIcon}>👤</span>
                   <span>
                     <strong>{formatName(name)}</strong>
-                    {disabled && (
+                    {(disabled || opponentPlayers.has(name)) && (
                       <small>
-                        {opponentPlayers.has(name)
-                          ? "Already in opponent squad"
-                          : "Already selected"}
+                        {disabled
+                          ? "Already selected"
+                          : "Also in opponent squad · Joker"}
                       </small>
                     )}
                   </span>
@@ -252,12 +318,11 @@ export default function TeamPlayers({ teamKey }) {
 
             {!searchLoading &&
               !results.some(
-                (player) => normalizeName(player.playerName) === normalizeName(query),
+                (player) => getPlayerName(player) === normalizeName(query),
               ) && (
                 <button
                   type="button"
                   className={styles.dropdownItem}
-                  disabled={opponentPlayers.has(normalizeName(query))}
                   onClick={() => addPlayer(query)}
                 >
                   <span className={styles.newPlayerIcon}>+</span>
@@ -265,7 +330,7 @@ export default function TeamPlayers({ teamKey }) {
                     <strong>Add “{formatName(query)}”</strong>
                     <small>
                       {opponentPlayers.has(normalizeName(query))
-                        ? "Already in opponent squad"
+                        ? "Also in opponent squad · Add as joker"
                         : "Create or add this player"}
                     </small>
                   </span>
@@ -293,6 +358,9 @@ export default function TeamPlayers({ teamKey }) {
                 {player.charAt(0).toUpperCase()}
               </span>
               <strong className={styles.playerName}>{formatName(player)}</strong>
+              {opponentPlayers.has(player) && (
+                <span className={styles.jokerBadge}>Joker</span>
+              )}
               <button
                 type="button"
                 onClick={() => removePlayer(player)}

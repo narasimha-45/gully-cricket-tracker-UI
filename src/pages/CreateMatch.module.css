@@ -1,7 +1,7 @@
 .page {
-  width: min(100%, 640px);
+  width: 100%;
   margin: 0 auto;
-  padding: 20px 16px 116px;
+  padding: 20px 0 24px;
 }
 
 .header {
@@ -196,18 +196,16 @@
 }
 
 .footer {
-  position: fixed;
+  position: sticky;
   z-index: 20;
-  right: 16px;
-  bottom: 18px;
-  left: 16px;
-  width: min(calc(100% - 32px), 608px);
-  margin: 0 auto;
-  padding: 10px;
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  border-radius: 18px;
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.13);
+  bottom: 10px;
+  width: 100%;
+  margin-top: 18px;
+  padding: 9px;
+  border: 1px solid rgba(226, 232, 240, 0.95);
+  border-radius: 17px;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
   backdrop-filter: blur(12px);
 }
 

@@ -71,6 +71,7 @@ export const createEmptyInnings = ({
     wides: 0,
     noBalls: 0,
   },
+  thisOverBowlerChanged: false,
   completed: false,
   ...(isSuperOver ? { isSuperOver: true } : {}),
 });
@@ -88,6 +89,23 @@ export const getScheduledTeamsForInnings = (match, inningsIndex) => {
   const firstBattingTeam = getFirstBattingTeam(match);
   const secondBattingTeam = getOtherTeamName(match, firstBattingTeam);
 
+  const followOnEnforced = Boolean(
+    isTestMatch(match) &&
+      getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
+      match?.testConfig?.followOnEnforced,
+  );
+
+  if (followOnEnforced && inningsIndex >= 2) {
+    const battingTeam = inningsIndex === 2
+      ? secondBattingTeam
+      : firstBattingTeam;
+
+    return {
+      battingTeam,
+      bowlingTeam: getOtherTeamName(match, battingTeam),
+    };
+  }
+
   const battingTeam = inningsIndex % 2 === 0
     ? firstBattingTeam
     : secondBattingTeam;
@@ -97,6 +115,31 @@ export const getScheduledTeamsForInnings = (match, inningsIndex) => {
     bowlingTeam: getOtherTeamName(match, battingTeam),
   };
 };
+
+export const getFollowOnLead = (match) => {
+  if (
+    !isTestMatch(match) ||
+    getTestInningsPerTeam(match) !== TEST_INNINGS_OPTIONS.DOUBLE ||
+    !match?.innings?.[0] ||
+    !match?.innings?.[1]
+  ) {
+    return 0;
+  }
+
+  return Number(match.innings[0].totalRuns || 0) -
+    Number(match.innings[1].totalRuns || 0);
+};
+
+export const canEnforceFollowOn = (match) =>
+  Boolean(
+    isTestMatch(match) &&
+      getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
+      match?.status === "LIVE" &&
+      match?.live?.inningsIndex === 1 &&
+      match?.live?.pendingNextInnings &&
+      !match?.testConfig?.followOnEnforced &&
+      getFollowOnLead(match) > 0,
+  );
 
 export const getTeamInningsOrdinal = (match, inningsIndex) => {
   const targetTeam = getScheduledTeamsForInnings(match, inningsIndex).battingTeam;

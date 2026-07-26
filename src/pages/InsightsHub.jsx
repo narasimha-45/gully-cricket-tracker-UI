@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import styles from "./InsightsHub.module.css";
+import { api, unwrapApiData } from "../api";
 
 export default function InsightsHub() {
   const navigate = useNavigate();
@@ -8,22 +9,20 @@ export default function InsightsHub() {
   const [filter, setFilter] = useState("all"); // "all" or specific seasonId
   const [seasons, setSeasons] = useState([]);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
 
   useEffect(() => {
     window.scrollTo(0, 0);
-    fetchSeasons();
+    loadSeasons();
   }, [location.pathname]);
 
-  const fetchSeasons = async () => {
+  const loadSeasons = async () => {
     try {
-      const res = await fetch(`${API}/api/seasons`);
-      const json = await res.json();
-      if (json.success) {
-        setSeasons(json.data);
-      }
+      const response = await api.seasons.getAllSeasons();
+      const seasonList = unwrapApiData(response);
+      setSeasons(Array.isArray(seasonList) ? seasonList : []);
     } catch (err) {
-      console.error("Failed to fetch seasons", err);
+      console.error("Failed to load seasons", err);
+      setSeasons([]);
     }
   };
 
@@ -54,9 +53,14 @@ export default function InsightsHub() {
             onChange={(e) => setFilter(e.target.value)}
           >
             <option value="all">All Seasons (Overall)</option>
-            {seasons.map(s => (
-              <option key={s._id} value={s._id}>{s.seasonName}</option>
-            ))}
+            {seasons.map((season) => {
+              const id = season.id || season._id;
+              return (
+                <option key={id} value={id}>
+                  {season.seasonName || season.name || "Season"}
+                </option>
+              );
+            })}
           </select>
         </div>
       </div>
@@ -120,7 +124,7 @@ export default function InsightsHub() {
 
       {/* CONTENT */}
       <div className={styles.content}>
-        {/* Pass filter down via context to child routes so they know which season to fetch */}
+        {/* Pass filter down via context to child routes so they know which season to load */}
         <Outlet context={{ globalFilter: filter }} />
       </div>
     </div>

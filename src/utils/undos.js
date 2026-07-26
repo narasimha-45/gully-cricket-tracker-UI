@@ -20,6 +20,9 @@ const restoreFromSnapshot = (updated, previous, setExtraMode) => {
   updated.live.pendingNextInningsIndex =
     previous.pendingNextInningsIndex ?? null;
   updated.live.pendingSuperOver = Boolean(previous.pendingSuperOver);
+  if (Object.prototype.hasOwnProperty.call(previous, "testConfig")) {
+    updated.testConfig = deepCopy(previous.testConfig);
+  }
 
   innings.balls = previous.balls;
   innings.totalRuns = previous.totalRuns;
@@ -30,6 +33,7 @@ const restoreFromSnapshot = (updated, previous, setExtraMode) => {
   innings.bowlingStats = deepCopy(previous.bowlingStats || {});
   innings.dismissals = deepCopy(previous.dismissals || {});
   innings.thisOver = deepCopy(previous.thisOver || []);
+  innings.thisOverBowlerChanged = Boolean(previous.thisOverBowlerChanged);
   innings.ballByBall = deepCopy(previous.ballByBall || []);
   innings.extras = deepCopy(
     previous.extras || { wides: 0, noBalls: 0 },

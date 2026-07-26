@@ -10,6 +10,9 @@ export default function MatchPopup({
 
   secondaryText,
   onSecondary,
+
+  tertiaryText,
+  onTertiary,
 }) {
   if (!open) return null;
 
@@ -23,11 +26,7 @@ export default function MatchPopup({
         <h2 style={titleStyle}>{title}</h2>
 
         {/* SUBTITLE */}
-        {subtitle && (
-          <p style={subtitleStyle}>
-            {subtitle}
-          </p>
-        )}
+        {subtitle && <p style={subtitleStyle}>{subtitle}</p>}
 
         {/* PRIMARY BUTTON */}
         <button
@@ -50,11 +49,14 @@ export default function MatchPopup({
 
         {/* SECONDARY */}
         {secondaryText && onSecondary && (
-          <button
-            style={secondaryBtn}
-            onClick={onSecondary}
-          >
-            ↺ {secondaryText}
+          <button style={secondaryBtn} onClick={onSecondary}>
+            {secondaryText}
+          </button>
+        )}
+
+        {tertiaryText && onTertiary && (
+          <button style={tertiaryBtn} onClick={onTertiary}>
+            {tertiaryText}
           </button>
         )}
       </div>
@@ -95,8 +97,7 @@ const card = {
 
   textAlign: "center",
 
-  boxShadow:
-    "0 25px 60px rgba(15,23,42,0.18)",
+  boxShadow: "0 25px 60px rgba(15,23,42,0.18)",
 
   overflow: "hidden",
 };
@@ -164,14 +165,39 @@ const primaryBtn = {
 
   cursor: "pointer",
 
-  boxShadow:
-    "0 10px 30px rgba(79,70,229,0.28)",
+  boxShadow: "0 10px 30px rgba(79,70,229,0.28)",
 
   transition: "all 0.2s ease",
 };
 
 const secondaryBtn = {
-  marginTop: 16,
+  width: "100%",
+
+  minHeight: 46,
+
+  marginTop: 12,
+
+  border: "1px solid var(--color-slate-200)",
+
+  borderRadius: 15,
+
+  background: "var(--color-white)",
+
+  color: "var(--color-slate-700)",
+
+  fontSize: 14,
+
+  fontWeight: 700,
+
+  cursor: "pointer",
+
+  padding: "10px 12px",
+
+  transition: "all 0.2s ease",
+};
+
+const tertiaryBtn = {
+  marginTop: 12,
 
   border: "none",
 
@@ -185,7 +211,7 @@ const secondaryBtn = {
 
   cursor: "pointer",
 
-  padding: 4,
+  padding: 6,
 
   transition: "color 0.2s ease",
 };
@@ -201,8 +227,7 @@ const spinner = {
   width: 16,
   height: 16,
 
-  border:
-    "2px solid rgba(255,255,255,0.35)",
+  border: "2px solid rgba(255,255,255,0.35)",
 
   borderTop: "2px solid var(--color-white)",
 

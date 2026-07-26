@@ -41,14 +41,17 @@ export default function TestMatchControls({ match, setMatch }) {
         <div className={styles.copy}>
           <span className={styles.badge}>Test scoring</span>
           <strong>
-            {formatName(current.battingTeam)} · {inningsOrdinal === 1 ? "1st" : "2nd"} innings
+            {formatName(current.battingTeam)} ·{" "}
+            {inningsOrdinal === 1 ? "1st" : "2nd"} innings
           </strong>
           <p>
             No over limit. This innings ends when the side is all out or you
             declare it.
           </p>
           <span className={styles.meta}>
-            {inningsPerTeam === 1 ? "Single innings" : "Double innings"} per team
+            {inningsPerTeam === 1 ? "Single innings" : "Double innings"} per
+            team
+            {match.testConfig?.followOnEnforced ? " · Follow-on enforced" : ""}
             {target ? ` · Target ${target}` : ""}
           </span>
         </div>
@@ -75,7 +78,9 @@ export default function TestMatchControls({ match, setMatch }) {
 
       <MatchPopup
         open={Boolean(confirmAction)}
-        title={confirmAction === "DRAW" ? "End match as draw?" : "Declare innings?"}
+        title={
+          confirmAction === "DRAW" ? "End match as draw?" : "Declare innings?"
+        }
         subtitle={
           confirmAction === "DRAW"
             ? "The current score will be saved and the Test match will be completed as a draw."

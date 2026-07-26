@@ -3,9 +3,11 @@ import { deepCopy } from "./helpers";
 import { evaluateMatchState } from "./matchStateHandlers";
 import { takeSnapshot } from "./snapShot";
 import {
+  canEnforceFollowOn,
   createEmptyInnings,
   getScheduledTeamsForInnings,
   getTeamInningsOrdinal,
+  sameName,
 } from "./matchModel";
 
 const emptyBattingStats = (position) => ({
@@ -62,6 +64,35 @@ export const selectLivePlayer = ({
   }
   if (role === "bowler") ensureBowler(innings, player);
 
+  persist(updated, setMatch);
+};
+
+export const changeBowler = ({
+  player,
+  match,
+  setMatch,
+  extraMode = "NORMAL",
+}) => {
+  if (
+    !player ||
+    match.status === "COMPLETED" ||
+    sameName(player, match.live?.bowler) ||
+    sameName(player, match.live?.striker) ||
+    sameName(player, match.live?.nonStriker)
+  ) {
+    return;
+  }
+
+  const updated = deepCopy(match);
+  takeSnapshot(updated, "BOWLER_CHANGE", extraMode);
+
+  const innings = updated.innings[updated.live.inningsIndex];
+  innings.thisOverBowlerChanged = Boolean(
+    updated.live.bowler && (innings.thisOver || []).length > 0,
+  ) || Boolean(innings.thisOverBowlerChanged);
+
+  updated.live.bowler = player;
+  ensureBowler(innings, player);
   persist(updated, setMatch);
 };
 
@@ -122,12 +153,15 @@ export const handleOverEnd = (updated, live, innings) => {
   );
 
   ensureBowler(innings, live.bowler);
-  if (isMaiden) innings.bowlingStats[live.bowler].maidens += 1;
+  if (isMaiden && !innings.thisOverBowlerChanged) {
+    innings.bowlingStats[live.bowler].maidens += 1;
+  }
 
   live.lastOverBowler = live.bowler;
   live.bowler = null;
   [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
   innings.thisOver = [];
+  innings.thisOverBowlerChanged = false;
 };
 
 export const applyRun = ({
@@ -199,7 +233,7 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
   ensureBatter(innings, live.striker);
   ensureBowler(innings, live.bowler);
 
-  innings.thisOver.push({ type, runs });
+  innings.thisOver.push({ type, runs, bowler: live.bowler });
   innings.ballByBall.push({
     over: Math.floor(innings.balls / 6),
     ballInOver: isLegal ? (innings.balls % 6) + 1 : innings.balls % 6,
@@ -257,9 +291,19 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
   persist(updated, setMatch);
 };
 
-export const startNextInnings = ({ match, setMatch }) => {
+export const startNextInnings = ({ match, setMatch, followOn = false }) => {
   const updated = deepCopy(match);
-  takeSnapshot(updated, "START_NEXT_INNINGS");
+  takeSnapshot(
+    updated,
+    followOn ? "ENFORCE_FOLLOW_ON" : "START_NEXT_INNINGS",
+  );
+
+  if (followOn && canEnforceFollowOn(updated)) {
+    updated.testConfig = {
+      ...(updated.testConfig || {}),
+      followOnEnforced: true,
+    };
+  }
 
   const nextIndex = updated.live.inningsIndex + 1;
   const scheduledTeams = getScheduledTeamsForInnings(updated, nextIndex);

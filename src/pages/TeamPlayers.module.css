@@ -254,6 +254,18 @@
   white-space: nowrap;
 }
 
+.jokerBadge {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: var(--color-amber-100);
+  color: var(--color-amber-900);
+  font-size: 9px;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
 .removeButton {
   display: grid;
   place-items: center;

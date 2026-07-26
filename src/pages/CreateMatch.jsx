@@ -14,6 +14,7 @@ const emptyTeam = () => ({
   name: "",
   query: "",
   players: [],
+  playersLoaded: true,
 });
 
 const normalizePlayers = (players = []) =>
@@ -30,18 +31,28 @@ export default function CreateMatch() {
   const [testInningsPerTeam, setTestInningsPerTeam] = useState(
     TEST_INNINGS_OPTIONS.DOUBLE,
   );
+  const [teamALoading, setTeamALoading] = useState(false);
+  const [teamBLoading, setTeamBLoading] = useState(false);
 
   const normalizedTeamA = normalizeName(teamA.name || teamA.query);
   const normalizedTeamB = normalizeName(teamB.name || teamB.query);
 
   const validationMessage = useMemo(() => {
     if (!normalizedTeamA || !normalizedTeamB) return "Select both teams";
+    if (teamALoading || teamBLoading) return "Loading existing squad…";
     if (normalizedTeamA === normalizedTeamB) return "Teams must be different";
     if (matchType === MATCH_TYPES.OVERS && Number(overs) < 1) {
       return "Overs must be at least 1";
     }
     return "";
-  }, [matchType, normalizedTeamA, normalizedTeamB, overs]);
+  }, [
+    matchType,
+    normalizedTeamA,
+    normalizedTeamB,
+    overs,
+    teamALoading,
+    teamBLoading,
+  ]);
 
   const canCreate = !validationMessage;
 
@@ -52,6 +63,7 @@ export default function CreateMatch() {
       name: normalizeName(team.name || team.query),
       players: normalizePlayers(team.players),
       isExisting: Boolean(team.id),
+      seasonSquadLoaded: team.id ? team.playersLoaded !== false : true,
       ...(team.id ? { id: team.id } : {}),
     });
 
@@ -117,6 +129,7 @@ export default function CreateMatch() {
             setValue={setTeamA}
             otherSelectedId={teamB.name}
             seasonId={seasonId}
+            onSquadLoadingChange={setTeamALoading}
           />
           <span className={styles.vs}>VS</span>
           <TeamSearch
@@ -125,6 +138,7 @@ export default function CreateMatch() {
             setValue={setTeamB}
             otherSelectedId={teamA.name}
             seasonId={seasonId}
+            onSquadLoadingChange={setTeamBLoading}
           />
         </div>
       </section>

@@ -2,12 +2,14 @@ import { saveMatch } from "../storage/matchDB";
 
 export const recreateMatch = async (match, navigate) => {
   const newMatchId = `match_${Date.now()}`;
+  const { followOnEnforced: _followOnEnforced, ...reusableTestConfig } =
+    match.testConfig || {};
   const newMatch = {
     id: newMatchId,
     seasonId: match.seasonId,
     matchType: match.matchType,
     totalOvers: match.totalOvers,
-    testConfig: match.testConfig || null,
+    testConfig: match.testConfig ? reusableTestConfig : null,
     rules: match.rules,
     teams: {
       teamA: {

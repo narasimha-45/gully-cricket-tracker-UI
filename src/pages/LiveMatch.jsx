@@ -12,6 +12,10 @@ import { getMatch } from "../storage/matchDB";
 import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
 import { formatName } from "../utils/helpers";
 import { startNextInnings, startSuperOver } from "../utils/matchEvents";
+import {
+  canEnforceFollowOn,
+  getFollowOnLead,
+} from "../utils/matchModel";
 import { formatMatchResult } from "../utils/matchPresentation";
 import { recreateMatch } from "../utils/recreateMatch";
 import {
@@ -94,6 +98,8 @@ export default function LiveMatch() {
   const { live } = match;
   const currentInnings = match.innings[live.inningsIndex];
   const nextInningsIndex = live.pendingNextInningsIndex ?? live.inningsIndex + 1;
+  const followOnAvailable = canEnforceFollowOn(match);
+  const followOnLead = followOnAvailable ? getFollowOnLead(match) : 0;
 
   const handleHeroAction = () => {
     if (match.status === "COMPLETED") {
@@ -191,12 +197,28 @@ export default function LiveMatch() {
           currentInnings.totalRuns
         }-${currentInnings.wickets}${
           currentInnings.completionReason === "DECLARED" ? " declared" : ""
-        }.`}
+        }.${
+          followOnAvailable
+            ? ` ${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} and may enforce the follow-on.`
+            : ""
+        }`}
         primaryText={`Start innings ${nextInningsIndex + 1}`}
         onPrimary={() => startNextInnings({ match, setMatch })}
-        secondaryText="Undo last action"
-        onSecondary={() =>
-          undoFromInningsPopup({ match, setMatch, setExtraMode })
+        secondaryText={
+          followOnAvailable
+            ? `Enforce follow-on · Start innings ${nextInningsIndex + 1}`
+            : "Undo last action"
+        }
+        onSecondary={
+          followOnAvailable
+            ? () => startNextInnings({ match, setMatch, followOn: true })
+            : () => undoFromInningsPopup({ match, setMatch, setExtraMode })
+        }
+        tertiaryText={followOnAvailable ? "Undo last action" : null}
+        onTertiary={
+          followOnAvailable
+            ? () => undoFromInningsPopup({ match, setMatch, setExtraMode })
+            : null
         }
       />
 

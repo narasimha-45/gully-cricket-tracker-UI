@@ -21,11 +21,12 @@ export default function MatchHero({ match, onAction }) {
             ● {completed ? "END" : "LIVE"}
           </span>
           <h1 className={styles.title}>
-            {formatName(match.teams.teamA.name)} vs {formatName(match.teams.teamB.name)}
+            {formatName(match.teams.teamA.name)} vs{" "}
+            {formatName(match.teams.teamB.name)}
           </h1>
           <span className={styles.formatPill}>
             {testMatch
-              ? `Test · ${getTestInningsPerTeam(match)} inn/team`
+              ? `Test · ${getTestInningsPerTeam(match)} innings`
               : `${match.totalOvers} Ov`}
           </span>
         </div>
@@ -92,7 +93,7 @@ export default function MatchHero({ match, onAction }) {
           </div>
         )}
 
-        {status.type === "test" && (
+        {(status.type === "test" || status.type === "inningsInfo") && (
           <div className={styles.testStatusLine}>
             <span>{status.text}</span>
             <span>CRR: {status.crr}</span>

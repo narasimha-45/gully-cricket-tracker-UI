@@ -5,6 +5,7 @@ import WicketSheet from "./WicketSheet";
 import { formatName } from "../utils/helpers";
 import {
   applyRun,
+  changeBowler,
   retireBatsman,
   selectLivePlayer,
   switchStrike,
@@ -47,9 +48,36 @@ export default function LiveScoringPanel({
       (player) =>
         !(live.outBatsmen || []).some((out) => sameName(out, player)) &&
         !sameName(player, live.striker) &&
-        !sameName(player, live.nonStriker),
+        !sameName(player, live.nonStriker) &&
+        !sameName(player, live.bowler),
     );
-  }, [match, innings.battingTeam, live.outBatsmen, live.striker, live.nonStriker]);
+  }, [
+    match,
+    innings.battingTeam,
+    live.outBatsmen,
+    live.striker,
+    live.nonStriker,
+    live.bowler,
+  ]);
+
+  const bowlerBlockedBatter = useMemo(
+    () =>
+      getPlayersForTeam(match, innings.battingTeam).find(
+        (player) =>
+          sameName(player, live.bowler) &&
+          !(live.outBatsmen || []).some((out) => sameName(out, player)) &&
+          !sameName(player, live.striker) &&
+          !sameName(player, live.nonStriker),
+      ),
+    [
+      match,
+      innings.battingTeam,
+      live.bowler,
+      live.outBatsmen,
+      live.striker,
+      live.nonStriker,
+    ],
+  );
 
   const canScore = Boolean(live.striker && live.nonStriker && live.bowler);
   const historyCount = live.history?.length || 0;
@@ -60,6 +88,11 @@ export default function LiveScoringPanel({
     setSheet(null);
   };
 
+  const chooseReplacementBowler = (player) => {
+    changeBowler({ player, match, setMatch, extraMode });
+    setSheet(null);
+  };
+
   const toggleExtra = (mode) => {
     if (!canScore) return;
     setExtraMode((current) => (current === mode ? "NORMAL" : mode));
@@ -67,13 +100,11 @@ export default function LiveScoringPanel({
 
   return (
     <>
-      {isTestMatch(match) && (
-        <TestMatchControls match={match} setMatch={setMatch} />
-      )}
-
       {!canScore && (
         <div className={styles.scoringHint}>
-          Select two batters and a bowler before recording a ball.
+          {bowlerBlockedBatter && (!live.striker || !live.nonStriker)
+            ? `${formatName(bowlerBlockedBatter)} is currently bowling. Change the bowler before selecting this joker to bat.`
+            : "Select two batters and a bowler before recording a ball."}
         </div>
       )}
 
@@ -154,6 +185,16 @@ export default function LiveScoringPanel({
             {live.bowler ? `${formatName(live.bowler)} *` : "Select bowler"}
           </button>
           {renderBowlStats(innings, live.bowler)}
+        </div>
+        <div className={styles.bowlerActionRow}>
+          <button
+            type="button"
+            className={styles.changeBowlerButton}
+            disabled={!live.bowler || bowlingPlayers.length < 2}
+            onClick={() => setSheet("changeBowler")}
+          >
+            Change bowler
+          </button>
         </div>
       </section>
 
@@ -258,6 +299,10 @@ export default function LiveScoringPanel({
         </button>
       </section>
 
+      {isTestMatch(match) && (
+        <TestMatchControls match={match} setMatch={setMatch} />
+      )}
+
       <BottomSheetSelector
         open={sheet === "striker"}
         title="Select striker"
@@ -276,8 +321,24 @@ export default function LiveScoringPanel({
         open={sheet === "bowler"}
         title="Select bowler"
         items={bowlingPlayers}
-        disabledItems={[live.lastOverBowler].filter(Boolean)}
+        disabledItems={[
+          live.lastOverBowler,
+          live.striker,
+          live.nonStriker,
+        ].filter(Boolean)}
         onSelect={(player) => choosePlayer("bowler", player)}
+        onClose={() => setSheet(null)}
+      />
+      <BottomSheetSelector
+        open={sheet === "changeBowler"}
+        title="Change bowler"
+        items={bowlingPlayers}
+        disabledItems={[
+          live.bowler,
+          live.striker,
+          live.nonStriker,
+        ].filter(Boolean)}
+        onSelect={chooseReplacementBowler}
         onClose={() => setSheet(null)}
       />
       <WicketSheet

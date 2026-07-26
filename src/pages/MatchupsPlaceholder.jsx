@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useOutletContext } from "react-router-dom";
+import { api, getApiMessage, unwrapApiData } from "../api";
 
 /**
  * REUSABLE PLAYER SEARCH INPUT WITH AUTO-SUGGESTIONS
@@ -9,7 +10,6 @@ const PlayerSearchInput = ({
   placeholder,
   value,
   onChange,
-  apiBase,
 }) => {
   const [query, setQuery] = useState(value);
   const [suggestions, setSuggestions] = useState([]);
@@ -31,22 +31,20 @@ const PlayerSearchInput = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const fetchSuggestions = async (q) => {
+  const loadSuggestions = async (q) => {
     if (!q || q.length < 2) {
       setSuggestions([]);
       return;
     }
+
     try {
       setLoading(true);
-      const res = await fetch(
-        `${apiBase}/api/stats/search/players?q=${encodeURIComponent(q)}`,
-      );
-      const json = await res.json();
-      if (json.success) {
-        setSuggestions(json.data);
-      }
+      const response = await api.stats.searchPlayers(q);
+      const playerList = unwrapApiData(response);
+      setSuggestions(Array.isArray(playerList) ? playerList : []);
     } catch (err) {
-      console.error("Failed to fetch suggestions", err);
+      console.error("Failed to load player suggestions", err);
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
@@ -54,7 +52,7 @@ const PlayerSearchInput = ({
 
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (isOpen) fetchSuggestions(query);
+      if (isOpen) loadSuggestions(query);
     }, 300);
     return () => clearTimeout(timeoutId);
   }, [query, isOpen]);
@@ -85,15 +83,20 @@ const PlayerSearchInput = ({
             {loading ? (
               <div style={suggestionItem}>Searching...</div>
             ) : suggestions.length > 0 ? (
-              suggestions.map((p) => (
-                <div
-                  key={p._id}
-                  style={suggestionItem}
-                  onClick={() => handleSelect(p.name)}
-                >
-                  <span style={{ textTransform: "capitalize" }}>{p.name}</span>
-                </div>
-              ))
+              suggestions.map((player, index) => {
+                const name =
+                  player.playerName || player.name || player.displayName || "";
+                const key = player.id || player._id || `${name}-${index}`;
+                return (
+                  <div
+                    key={key}
+                    style={suggestionItem}
+                    onClick={() => handleSelect(name)}
+                  >
+                    <span style={{ textTransform: "capitalize" }}>{name}</span>
+                  </div>
+                );
+              })
             ) : (
               <div style={suggestionItem}>No players found</div>
             )}
@@ -113,41 +116,39 @@ export default function Matchups() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  const API = import.meta.env.VITE_API_BASE_URL;
 
-  const handleFetch = async () => {
+  const loadMatchup = async () => {
     if (!p1 || !p2) return;
     try {
       setLoading(true);
       setError(null);
 
-      const sId = globalFilter === "all" ? "overall" : globalFilter;
+      const seasonId = globalFilter === "all" ? "overall" : globalFilter;
 
       if (mode === "rivalry") {
-        const res = await fetch(
-          `${API}/api/stats/rivalry?batter=${encodeURIComponent(p1)}&bowler=${encodeURIComponent(p2)}&seasonId=${sId}`,
-        );
-        const json = await res.json();
-        if (json.success) setData(json.data);
-        else setError(json.message);
+        const response = await api.stats.getRivalryStats({
+          batter: p1,
+          bowler: p2,
+          seasonId,
+        });
+        setData(unwrapApiData(response));
       } else {
-        // Comparison Mode
-        const res = await fetch(
-          `${API}/api/stats/head-to-head/player?player1=${encodeURIComponent(p1)}&player2=${encodeURIComponent(p2)}&seasonId=${sId}`,
-        );
-        const json = await res.json();
+        const response = await api.stats.getHeadToHeadStats({
+          player1: p1,
+          player2: p2,
+          seasonId,
+        });
+        const comparison = unwrapApiData(response);
+        const players = comparison?.players || [];
 
-        if (json.success) {
-          setData({
-            p1: json.data.players[0],
-            p2: json.data.players[1],
-          });
+        if (players.length >= 2) {
+          setData({ p1: players[0], p2: players[1] });
         } else {
-          setError(json.message || "Could not compare players.");
+          setError("Could not compare players.");
         }
       }
     } catch (err) {
-      setError("Failed to fetch data");
+      setError(getApiMessage(err?.body, "Failed to load matchup data"));
     } finally {
       setLoading(false);
     }
@@ -194,7 +195,6 @@ export default function Matchups() {
             placeholder="Search..."
             value={p1}
             onChange={setP1}
-            apiBase={API}
           />
           <div style={vs}>VS</div>
           <PlayerSearchInput
@@ -202,7 +202,6 @@ export default function Matchups() {
             placeholder="Search..."
             value={p2}
             onChange={setP2}
-            apiBase={API}
           />
         </div>
 
@@ -211,7 +210,7 @@ export default function Matchups() {
             ...btn,
             opacity: !p1 || !p2 ? 0.6 : 1,
           }}
-          onClick={handleFetch}
+          onClick={loadMatchup}
           disabled={!p1 || !p2 || loading}
         >
           {loading

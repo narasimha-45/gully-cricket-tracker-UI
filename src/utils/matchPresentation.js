@@ -94,6 +94,19 @@ export function buildMatchStatusLine(match) {
   const innings = match.innings[currentIndex];
   const crr = calcCRR(innings.totalRuns, innings.balls);
 
+  if (currentIndex === 0) {
+    const tossWinner = formatName(match.toss?.winner || "");
+    const tossDecision = match.toss?.decision === "bowl" ? "bowl" : "bat";
+
+    return {
+      type: "inningsInfo",
+      crr,
+      text: tossWinner
+        ? `${tossWinner} elected to ${tossDecision}`
+        : "First innings in progress",
+    };
+  }
+
   if (isTestMatch(match)) {
     const target = getFinalInningsTarget(match, currentIndex);
     if (target) {

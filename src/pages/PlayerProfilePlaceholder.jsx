@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-
-const API = import.meta.env.VITE_API_BASE_URL;
+import { api, unwrapApiData } from "../api";
 
 export default function PlayerProfile() {
   const { id } = useParams();
@@ -12,34 +11,33 @@ export default function PlayerProfile() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSeasons();
+    loadSeasons();
   }, []);
   useEffect(() => {
     loadProfile();
   }, [id, selectedSeason]);
 
-  const fetchSeasons = async () => {
+  const loadSeasons = async () => {
     try {
-      const res = await fetch(`${API}/api/seasons`);
-      const json = await res.json();
-      if (json.success) setSeasons(json.data);
+      const response = await api.seasons.getAllSeasons();
+      const seasonList = unwrapApiData(response);
+      setSeasons(Array.isArray(seasonList) ? seasonList : []);
     } catch (err) {
-      console.error("Failed to fetch seasons", err);
+      console.error("Failed to load seasons", err);
+      setSeasons([]);
     }
   };
 
   const loadProfile = async () => {
     try {
       setLoading(true);
-      let url = `${API}/api/stats/player/${encodeURIComponent(id)}`;
-      if (selectedSeason !== "overall")
-        url = `${API}/api/stats/player/${encodeURIComponent(id)}/season/${selectedSeason}`;
-      const res = await fetch(url);
-      const json = await res.json();
-      if (json.success) setProfile(json.data);
-      else setProfile(null);
+      const response = selectedSeason === "overall"
+        ? await api.stats.getPlayerProfile(id)
+        : await api.stats.getPlayerProfileBySeason(id, selectedSeason);
+      setProfile(unwrapApiData(response) || null);
     } catch (err) {
       console.error("Failed to load player profile", err);
+      setProfile(null);
     } finally {
       setLoading(false);
     }
@@ -57,7 +55,7 @@ export default function PlayerProfile() {
             fontSize: 14,
           }}
         >
-          Fetching player data...
+          Loading player data...
         </div>
       </div>
     );
@@ -171,11 +169,14 @@ export default function PlayerProfile() {
           onChange={(e) => setSelectedSeason(e.target.value)}
         >
           <option value="overall">All Seasons</option>
-          {seasons.map((s) => (
-            <option key={s._id} value={s._id}>
-              {s.seasonName}
-            </option>
-          ))}
+          {seasons.map((season) => {
+            const seasonId = season.id || season._id;
+            return (
+              <option key={seasonId} value={seasonId}>
+                {season.seasonName || season.name || "Season"}
+              </option>
+            );
+          })}
         </select>
       </div>
 

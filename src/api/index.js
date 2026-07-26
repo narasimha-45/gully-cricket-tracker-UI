@@ -5,7 +5,12 @@ import { teamsApi } from "./teams";
 import { searchApi } from "./search";
 import { statsApi } from "./stats";
 
-export { ApiError, BASE_URL } from "./client";
+export {
+  ApiError,
+  BASE_URL,
+  getApiMessage,
+  unwrapApiData,
+} from "./client";
 
 export const api = {
   matches: matchesApi,
