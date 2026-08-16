@@ -1,6 +1,10 @@
-import React from "react";
-import "./BottomSheetSelector.css";
+import { useId } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
+import { useDialogA11y } from "../hooks/useDialogA11y";
 import { formatName } from "../utils/helpers";
+import { sameName } from "../utils/matchModel";
+import styles from "./BottomSheetSelector.module.css";
 
 export default function BottomSheetSelector({
   open,
@@ -9,52 +13,77 @@ export default function BottomSheetSelector({
   disabledItems = [],
   onSelect,
   onClose,
-  children
+  children,
 }) {
-  if (!open) return null;
+  const titleId = useId();
+  const dialogRef = useDialogA11y(open, onClose);
 
-  return (
-    <>
-      {/* Backdrop */}
-      <div className="sheet-backdrop" onClick={onClose} />
+  if (!open || typeof document === "undefined") return null;
 
-      {/* Sheet */}
-      <div className="sheet">
-        <div className="sheet-header">
-          <h3>{title}</h3>
-          <button onClick={onClose}>✕</button>
-        </div>
+  return createPortal(
+    <div
+      className={styles.backdrop}
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose?.();
+      }}
+    >
+      <section
+        ref={dialogRef}
+        className={styles.sheet}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
+        <div className={styles.handle} aria-hidden="true" />
+        <header className={styles.header}>
+          <h2 id={titleId}>{title}</h2>
+          <button
+            type="button"
+            className={styles.closeButton}
+            onClick={onClose}
+            aria-label="Close"
+          >
+            <X size={19} />
+          </button>
+        </header>
 
-        <div className="sheet-body">
+        <div className={styles.body}>
           {items ? (
-            <>
-              {items.length === 0 && (
-                <p className="muted">No players available</p>
-              )}
-
-              {items.map(player => {
-                const disabled = disabledItems.includes(player);
-
-                return (
-                  <button
-                    key={player}
-                    className={`sheet-item ${disabled ? "disabled" : ""}`}
-                    disabled={disabled}
-                    onClick={() => onSelect(player)}
-                  >
-                    {formatName(player)}
-                  </button>
-                );
-              })}
-            </>
+            items.length === 0 ? (
+              <p className={styles.muted}>No players available</p>
+            ) : (
+              <div className={styles.itemList}>
+                {items.map((player, index) => {
+                  const disabled = disabledItems.some((item) =>
+                    sameName(item, player),
+                  );
+                  return (
+                    <button
+                      type="button"
+                      key={player}
+                      data-dialog-autofocus={
+                        index === 0 && !disabled ? "true" : undefined
+                      }
+                      className={styles.item}
+                      disabled={disabled}
+                      onClick={() => onSelect?.(player)}
+                    >
+                      <span className={styles.avatar} aria-hidden="true">
+                        {formatName(player).slice(0, 1).toUpperCase()}
+                      </span>
+                      <span>{formatName(player)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )
           ) : (
-            // Render custom children if items is not provided
-            <>
-              {React.Children.map(children, child => child)}
-            </>
+            children
           )}
         </div>
-      </div>
-    </>
+      </section>
+    </div>,
+    document.body,
   );
 }

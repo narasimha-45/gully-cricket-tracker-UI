@@ -1,4 +1,5 @@
 import { formatName } from "../utils/helpers";
+import { getTeamInningsOrdinal, isTestMatch } from "../utils/matchModel";
 import styles from "./MatchSummaryTab.module.css";
 
 function formatOvers(balls = 0) {
@@ -14,25 +15,21 @@ function getTopBatters(innings) {
 
   const batting = Array.isArray(innings.battingStats)
     ? innings.battingStats
-    : Object.entries(innings.battingStats).map(
-        ([name, stats]) => ({
-          name,
-          ...stats,
-        })
-      );
+    : Object.entries(innings.battingStats).map(([name, stats]) => ({
+        name,
+        ...stats,
+      }));
 
   return batting
-    .filter((p) => p.balls > 0)
+    .filter((p) => p.balls > 0 || p.runs > 0)
     .sort((a, b) => {
       if (b.runs !== a.runs) {
         return b.runs - a.runs;
       }
 
-      const aSR =
-        a.balls > 0 ? (a.runs / a.balls) * 100 : 0;
+      const aSR = a.balls > 0 ? (a.runs / a.balls) * 100 : 0;
 
-      const bSR =
-        b.balls > 0 ? (b.runs / b.balls) * 100 : 0;
+      const bSR = b.balls > 0 ? (b.runs / b.balls) * 100 : 0;
 
       return bSR - aSR;
     })
@@ -48,25 +45,21 @@ function getTopBowlers(innings) {
 
   const bowling = Array.isArray(innings.bowlingStats)
     ? innings.bowlingStats
-    : Object.entries(innings.bowlingStats).map(
-        ([name, stats]) => ({
-          name,
-          ...stats,
-        })
-      );
+    : Object.entries(innings.bowlingStats).map(([name, stats]) => ({
+        name,
+        ...stats,
+      }));
 
   return bowling
-    .filter((p) => p.balls > 0)
+    .filter((p) => p.balls > 0 || p.runs > 0 || p.wickets > 0)
     .sort((a, b) => {
       if (b.wickets !== a.wickets) {
         return b.wickets - a.wickets;
       }
 
-      const aEco =
-        a.balls > 0 ? a.runs / (a.balls / 6) : 999;
+      const aEco = a.balls > 0 ? a.runs / (a.balls / 6) : 999;
 
-      const bEco =
-        b.balls > 0 ? b.runs / (b.balls / 6) : 999;
+      const bEco = b.balls > 0 ? b.runs / (b.balls / 6) : 999;
 
       return aEco - bEco;
     })
@@ -85,30 +78,27 @@ export default function MatchSummaryTab({ match }) {
 
         const topBowlers = getTopBowlers(innings);
 
-        const inningsLabel =
-          index === 0
+        const inningsLabel = isTestMatch(match)
+          ? `${getTeamInningsOrdinal(match, index) === 1 ? "1st" : "2nd"} Innings`
+          : index === 0
             ? "1st Innings"
             : index === 1
-            ? "2nd Innings"
-            : `Super Over ${Math.floor((index - 2) / 2) + 1}`;
+              ? "2nd Innings"
+              : `Super Over ${Math.floor((index - 2) / 2) + 1}`;
 
         return (
-          <div
-            key={index}
-            className={styles.summarySection}
-          >
+          <div key={index} className={styles.summarySection}>
             {/* HEADER */}
 
             <div className={styles.summaryHeaderRow}>
               <div>
                 <div className={styles.summaryHeading}>
-                  {inningsLabel} • {innings.battingTeam}
+                  {inningsLabel} • {formatName(innings.battingTeam)}
                 </div>
               </div>
 
               <div className={styles.summaryScore}>
                 {innings.totalRuns}/{innings.wickets}
-
                 <div className={styles.summaryOvers}>
                   ({formatOvers(innings.balls)} ov)
                 </div>
@@ -121,24 +111,15 @@ export default function MatchSummaryTab({ match }) {
               {/* BATTERS */}
 
               <div>
-                <div className={styles.summaryMiniTitle}>
-                  Batting
-                </div>
+                <div className={styles.summaryMiniTitle}>Batting</div>
 
                 {topBatters.map((player, idx) => (
-                  <div
-                    key={idx}
-                    className={styles.summaryCompactRow}
-                  >
-                    <span
-                      className={styles.summaryCompactName}
-                    >
+                  <div key={idx} className={styles.summaryCompactRow}>
+                    <span className={styles.summaryCompactName}>
                       {formatName(player.name)}
                     </span>
 
-                    <span
-                      className={styles.summaryCompactValue}
-                    >
+                    <span className={styles.summaryCompactValue}>
                       {player.runs} ({player.balls})
                     </span>
                   </div>
@@ -148,24 +129,15 @@ export default function MatchSummaryTab({ match }) {
               {/* BOWLERS */}
 
               <div>
-                <div className={styles.summaryMiniTitle}>
-                  Bowling
-                </div>
+                <div className={styles.summaryMiniTitle}>Bowling</div>
 
                 {topBowlers.map((player, idx) => (
-                  <div
-                    key={idx}
-                    className={styles.summaryCompactRow}
-                  >
-                    <span
-                      className={styles.summaryCompactName}
-                    >
+                  <div key={idx} className={styles.summaryCompactRow}>
+                    <span className={styles.summaryCompactName}>
                       {formatName(player.name)}
                     </span>
 
-                    <span
-                      className={styles.summaryCompactValue}
-                    >
+                    <span className={styles.summaryCompactValue}>
                       {player.wickets}/{player.runs}
                     </span>
                   </div>

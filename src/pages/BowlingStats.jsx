@@ -1,553 +1,278 @@
-import { useEffect, useState } from "react";
-import { useParams, useOutletContext, useNavigate } from "react-router-dom";
-import { formatName } from "../utils/helpers";
-
-import { Filter } from "lucide-react";
-
+import { useEffect, useMemo, useReducer } from "react";
+import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
+import {
+  LeaderboardState,
+  LeaderboardToolbar,
+  SortButton,
+} from "../features/stats/components/LeaderboardView";
+import {
+  LEADERBOARD_ACTIONS,
+  createLeaderboardState,
+  leaderboardReducer,
+} from "../features/stats/state/leaderboardReducer";
+import { useBowlingLeaderboard, useTeamsForSeason } from "../hooks/queries";
+import { formatName } from "../utils/helpers";
+import styles from "./Leaderboards.module.css";
 
-import { buildBowlingEndpoint } from "../utils/buildBowlingEndpoint";
+const DEFAULT_FILTERS = Object.freeze({
+  innings: "All",
+  result: "All",
+  opponentTeamId: "All",
+  teamId: "All",
+});
+const INNINGS_NUMBER = { First: 1, Second: 2 };
+const MATCH_RESULT = { Won: "WIN", Lost: "LOSS" };
+const optional = (value) => (value && value !== "All" ? value : undefined);
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+
+const formatOvers = (value) => {
+  if (value === null || value === undefined) return "0.0";
+  const text = String(value);
+  return text.includes(".") ? text : `${text}.0`;
+};
 
 export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
   const navigate = useNavigate();
-
   const outletContext = useOutletContext();
-  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
+  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : "all";
+  const statsSeasonId = !isOverall
+    ? seasonId
+    : globalFilter !== "all"
+      ? globalFilter
+      : undefined;
+  const teamsSeasonId = !isOverall
+    ? seasonId || "ALL"
+    : globalFilter !== "all"
+      ? globalFilter
+      : "ALL";
 
-  const API = import.meta.env.VITE_API_BASE_URL;
-
-  /* =====================================
-     OVERALL LOCAL STATE
-  ===================================== */
-
-  const [overallStats, setOverallStats] = useState(null);
-
-  const [players, setPlayers] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-
-  const [sortKey, setSortKey] = useState("wickets");
-
-  const [sortDir, setSortDir] = useState("desc");
-
-  const [selectedFilters, setSelectedFilters] = useState({
-    innings: "All",
-    result: "All",
-    opponent: "All",
-    team: "All",
-  });
-
-  /* =====================================
-     LOAD ONLY ONCE
-  ===================================== */
-
-  useEffect(() => {
-    loadStats();
-  }, [seasonId, isOverall, globalFilter, selectedFilters]);
-
-  useEffect(() => {
-    loadFilterOptions();
-  }, [seasonId, isOverall]);
-
-  /* =====================================
-     FETCH
-  ===================================== */
-
-  const loadStats = async () => {
-    try {
-      setLoading(true);
-
-      const endpoint = buildBowlingEndpoint({
-        API,
-        isOverall,
-        globalFilter,
-        seasonId,
-        filters: selectedFilters,
-      });
-
-      const res = await fetch(endpoint);
-
-      const json = await res.json();
-
-      setPlayers(json.data || []);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loadFilterOptions = async () => {
-    try {
-      let endpoint;
-
-      if (isOverall) {
-        endpoint = `${API}/api/teams`;
-      } else {
-        endpoint = `${API}/api/teams/season/${seasonId}`;
-      }
-
-      const res = await fetch(endpoint);
-
-      const json = await res.json();
-
-      const teams = json.data?.map((team) => team.name) || [];
-
-      setFilterOptions({
-        teams,
-        opponents: teams,
-      });
-    } catch (err) {
-      console.error(err);
-    }
-  };  
-
-  const [showFilters, setShowFilters] = useState(false);
-
-  const [filterOptions, setFilterOptions] = useState({
-    teams: [],
-    opponents: [],
-  });
-
-  const bowlingFilters = [
-    {
-      key: "innings",
-      label: "Innings",
-      options: ["All", "First", "Second"],
-    },
-
-    {
-      key: "result",
-      label: "Match Result",
-      options: ["All", "Won", "Lost"],
-    },
-
-    {
-      key: "opponent",
-      label: "Opponent",
-      options: ["All", ...filterOptions.opponents],
-    },
-
-    {
-      key: "team",
-      label: "Team",
-      options: ["All", ...filterOptions.teams],
-    },
-  ];
-
-  /* =====================================
-     HELPERS
-  ===================================== */
-
-  const ballsToOvers = (balls = 0) => {
-    const overs = Math.floor(balls / 6);
-
-    const rem = balls % 6;
-
-    return `${overs}.${rem}`;
-  };
-
-  /* =====================================
-     SORT
-  ===================================== */
-
-  const sortedPlayers = [...players].sort((a, b) => {
-    let av = 0;
-    let bv = 0;
-
-    switch (sortKey) {
-      case "best":
-        av = (a.bestBowling?.wickets || 0) * 1000 - (a.bestBowling?.runs || 0);
-
-        bv = (b.bestBowling?.wickets || 0) * 1000 - (b.bestBowling?.runs || 0);
-
-        break;
-      case "innings":
-        av = a.innings || 0;
-        bv = b.innings || 0;
-        break;
-
-      case "wickets":
-        av = a.wickets || 0;
-        bv = b.wickets || 0;
-        break;
-
-      case "balls":
-        av = a.balls || 0;
-        bv = b.balls || 0;
-        break;
-
-      case "eco":
-        av = Number(a.derived?.economy || 0);
-
-        bv = Number(b.derived?.economy || 0);
-
-        break;
-
-      case "avg":
-        av = Number(a.derived?.bowlingAverage || 0);
-
-        bv = Number(b.derived?.bowlingAverage || 0);
-
-        break;
-
-      default:
-        av = 0;
-        bv = 0;
-    }
-
-    return sortDir === "asc" ? av - bv : bv - av;
-  });
-
-  /* =====================================
-     SORT HEADER
-  ===================================== */
-
-  const SortHeader = ({ label, col }) => (
-    <span
-      style={sortableHeader}
-      onClick={() => {
-        if (sortKey === col) {
-          setSortDir(sortDir === "asc" ? "desc" : "asc");
-        } else {
-          setSortKey(col);
-
-          setSortDir("desc");
-        }
-      }}
-    >
-      {label}
-
-      {sortKey === col && (sortDir === "asc" ? " ▲" : " ▼")}
-    </span>
+  const [state, dispatch] = useReducer(
+    leaderboardReducer,
+    createLeaderboardState(DEFAULT_FILTERS, "wickets"),
   );
 
-  /* =====================================
-     LOADING
-  ===================================== */
+  useEffect(() => {
+    dispatch({ type: LEADERBOARD_ACTIONS.RESET_TEAM_FILTERS });
+  }, [teamsSeasonId]);
 
-  if (loading && players.length === 0) {
-    return (
-      <div style={loadingWrap}>
-        <div style={spinner}></div>
+  const teamsQuery = useTeamsForSeason(teamsSeasonId);
+  const teams = useMemo(() => {
+    const unique = new Map();
+    (teamsQuery.data || []).forEach((team) => {
+      const id = team.teamId ?? team.id;
+      const name = team.teamName ?? team.name;
+      if (id && name && !unique.has(id))
+        unique.set(id, { value: id, label: formatName(name) });
+    });
+    return [...unique.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [teamsQuery.data]);
 
-        <p style={loadingText}>Loading bowling stats...</p>
-      </div>
-    );
-  }
+  const apiFilters = useMemo(
+    () => ({
+      seasonId: statsSeasonId,
+      inningsNumber: INNINGS_NUMBER[state.filters.innings],
+      result: MATCH_RESULT[state.filters.result],
+      teamId: optional(state.filters.teamId),
+      opponentTeamId: optional(state.filters.opponentTeamId),
+    }),
+    [statsSeasonId, state.filters],
+  );
 
-  /* =====================================
-     UI
-  ===================================== */
+  const statsQuery = useBowlingLeaderboard(apiFilters);
+
+  const filterDefinitions = useMemo(
+    () => [
+      { key: "innings", label: "Innings", options: ["All", "First", "Second"] },
+      { key: "result", label: "Match Result", options: ["All", "Won", "Lost"] },
+      {
+        key: "opponentTeamId",
+        label: "Opponent",
+        options: [{ value: "All", label: "All" }, ...teams],
+      },
+      {
+        key: "teamId",
+        label: "Team",
+        options: [{ value: "All", label: "All" }, ...teams],
+      },
+    ],
+    [teams],
+  );
+
+  const activeLabels = useMemo(
+    () =>
+      Object.entries(state.filters).flatMap(([key, value]) => {
+        if (value === "All") return [];
+        const definition = filterDefinitions.find((item) => item.key === key);
+        const option = definition?.options.find(
+          (item) => (typeof item === "string" ? item : item.value) === value,
+        );
+        return [typeof option === "string" ? option : option?.label || value];
+      }),
+    [filterDefinitions, state.filters],
+  );
+
+  const players = useMemo(() => {
+    const getSortValue = (player) => {
+      switch (state.sortKey) {
+        case "innings":
+          return number(player.inningsBowled);
+        case "wickets":
+          return number(player.totalWickets);
+        case "overs":
+          return number(player.totalOversBowled);
+        case "economy":
+          return number(player.economyRate);
+        case "average":
+          return number(player.totalWickets) === 0 || player.average == null
+            ? Number.POSITIVE_INFINITY
+            : number(player.average);
+        case "fiveWicketHauls":
+          return number(player.fiveWicketHauls);
+        default:
+          return 0;
+      }
+    };
+    return [...(statsQuery.data || [])].sort((a, b) => {
+      const aValue = getSortValue(a);
+      const bValue = getSortValue(b);
+      const delta = aValue - bValue;
+      return state.sortDir === "asc" ? delta : -delta;
+    });
+  }, [statsQuery.data, state.sortDir, state.sortKey]);
+
+  const onSort = (column) =>
+    dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
-    <div style={page}>
-      <div style={topBar}>
-        <div style={activeFilters}>
-          {Object.entries(selectedFilters).map(([key, value]) => {
-            if (value === "All") return null;
+    <div className={styles.page}>
+      <LeaderboardToolbar
+        activeLabels={activeLabels}
+        warning={teamsQuery.isError ? "Team filters unavailable" : ""}
+        onOpenFilters={() =>
+          dispatch({ type: LEADERBOARD_ACTIONS.OPEN_FILTERS })
+        }
+        filtersDisabled={teamsQuery.isLoading}
+      />
 
-            return (
-              <span key={key} style={filterPill}>
-                {value}
-              </span>
-            );
-          })}
-        </div>
-
-        <button style={filterBtn} onClick={() => setShowFilters(true)}>
-          <Filter size={18} />
-        </button>
-      </div>
-      {/* HEADER */}
-
-      <div
-        style={{
-          ...rowBase,
-          ...headerRow,
-        }}
+      <LeaderboardState
+        loading={statsQuery.isLoading}
+        fetching={statsQuery.isFetching && !statsQuery.isLoading}
+        error={statsQuery.error}
+        empty={players.length === 0}
+        onRetry={statsQuery.refetch}
+        emptyTitle="No bowling stats"
+        emptySubtitle="Complete a match or adjust the filters to see bowling leaders."
       >
-        <span style={playerHeader}>Player</span>
+        <div className={styles.table}>
+          <div className={`${styles.header} ${styles.bowlingGrid}`}>
+            <span className={styles.playerHeader}>Player</span>
+            <SortButton
+              label="I"
+              column="innings"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by innings bowled"
+            />
+            <SortButton
+              label="W"
+              column="wickets"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by wickets"
+            />
+            <SortButton
+              label="O"
+              column="overs"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by overs"
+            />
+            <SortButton
+              label="Eco"
+              column="economy"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by economy"
+            />
+            <SortButton
+              label="Avg"
+              column="average"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by average"
+            />
+            <SortButton
+              label="5W"
+              column="fiveWicketHauls"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by five wicket hauls"
+            />
+          </div>
 
-        <SortHeader label="I" col="innings" />
-
-        <SortHeader label="W" col="wickets" />
-
-        <SortHeader label="O" col="balls" />
-
-        <SortHeader label="Eco" col="eco" />
-
-        <SortHeader label="Avg" col="avg" />
-
-        <SortHeader label="Best" col="best" />
-      </div>
-
-      {/* ROWS */}
-
-      {sortedPlayers.map((p) => (
-        <div
-          key={p.name}
-          style={{
-            ...rowBase,
-            ...dataRow,
-          }}
-        >
-          <span
-            style={{ ...playerCell, cursor: "pointer", color: "#4f46e5" }}
-            onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
-          >
-            {formatName(p.name)}
-          </span>
-
-          <span style={center}>{p.innings || 0}</span>
-
-          <span style={wickets}>{p.wickets}</span>
-
-          <span style={center}>{ballsToOvers(p.balls)}</span>
-
-          <span style={eco}>{p.derived?.economy || "0.00"}</span>
-
-          <span style={avg}>{p.derived?.bowlingAverage || "0.00"}</span>
-
-          <span style={best}>
-            {p.bestBowling?.wickets || 0}/{p.bestBowling?.runs || 0}
-          </span>
+          {players.map((player) => (
+            <div
+              key={player.playerId ?? player.playerName}
+              className={`${styles.row} ${styles.bowlingGrid}`}
+            >
+              <button
+                type="button"
+                className={styles.playerButton}
+                onClick={() =>
+                  navigate(`/player/${encodeURIComponent(player.playerId)}`)
+                }
+              >
+                {formatName(player.playerName)}
+                <span className={styles.secondary}>
+                  {number(player.totalMatchesPlayed)} matches
+                </span>
+              </button>
+              <span className={styles.stat}>
+                {number(player.inningsBowled)}
+              </span>
+              <span className={`${styles.stat} ${styles.primaryStat}`}>
+                {number(player.totalWickets)}
+              </span>
+              <span className={styles.stat}>
+                {formatOvers(player.totalOversBowled)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.economyRate).toFixed(2)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.totalWickets) === 0 || player.average == null
+                  ? "—"
+                  : number(player.average).toFixed(2)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.fiveWicketHauls)}
+              </span>
+            </div>
+          ))}
         </div>
-      ))}
+      </LeaderboardState>
 
-      {/* EMPTY */}
-
-      {players.length === 0 && (
-        <div style={emptyWrap}>
-          <p style={emptyTitle}>No bowling stats</p>
-
-          <p style={emptySub}>Completed matches will appear here</p>
-        </div>
-      )}
       <StatsFilterSheet
-        open={showFilters}
-        onClose={() => setShowFilters(false)}
-        filters={bowlingFilters}
-        selectedFilters={selectedFilters}
-        onChange={setSelectedFilters}
+        open={state.filtersOpen}
+        onClose={() => dispatch({ type: LEADERBOARD_ACTIONS.CLOSE_FILTERS })}
+        filters={filterDefinitions}
+        selectedFilters={state.filters}
+        onChange={(filters) =>
+          dispatch({
+            type: LEADERBOARD_ACTIONS.APPLY_FILTERS,
+            payload: filters,
+          })
+        }
+        title="Bowling filters"
       />
     </div>
   );
 }
-
-/* =========================================
-   STYLES
-========================================= */
-const topBar = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  marginBottom: 14,
-};
-
-const statsTitle = {
-  fontSize: 22,
-  fontWeight: 800,
-  color: "#111827",
-  marginBottom: 10,
-};
-
-const filterBtn = {
-  width: 42,
-  height: 42,
-  borderRadius: "50%",
-  border: "none",
-  background: "linear-gradient(135deg,#4f46e5,#4338ca)",
-  color: "#ffffff",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  boxShadow: "0 6px 18px rgba(79,70,229,0.25)",
-};
-
-const activeFilters = {
-  display: "flex",
-  gap: 8,
-  flexWrap: "wrap",
-};
-
-const filterPill = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "#eef2ff",
-  color: "#4338ca",
-  fontSize: 12,
-  fontWeight: 700,
-};
-
-const page = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  gap: 10,
-};
-
-const rowBase = {
-  display: "grid",
-
-  gridTemplateColumns: "2.8fr repeat(6,1fr)",
-
-  alignItems: "center",
-};
-
-const headerRow = {
-  position: "sticky",
-
-  top: "var(--stats-header-top, 68px)",
-
-  zIndex: 70,
-
-  margin: "0 -18px 8px -18px",
-
-  padding: "10px 32px 8px",
-
-  background: "rgba(248, 250, 252, 0.96)",
-
-  backdropFilter: "blur(12px)",
-
-  fontSize: 12,
-
-  fontWeight: 700,
-
-  color: "#64748b",
-};
-
-const dataRow = {
-  background: "#ffffff",
-
-  padding: "14px",
-
-  borderRadius: 18,
-
-  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-
-  border: "1px solid #eef2ff",
-
-  fontSize: 14,
-};
-
-const sortableHeader = {
-  textAlign: "center",
-
-  cursor: "pointer",
-
-  userSelect: "none",
-};
-
-const playerHeader = {
-  textAlign: "left",
-};
-
-const playerCell = {
-  fontWeight: 700,
-
-  color: "#111827",
-
-  textAlign: "left",
-
-  fontSize: 14,
-};
-
-const center = {
-  textAlign: "center",
-
-  fontWeight: 600,
-
-  color: "#374151",
-};
-
-const wickets = {
-  textAlign: "center",
-
-  fontWeight: 800,
-
-  color: "#dc2626",
-};
-
-const eco = {
-  textAlign: "center",
-
-  fontWeight: 700,
-
-  color: "#2563eb",
-};
-
-const avg = {
-  textAlign: "center",
-
-  fontWeight: 700,
-
-  color: "#059669",
-};
-
-const best = {
-  textAlign: "center",
-
-  fontWeight: 800,
-
-  color: "#7c3aed",
-};
-
-const loadingWrap = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  alignItems: "center",
-
-  justifyContent: "center",
-
-  marginTop: 50,
-};
-
-const loadingText = {
-  marginTop: 14,
-
-  color: "#64748b",
-
-  fontSize: 14,
-};
-
-const spinner = {
-  width: 28,
-
-  height: 28,
-
-  border: "3px solid #e0e7ff",
-
-  borderTop: "3px solid #4338ca",
-
-  borderRadius: "50%",
-
-  animation: "spin 0.8s linear infinite",
-};
-
-const emptyWrap = {
-  marginTop: 40,
-
-  textAlign: "center",
-};
-
-const emptyTitle = {
-  fontSize: 16,
-
-  fontWeight: 700,
-
-  color: "#111827",
-};
-
-const emptySub = {
-  marginTop: 6,
-
-  color: "#64748b",
-
-  fontSize: 14,
-};
