@@ -1,230 +1,25 @@
-.page {
-  min-height: 100vh;
-
-  display: flex;
-
-  justify-content: center;
-
-  background:
-    linear-gradient(180deg,
-      var(--color-indigo-100) 0%,
-      var(--color-slate-50) 22%);
-}
-
-.app {
-  width: 100%;
-
-  max-width: 430px;
-
-  min-height: 100vh;
-
-  background: var(--color-slate-50);
-
-  position: relative;
-}
-
-/* HEADER */
-
-.header {
-  position: fixed;
-
-  top: 0;
-
-  width: 100%;
-
-  max-width: 430px;
-
-  height: 68px;
-
-  display: flex;
-
-  align-items: center;
-
-  justify-content: center;
-
-  z-index: 100;
-
-  background:
-    linear-gradient(135deg,
-      var(--color-indigo-900),
-      var(--color-indigo-700));
-
-  color: white;
-
-  font-size: 24px;
-
-  font-weight: 900;
-
-  letter-spacing: -1px;
-
-  box-shadow:
-    0 10px 30px rgba(67, 56, 202, 0.24);
-}
-
-/* CONTENT */
-
-.content {
-  padding: 86px 18px 120px;
-}
-
-/* FOOTER */
-
-.footer {
-  position: fixed;
-
-  bottom: 0;
-
-  width: 100%;
-
-  max-width: 430px;
-
-  padding:
-    14px 18px 24px;
-
-  background:
-    linear-gradient(to top,
-      rgba(248, 250, 252, 0.98),
-      rgba(248, 250, 252, 0.78),
-      transparent);
-
-  backdrop-filter: blur(12px);
-
-  z-index: 50;
-
-  box-sizing: border-box;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  /* gap: px; */
-}
-
-.logo {
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-}
-
-.title {
-  font-size: 22px;
-  font-weight: 800;
-  letter-spacing: -0.3px;
-}
-
-/* SYNC INDICATOR */
-
-.syncBadge {
-  position: absolute;
-  top: 50%;
-  right: 14px;
-  transform: translateY(-50%);
-
-  display: flex;
-  align-items: center;
-  gap: 6px;
-
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: none;
-
-  background: rgba(255, 255, 255, 0.16);
-  color: white;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0;
-
-  cursor: pointer;
-}
-
-.syncBadge:disabled {
-  opacity: 0.7;
-  cursor: default;
-}
-
-.syncDot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: var(--color-amber-400, #fbbf24);
-  flex-shrink: 0;
-}
-
-.syncDot.syncing {
-  background: var(--color-emerald-400, #34d399);
-  animation: syncPulse 1s ease-in-out infinite;
-}
-
-@keyframes syncPulse {
-
-  0%,
-  100% {
-    opacity: 1;
-  }
-
-  50% {
-    opacity: 0.35;
-  }
-}
-/* Mobile browser/PWA safe areas */
+.page { min-height: 100vh; display: flex; justify-content: center; background: radial-gradient(circle at 50% -20%, var(--color-indigo-200), transparent 38%), var(--color-slate-100); }
+.app { position: relative; width: 100%; max-width: 460px; min-height: 100vh; overflow-x: clip; background: var(--color-background); box-shadow: 0 0 0 1px rgba(15, 23, 42, .04), 0 24px 70px rgba(15, 23, 42, .10); }
+.header { position: fixed; top: 0; z-index: 100; width: 100%; max-width: 460px; height: 66px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px; background: linear-gradient(135deg, var(--color-indigo-900), var(--color-indigo-700)); color: white; box-shadow: 0 8px 24px rgba(49, 46, 129, .20); }
+.brand { min-width: 0; display: flex; align-items: center; gap: 10px; }
+.logoMark { width: 36px; height: 36px; flex: 0 0 36px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; background: rgba(255,255,255,.12); font-size: 19px; }
+.title { overflow: hidden; font-size: 19px; font-weight: 900; letter-spacing: -.35px; text-overflow: ellipsis; white-space: nowrap; }
+.syncBadge { min-width: 46px; height: 34px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 0 10px; border: 1px solid rgba(255,255,255,.18); border-radius: 999px; background: rgba(255,255,255,.13); color: white; font-size: 12px; font-weight: 850; cursor: pointer; }
+.syncBadge:disabled { opacity: .58; cursor: default; }
+.syncDot { width: 7px; height: 7px; flex: 0 0 7px; border-radius: 50%; background: var(--color-amber-300); }
+.syncDot.syncing { background: #6ee7b7; animation: syncPulse 1s ease-in-out infinite; }
+.content { min-height: 100vh; padding: 84px 16px 116px; }
+.contentWithBanner { padding-top: 112px; }
+.footer { position: fixed; bottom: 0; z-index: 50; width: 100%; max-width: 460px; padding: 14px 16px 22px; background: linear-gradient(to top, rgba(248,250,252,.99), rgba(248,250,252,.90), rgba(248,250,252,0)); backdrop-filter: blur(12px); }
+.offlineBanner, .saveErrorBanner { position: fixed; top: 66px; z-index: 95; width: 100%; max-width: 460px; min-height: 28px; padding: 7px 12px; border: 0; text-align: center; font-size: 11px; font-weight: 800; }
+.offlineBanner { background: var(--color-amber-100); color: var(--color-amber-900); }
+.saveErrorBanner { background: var(--color-red-100); color: var(--color-red-800); cursor: pointer; }
+@keyframes syncPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@supports (min-height: 100dvh) { .page, .app { min-height: 100dvh; } }
 @supports (padding: env(safe-area-inset-top)) {
-  .page,
-  .app {
-    min-height: 100dvh;
-  }
-
-  .header {
-    height: calc(68px + env(safe-area-inset-top));
-    padding-top: env(safe-area-inset-top);
-  }
-
-  .content {
-    padding-top: calc(86px + env(safe-area-inset-top));
-  }
-
-  .footer {
-    padding-bottom: calc(24px + env(safe-area-inset-bottom));
-  }
-}
-
-.offlineBanner,
-.saveErrorBanner {
-  position: fixed;
-  top: 68px;
-  width: 100%;
-  max-width: 430px;
-  z-index: 95;
-  padding: 7px 12px;
-  text-align: center;
-  font-size: 11px;
-  font-weight: 750;
-}
-
-.offlineBanner {
-  background: var(--color-amber-100);
-  color: var(--color-amber-900);
-}
-
-.saveErrorBanner {
-  border: 0;
-  background: var(--color-red-100);
-  color: var(--color-red-800);
-  cursor: pointer;
-}
-
-@supports (padding: env(safe-area-inset-top)) {
-  .offlineBanner,
-  .saveErrorBanner {
-    top: calc(68px + env(safe-area-inset-top));
-  }
-}
-
-.contentWithBanner {
-  padding-top: 114px;
-}
-
-@supports (padding: env(safe-area-inset-top)) {
-  .contentWithBanner {
-    padding-top: calc(114px + env(safe-area-inset-top));
-  }
+  .header { height: calc(66px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
+  .content { padding-top: calc(84px + env(safe-area-inset-top)); }
+  .contentWithBanner { padding-top: calc(112px + env(safe-area-inset-top)); }
+  .footer { padding-bottom: calc(22px + env(safe-area-inset-bottom)); }
+  .offlineBanner, .saveErrorBanner { top: calc(66px + env(safe-area-inset-top)); }
 }

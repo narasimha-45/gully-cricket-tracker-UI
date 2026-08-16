@@ -1,5 +1,5 @@
 import { api } from "../api";
-import { queryClient } from "../queryClient";
+import { invalidateAfterMatchSync } from "../cacheInvalidation";
 import { deleteMatch, getAllMatches, saveMatch } from "../storage/matchDB";
 import { buildMatchSyncPayload } from "./matchSyncPayload";
 import { getMatchIdempotencyKey } from "./matchIdentity";
@@ -44,9 +44,7 @@ export function syncPendingMatches() {
     }
 
     await Promise.all(
-      [...touchedSeasons].map((seasonId) =>
-        queryClient.invalidateQueries({ queryKey: ["seasonMatches", seasonId] }),
-      ),
+      [...touchedSeasons].map((seasonId) => invalidateAfterMatchSync(seasonId)),
     );
 
     return { attempted: pending.length, synced, failed };

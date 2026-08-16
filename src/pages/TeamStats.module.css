@@ -1,0 +1,14 @@
+.table { display: grid; gap: 8px; }
+.grid { display: grid; grid-template-columns: minmax(170px, 2.6fr) repeat(5, minmax(48px, 1fr)); align-items: center; gap: 4px; }
+.header { padding: 9px 12px; border-radius: 12px; background: var(--color-slate-100); color: var(--color-slate-500); font-size: 10px; font-weight: 850; text-transform: uppercase; letter-spacing: .04em; }
+.header span:not(:first-child) { text-align: center; }
+.row { width: 100%; min-height: 62px; padding: 10px 12px; border: 1px solid var(--color-slate-100); border-radius: 14px; background: white; box-shadow: var(--shadow-sm); color: var(--color-slate-700); font: inherit; font-size: 12px; cursor: pointer; }
+.row:hover { border-color: var(--color-indigo-200); }
+.row > span:not(:first-child), .row > strong { text-align: center; }
+.teamCell { display: flex; align-items: center; gap: 9px; min-width: 0; text-align: left; }
+.teamCell > span:last-child { min-width: 0; }
+.teamCell strong { display: block; overflow: hidden; color: var(--color-slate-900); font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.teamCell small { display: block; margin-top: 3px; color: var(--color-slate-400); font-size: 9px; }
+.rank { display: grid; place-items: center; width: 25px; height: 25px; flex: 0 0 25px; border-radius: 9px; background: var(--color-indigo-50); color: var(--color-indigo-700); font-size: 10px; font-weight: 900; }
+.winRate { color: var(--color-emerald-700); font-weight: 850; }
+@media (max-width: 520px) { .table { overflow-x: auto; } .grid { min-width: 600px; } }

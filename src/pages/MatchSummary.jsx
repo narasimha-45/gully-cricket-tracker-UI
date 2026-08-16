@@ -83,7 +83,7 @@ export default function MatchSummary() {
       status: "setup",
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      schemaVersion: 2,
+      schemaVersion: 3,
       syncStatus: "local",
     };
 

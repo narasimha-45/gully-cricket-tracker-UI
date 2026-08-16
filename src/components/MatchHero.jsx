@@ -1,4 +1,4 @@
-import { formatOvers } from "../utils/calcutors";
+import { formatOvers } from "../utils/calculators";
 import { formatName } from "../utils/helpers";
 import { getTestInningsPerTeam, isTestMatch } from "../utils/matchModel";
 import {

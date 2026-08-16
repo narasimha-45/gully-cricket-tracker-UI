@@ -1,43 +1,30 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
-import ErrorBoundary from "./common/ErrorBoundary";
+import { useNetworkStatus } from "../hooks/useNetworkStatus";
 import { useSyncPendingMatches } from "../hooks/useSyncPendingMatches";
+import ErrorBoundary from "./common/ErrorBoundary";
 import styles from "./AppShell.module.css";
 
-export default function AppShell({ title, children, bottomAction }) {
+export default function AppShell({ title = "Gully Cricket", children, bottomAction }) {
   const { pendingCount, syncing, retryNow } = useSyncPendingMatches();
   const location = useLocation();
-  const [online, setOnline] = useState(() => navigator.onLine);
+  const online = useNetworkStatus();
   const [localSaveError, setLocalSaveError] = useState("");
 
   useEffect(() => {
-    const handleOnline = () => setOnline(true);
-    const handleOffline = () => setOnline(false);
     const handleLocalSaveError = (event) =>
       setLocalSaveError(event.detail?.message || "Unable to save this match on this device.");
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
     window.addEventListener("gully:local-save-error", handleLocalSaveError);
-    return () => {
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
-      window.removeEventListener("gully:local-save-error", handleLocalSaveError);
-    };
+    return () => window.removeEventListener("gully:local-save-error", handleLocalSaveError);
   }, []);
 
   return (
     <div className={styles.page}>
       <div className={styles.app}>
         <header className={styles.header}>
-          <div className={styles.brand}>
-            <img
-              src="/gull-cricket-logo/favicon.svg"
-              alt="Gully Cricket"
-              className={styles.logo}
-            />
-
-            <span className={styles.title}>Gully Cricket</span>
+          <div className={styles.brand} aria-label={title}>
+            <span className={styles.logoMark} aria-hidden="true">🏏</span>
+            <span className={styles.title}>{title}</span>
           </div>
 
           {pendingCount > 0 && (
@@ -45,22 +32,19 @@ export default function AppShell({ title, children, bottomAction }) {
               type="button"
               className={styles.syncBadge}
               onClick={retryNow}
-              disabled={syncing}
+              disabled={syncing || !online}
               aria-live="polite"
+              title={online ? "Retry pending match sync" : "Sync will resume when online"}
             >
-              <span
-                className={`${styles.syncDot} ${syncing ? styles.syncing : ""}`}
-              />
-              {syncing
-                ? "Syncing…"
-                : `${pendingCount} match${pendingCount === 1 ? "" : "es"} not synced`}
+              <span className={`${styles.syncDot} ${syncing ? styles.syncing : ""}`} />
+              <span>{syncing ? "Syncing" : pendingCount}</span>
             </button>
           )}
         </header>
 
         {!online && (
           <div className={styles.offlineBanner} role="status">
-            Offline · live scoring remains on this device
+            Offline · scoring stays safely on this device
           </div>
         )}
 
@@ -76,15 +60,10 @@ export default function AppShell({ title, children, bottomAction }) {
         )}
 
         <main className={`${styles.content} ${!online || localSaveError ? styles.contentWithBanner : ""}`}>
-          {/* key={pathname} means navigating to a new screen remounts a
-              fresh boundary, so a crash on one page can't linger onto
-              the next one after the user taps "Try again" or navigates away. */}
           <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>
         </main>
 
-        {bottomAction && (
-          <footer className={styles.footer}>{bottomAction}</footer>
-        )}
+        {bottomAction && <footer className={styles.footer}>{bottomAction}</footer>}
       </div>
     </div>
   );

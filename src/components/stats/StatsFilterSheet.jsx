@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, X } from "lucide-react";
+import { useDialogA11y } from "../../hooks/useDialogA11y";
 
 import styles from "./StatsFilterSheet.module.css";
 
@@ -23,29 +24,7 @@ export default function StatsFilterSheet({
     }
   }, [open, selectedFilters]);
 
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    const previousOverscrollBehavior = document.body.style.overscrollBehavior;
-
-    document.body.style.overflow = "hidden";
-    document.body.style.overscrollBehavior = "none";
-
-    const handleKeyDown = (event) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      document.body.style.overscrollBehavior = previousOverscrollBehavior;
-      window.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open, onClose]);
+  const dialogRef = useDialogA11y(open, onClose);
 
   const activeFilterCount = useMemo(
     () =>
@@ -89,10 +68,12 @@ export default function StatsFilterSheet({
       }}
     >
       <section
+        ref={dialogRef}
         className={styles.sheet}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
+        tabIndex={-1}
       >
         <div className={styles.handle} aria-hidden="true" />
 
@@ -114,6 +95,7 @@ export default function StatsFilterSheet({
           <button
             type="button"
             className={styles.closeButton}
+            data-dialog-autofocus="true"
             onClick={onClose}
             aria-label="Close filters"
           >

@@ -1,169 +1,101 @@
-import { useOutletContext, useNavigate } from "react-router-dom";
-import LoadingState from "../components/common/LoadingState";
+import { useMemo } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
+import { formatName } from "../utils/helpers";
+import styles from "./AnalyticsOverview.module.css";
 
-export default function AnalyticsOverview() {
-  const { globalFilter } = useOutletContext();
-  const navigate = useNavigate();
-  const seasonId =
-    globalFilter && globalFilter !== "all" ? globalFilter : undefined;
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+const decimal = (value) => number(value).toFixed(2);
 
-  const { data: batters = [], isLoading: battersLoading } =
-    useBattingLeaderboard({ seasonId });
-  const { data: bowlers = [], isLoading: bowlersLoading } =
-    useBowlingLeaderboard({ seasonId });
-
-  const topBatters = batters.slice(0, 3);
-  const topBowlers = bowlers.slice(0, 3);
-
-  if (battersLoading || bowlersLoading) {
-    return <LoadingState label="Generating analytics summary…" />;
-  }
-
+function LeaderCard({ rank, name, primary, secondary, onOpen }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* TOP BATTERS */}
-      <div>
-        <div style={sectionHeader}>
-          <span style={{ fontSize: 18 }}>🏏</span>
-          <h2 style={sectionTitle}>Leading Run Scorers</h2>
-        </div>
-        <div style={podiumRow}>
-          {topBatters.map((p, i) => (
-            <div
-              key={p.name}
-              style={{
-                ...podiumCard,
-                borderTopColor:
-                  i === 0
-                    ? "#fbbf24"
-                    : i === 1
-                      ? "var(--color-slate-400)"
-                      : "#b45309",
-              }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
-            >
-              <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.runs} runs</div>
-              <div style={subStat}>
-                {p.innings} inn · {p.derived?.strikeRate} SR
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* TOP BOWLERS */}
-      <div>
-        <div style={sectionHeader}>
-          <span style={{ fontSize: 18 }}>🥎</span>
-          <h2 style={sectionTitle}>Top Wicket Takers</h2>
-        </div>
-        <div style={podiumRow}>
-          {topBowlers.map((p, i) => (
-            <div
-              key={p.name}
-              style={{
-                ...podiumCard,
-                borderTopColor:
-                  i === 0
-                    ? "#fbbf24"
-                    : i === 1
-                      ? "var(--color-slate-400)"
-                      : "#b45309",
-              }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
-            >
-              <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.wickets} wkts</div>
-              <div style={subStat}>
-                {p.derived?.economy} econ · {p.derived?.bowlingAverage} avg
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <button style={fullLeaderboardBtn} onClick={() => navigate("../batting")}>
-        View Detailed Leaderboards
-      </button>
-    </div>
+    <button type="button" className={styles.leaderCard} onClick={onOpen}>
+      <span className={styles.rank} aria-label={`Rank ${rank}`}>{rank}</span>
+      <span className={styles.playerName}>{formatName(name)}</span>
+      <strong className={styles.primaryValue}>{primary}</strong>
+      <span className={styles.secondaryValue}>{secondary}</span>
+    </button>
   );
 }
 
-const sectionHeader = {
-  display: "flex",
-  alignItems: "center",
-  gap: 10,
-  marginBottom: 16,
-  paddingLeft: 4,
-};
-const sectionTitle = {
-  fontSize: 16,
-  fontWeight: 700,
-  color: "var(--color-slate-800)",
-  margin: 0,
-};
+export default function AnalyticsOverview() {
+  const { globalFilter = "all" } = useOutletContext() || {};
+  const navigate = useNavigate();
+  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
 
-const podiumRow = { display: "flex", gap: 10 };
-const podiumCard = {
-  flex: 1,
-  background: "white",
-  borderRadius: 16,
-  padding: "16px 12px",
-  border: "1px solid var(--color-slate-200)",
-  borderTopWidth: 4,
-  textAlign: "center",
-  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-  cursor: "pointer",
-  transition: "transform 0.2s",
-};
+  const battingQuery = useBattingLeaderboard({ seasonId });
+  const bowlingQuery = useBowlingLeaderboard({ seasonId });
 
-const rankBadge = {
-  fontSize: 10,
-  fontWeight: 800,
-  background: "var(--color-slate-100)",
-  color: "var(--color-slate-500)",
-  width: 20,
-  height: 20,
-  borderRadius: "50%",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  margin: "0 auto 10px",
-};
-const playerName = {
-  fontSize: 14,
-  fontWeight: 700,
-  color: "var(--color-slate-900)",
-  marginBottom: 4,
-  textTransform: "capitalize",
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-};
-const statLabel = {
-  fontSize: 16,
-  fontWeight: 800,
-  color: "var(--color-indigo-600)",
-  marginBottom: 4,
-};
-const subStat = {
-  fontSize: 10,
-  color: "var(--color-slate-400)",
-  fontWeight: 500,
-};
+  const topBatters = useMemo(() =>
+    [...(battingQuery.data || [])]
+      .sort((a, b) => number(b.totalRuns) - number(a.totalRuns))
+      .slice(0, 3), [battingQuery.data]);
 
-const fullLeaderboardBtn = {
-  background: "white",
-  border: "1px solid var(--color-slate-200)",
-  padding: "14px",
-  borderRadius: 14,
-  fontSize: 14,
-  fontWeight: 600,
-  color: "var(--color-slate-600)",
-  cursor: "pointer",
-  marginTop: 10,
-};
+  const topBowlers = useMemo(() =>
+    [...(bowlingQuery.data || [])]
+      .sort((a, b) => number(b.totalWickets) - number(a.totalWickets))
+      .slice(0, 3), [bowlingQuery.data]);
+
+  const loading = battingQuery.isLoading || bowlingQuery.isLoading;
+  const error = battingQuery.error || bowlingQuery.error;
+  const empty = !loading && topBatters.length === 0 && topBowlers.length === 0;
+
+  return (
+    <div className={styles.page}>
+      <LeaderboardState
+        loading={loading}
+        fetching={(battingQuery.isFetching || bowlingQuery.isFetching) && !loading}
+        error={error}
+        empty={empty}
+        onRetry={() => { battingQuery.refetch(); bowlingQuery.refetch(); }}
+        emptyTitle="No analytics yet"
+        emptySubtitle="Complete a match to start building batting and bowling insights."
+      >
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.eyebrow}>Batting</span>
+              <h2>Leading run scorers</h2>
+            </div>
+            <button type="button" className={styles.textAction} onClick={() => navigate("../batting")}>View all</button>
+          </div>
+          <div className={styles.cards}>
+            {topBatters.map((player, index) => (
+              <LeaderCard
+                key={player.playerId || player.playerName}
+                rank={index + 1}
+                name={player.playerName}
+                primary={`${number(player.totalRuns)} runs`}
+                secondary={`${number(player.inningsPlayed)} innings · ${decimal(player.strikeRate)} SR`}
+                onOpen={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeading}>
+            <div>
+              <span className={styles.eyebrow}>Bowling</span>
+              <h2>Top wicket takers</h2>
+            </div>
+            <button type="button" className={styles.textAction} onClick={() => navigate("../bowling")}>View all</button>
+          </div>
+          <div className={styles.cards}>
+            {topBowlers.map((player, index) => (
+              <LeaderCard
+                key={player.playerId || player.playerName}
+                rank={index + 1}
+                name={player.playerName}
+                primary={`${number(player.totalWickets)} wickets`}
+                secondary={`${decimal(player.economyRate)} economy · ${number(player.totalWickets) === 0 ? "—" : decimal(player.average)} avg`}
+                onOpen={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}
+              />
+            ))}
+          </div>
+        </section>
+      </LeaderboardState>
+    </div>
+  );
+}

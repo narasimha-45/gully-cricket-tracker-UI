@@ -1,581 +1,189 @@
-import { useEffect, useMemo, useState } from "react";
-import { Filter } from "lucide-react";
+import { useEffect, useMemo, useReducer } from "react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
-
-import { api } from "../api";
-import EmptyState from "../components/common/EmptyState";
-import LoadingState from "../components/common/LoadingState";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
+import {
+  LeaderboardState,
+  LeaderboardToolbar,
+  SortButton,
+} from "../features/stats/components/LeaderboardView";
+import {
+  LEADERBOARD_ACTIONS,
+  createLeaderboardState,
+  leaderboardReducer,
+} from "../features/stats/state/leaderboardReducer";
+import { useBattingLeaderboard, useTeamsForSeason } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import styles from "./Leaderboards.module.css";
 
-const DEFAULT_FILTERS = {
+const DEFAULT_FILTERS = Object.freeze({
   innings: "All",
   result: "All",
   position: "All",
   opponentTeamId: "All",
   teamId: "All",
-};
-
-const INNINGS_NUMBER = {
-  First: 1,
-  Second: 2,
-};
-
-const MATCH_RESULT = {
-  Won: "WIN",
-  Lost: "LOSS",
-};
-
-const getOptionalFilter = (value) =>
-  value && value !== "All" ? value : undefined;
-
-const getNumber = (value) => {
-  const parsedValue = Number(value);
-  return Number.isFinite(parsedValue) ? parsedValue : 0;
-};
+});
+const INNINGS_NUMBER = { First: 1, Second: 2 };
+const MATCH_RESULT = { Won: "WIN", Lost: "LOSS" };
+const optional = (value) => (value && value !== "All" ? value : undefined);
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 export default function BattingStats({ isOverall = false }) {
   const { seasonId } = useParams();
   const navigate = useNavigate();
   const outletContext = useOutletContext();
-
   const globalFilter = isOverall ? outletContext?.globalFilter || "all" : "all";
 
-  const statsSeasonId = useMemo(() => {
-    if (!isOverall) {
-      return seasonId;
-    }
+  const statsSeasonId = !isOverall
+    ? seasonId
+    : globalFilter !== "all"
+      ? globalFilter
+      : undefined;
+  const teamsSeasonId = !isOverall
+    ? seasonId || "ALL"
+    : globalFilter !== "all"
+      ? globalFilter
+      : "ALL";
 
-    return globalFilter !== "all" ? globalFilter : undefined;
-  }, [globalFilter, isOverall, seasonId]);
+  const [state, dispatch] = useReducer(
+    leaderboardReducer,
+    createLeaderboardState(DEFAULT_FILTERS, "runs"),
+  );
 
-  const teamsSeasonId = useMemo(() => {
-    if (!isOverall) {
-      return seasonId || "ALL";
-    }
-
-    return globalFilter !== "all" ? globalFilter : "ALL";
-  }, [globalFilter, isOverall, seasonId]);
-
-  const [players, setPlayers] = useState([]);
-  const [teams, setTeams] = useState([]);
-
-  const [loading, setLoading] = useState(false);
-  const [loadingTeams, setLoadingTeams] = useState(false);
-
-  const [statsError, setStatsError] = useState("");
-  const [teamsError, setTeamsError] = useState("");
-
-  const [sortKey, setSortKey] = useState("runs");
-  const [sortDir, setSortDir] = useState("desc");
-
-  const [showFilters, setShowFilters] = useState(false);
-  const [selectedFilters, setSelectedFilters] = useState(DEFAULT_FILTERS);
-
-  /*
-   * Reset team-related filters whenever the selected season changes.
-   * This prevents a team from the previous season being sent to the API.
-   */
   useEffect(() => {
-    setSelectedFilters((currentFilters) => {
-      if (
-        currentFilters.teamId === "All" &&
-        currentFilters.opponentTeamId === "All"
-      ) {
-        return currentFilters;
-      }
+    dispatch({ type: LEADERBOARD_ACTIONS.RESET_TEAM_FILTERS });
+  }, [teamsSeasonId]);
 
-      return {
-        ...currentFilters,
-        teamId: "All",
-        opponentTeamId: "All",
-      };
+  const teamsQuery = useTeamsForSeason(teamsSeasonId);
+  const teams = useMemo(() => {
+    const unique = new Map();
+    (teamsQuery.data || []).forEach((team) => {
+      const id = team.teamId ?? team.id;
+      const name = team.teamName ?? team.name;
+      if (id && name && !unique.has(id)) unique.set(id, { value: id, label: formatName(name) });
     });
-  }, [teamsSeasonId]);
+    return [...unique.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [teamsQuery.data]);
 
-  /*
-   * Load teams for the active local/global season.
-   */
-  useEffect(() => {
-    let activeRequest = true;
+  const apiFilters = useMemo(
+    () => ({
+      seasonId: statsSeasonId,
+      inningsNumber: INNINGS_NUMBER[state.filters.innings],
+      result: MATCH_RESULT[state.filters.result],
+      battingPosition: optional(state.filters.position)
+        ? Number(state.filters.position)
+        : undefined,
+      teamId: optional(state.filters.teamId),
+      opponentTeamId: optional(state.filters.opponentTeamId),
+    }),
+    [statsSeasonId, state.filters],
+  );
 
-    const loadTeams = async () => {
-      try {
-        setLoadingTeams(true);
-        setTeamsError("");
+  const statsQuery = useBattingLeaderboard(apiFilters);
 
-        const response = await api.teams.getTeams(teamsSeasonId);
-
-        if (!activeRequest) {
-          return;
-        }
-
-        const responseTeams = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-            ? response.data
-            : [];
-
-        const uniqueTeams = new Map();
-
-        responseTeams.forEach((team) => {
-          const teamId = team.teamId ?? team.id;
-          const teamName = team.teamName ?? team.name;
-
-          if (!teamId || !teamName || uniqueTeams.has(teamId)) {
-            return;
-          }
-
-          uniqueTeams.set(teamId, {
-            value: teamId,
-            label: formatName(teamName),
-          });
-        });
-
-        setTeams(
-          [...uniqueTeams.values()].sort((firstTeam, secondTeam) =>
-            firstTeam.label.localeCompare(secondTeam.label),
-          ),
-        );
-      } catch (error) {
-        if (!activeRequest) {
-          return;
-        }
-
-        console.error("Failed to load batting filter teams:", error);
-        setTeams([]);
-        setTeamsError("Unable to load team filters.");
-      } finally {
-        if (activeRequest) {
-          setLoadingTeams(false);
-        }
-      }
-    };
-
-    loadTeams();
-
-    return () => {
-      activeRequest = false;
-    };
-  }, [teamsSeasonId]);
-
-  /*
-   * Load batting leaderboard whenever season or applied filters change.
-   */
-  useEffect(() => {
-    let activeRequest = true;
-
-    const loadStats = async () => {
-      try {
-        setLoading(true);
-        setStatsError("");
-
-        const battingPosition =
-          selectedFilters.position === "Opening"
-            ? 1
-            : selectedFilters.position !== "All"
-              ? Number(selectedFilters.position)
-              : undefined;
-
-        const response = await api.stats.getBattingLeaderboard({
-          seasonId: statsSeasonId,
-          inningsNumber: INNINGS_NUMBER[selectedFilters.innings],
-          result: MATCH_RESULT[selectedFilters.result],
-          battingPosition,
-          teamId: getOptionalFilter(selectedFilters.teamId),
-          opponentTeamId: getOptionalFilter(selectedFilters.opponentTeamId),
-        });
-
-        if (!activeRequest) {
-          return;
-        }
-
-        const battingPlayers = Array.isArray(response)
-          ? response
-          : Array.isArray(response?.data)
-            ? response.data
-            : [];
-
-        setPlayers(battingPlayers);
-      } catch (error) {
-        if (!activeRequest) {
-          return;
-        }
-
-        console.error("Failed to load batting leaderboard:", error);
-        setPlayers([]);
-        setStatsError("Unable to load batting statistics.");
-      } finally {
-        if (activeRequest) {
-          setLoading(false);
-        }
-      }
-    };
-
-    loadStats();
-
-    return () => {
-      activeRequest = false;
-    };
-  }, [selectedFilters, statsSeasonId]);
-
-  const battingFilters = useMemo(
+  const filterDefinitions = useMemo(
     () => [
-      {
-        key: "innings",
-        label: "Innings",
-        options: [
-          { value: "All", label: "All" },
-          { value: "First", label: "First" },
-          { value: "Second", label: "Second" },
-        ],
-      },
-      {
-        key: "result",
-        label: "Match Result",
-        options: [
-          { value: "All", label: "All" },
-          { value: "Won", label: "Won" },
-          { value: "Lost", label: "Lost" },
-        ],
-      },
+      { key: "innings", label: "Innings", options: ["All", "First", "Second"] },
+      { key: "result", label: "Match Result", options: ["All", "Won", "Lost"] },
       {
         key: "position",
         label: "Batting Position",
         options: [
           { value: "All", label: "All" },
-          { value: "Opening", label: "Opening" },
-          ...Array.from({ length: 9 }, (_, index) => {
-            const position = String(index + 3);
-
-            return {
-              value: position,
-              label: position,
-            };
-          }),
+          ...Array.from({ length: 11 }, (_, index) => ({
+            value: String(index + 1),
+            label: index < 2 ? `${index + 1} · Opener` : String(index + 1),
+          })),
         ],
       },
-      {
-        key: "opponentTeamId",
-        label: "Opponent",
-        options: [{ value: "All", label: "All" }, ...teams],
-      },
-      {
-        key: "teamId",
-        label: "Team",
-        options: [{ value: "All", label: "All" }, ...teams],
-      },
+      { key: "opponentTeamId", label: "Opponent", options: [{ value: "All", label: "All" }, ...teams] },
+      { key: "teamId", label: "Team", options: [{ value: "All", label: "All" }, ...teams] },
     ],
     [teams],
   );
 
-  const getFilterLabel = (filterKey, filterValue) => {
-    const filter = battingFilters.find((item) => item.key === filterKey);
+  const activeLabels = useMemo(() => {
+    return Object.entries(state.filters).flatMap(([key, value]) => {
+      if (value === "All") return [];
+      const definition = filterDefinitions.find((item) => item.key === key);
+      const option = definition?.options.find((item) => (typeof item === "string" ? item : item.value) === value);
+      return [typeof option === "string" ? option : option?.label || value];
+    });
+  }, [filterDefinitions, state.filters]);
 
-    const option = filter?.options.find((item) => item.value === filterValue);
-
-    return option?.label || filterValue;
-  };
-
-  const sortedPlayers = useMemo(() => {
+  const players = useMemo(() => {
     const getSortValue = (player) => {
-      switch (sortKey) {
-        case "innings":
-          return getNumber(player.inningsPlayed);
-
-        case "runs":
-          return getNumber(player.totalRuns);
-
-        case "hs":
-          return getNumber(player.highestScore);
-
-        case "sr":
-          return getNumber(player.strikeRate);
-
-        case "fours":
-          return getNumber(player.totalFours);
-
-        case "ducks":
-          return getNumber(player.ducks);
-
-        default:
-          return 0;
+      switch (state.sortKey) {
+        case "innings": return number(player.inningsPlayed);
+        case "runs": return number(player.totalRuns);
+        case "balls": return number(player.totalBallsFaced);
+        case "average": return number(player.average);
+        case "strikeRate": return number(player.strikeRate);
+        case "highest": return number(player.highestScore);
+        default: return 0;
       }
     };
-
-    return [...players].sort((firstPlayer, secondPlayer) => {
-      const difference = getSortValue(firstPlayer) - getSortValue(secondPlayer);
-
-      return sortDir === "asc" ? difference : -difference;
+    return [...(statsQuery.data || [])].sort((a, b) => {
+      const delta = getSortValue(a) - getSortValue(b);
+      return state.sortDir === "asc" ? delta : -delta;
     });
-  }, [players, sortDir, sortKey]);
+  }, [statsQuery.data, state.sortDir, state.sortKey]);
 
-  const handleSort = (column) => {
-    if (sortKey === column) {
-      setSortDir((currentDirection) =>
-        currentDirection === "asc" ? "desc" : "asc",
-      );
-      return;
-    }
-
-    setSortKey(column);
-    setSortDir("desc");
-  };
-
-  const SortHeader = ({ label, column }) => {
-    const active = sortKey === column;
-
-    return (
-      <button
-        type="button"
-        style={sortableHeader}
-        onClick={() => handleSort(column)}
-        aria-label={`Sort by ${label}`}
-      >
-        {label}
-        {active && (sortDir === "asc" ? " ▲" : " ▼")}
-      </button>
-    );
-  };
-
-  if (loading && players.length === 0) {
-    return <LoadingState label="Loading batting stats..." />;
-  }
+  const onSort = (column) => dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
-    <div style={page}>
-      <div style={topBar}>
-        <div style={activeFilters}>
-          {Object.entries(selectedFilters).map(([key, value]) => {
-            if (value === "All") {
-              return null;
-            }
+    <div className={styles.page}>
+      <LeaderboardToolbar
+        activeLabels={activeLabels}
+        warning={teamsQuery.isError ? "Team filters unavailable" : ""}
+        onOpenFilters={() => dispatch({ type: LEADERBOARD_ACTIONS.OPEN_FILTERS })}
+        filtersDisabled={teamsQuery.isLoading}
+      />
 
-            return (
-              <span key={key} style={filterPill}>
-                {getFilterLabel(key, value)}
-              </span>
-            );
-          })}
-
-          {teamsError && <span style={warningPill}>{teamsError}</span>}
-        </div>
-
-        <button
-          type="button"
-          style={{
-            ...filterBtn,
-            opacity: loadingTeams ? 0.6 : 1,
-          }}
-          onClick={() => setShowFilters(true)}
-          disabled={loadingTeams}
-          aria-label="Open batting filters"
-        >
-          <Filter size={18} />
-        </button>
-      </div>
-
-      <div
-        style={{
-          ...rowBase,
-          ...headerRow,
-        }}
+      <LeaderboardState
+        loading={statsQuery.isLoading}
+        fetching={statsQuery.isFetching && !statsQuery.isLoading}
+        error={statsQuery.error}
+        empty={players.length === 0}
+        onRetry={statsQuery.refetch}
+        emptyTitle="No batting stats"
+        emptySubtitle="Complete a match or adjust the filters to see batting leaders."
       >
-        <span style={playerHeader}>Player</span>
-        <SortHeader label="I" column="innings" />
-        <SortHeader label="R" column="runs" />
-        <SortHeader label="HS" column="hs" />
-        <SortHeader label="SR" column="sr" />
-        <SortHeader label="4s" column="fours" />
-        <SortHeader label="0s" column="ducks" />
-      </div>
+        <div className={styles.table}>
+          <div className={`${styles.header} ${styles.battingGrid}`}>
+            <span className={styles.playerHeader}>Player</span>
+            <SortButton label="I" column="innings" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by innings" />
+            <SortButton label="R" column="runs" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by runs" />
+            <SortButton label="B" column="balls" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by balls faced" />
+            <SortButton label="Avg" column="average" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} />
+            <SortButton label="SR" column="strikeRate" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} />
+            <SortButton label="HS" column="highest" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by highest score" />
+          </div>
 
-      {sortedPlayers.map((player) => (
-        <div
-          key={player.playerId ?? player.playerName}
-          style={{
-            ...rowBase,
-            ...dataRow,
-          }}
-        >
-          <button
-            type="button"
-            style={playerCell}
-            onClick={() =>
-              navigate(`/player/${encodeURIComponent(player.playerId)}`)
-            }
-          >
-            {formatName(player.playerName)}
-          </button>
-
-          <span style={center}>{getNumber(player.inningsPlayed)}</span>
-
-          <span style={runs}>{getNumber(player.totalRuns)}</span>
-
-          <span style={hs}>{getNumber(player.highestScore)}</span>
-
-          <span style={sr}>{getNumber(player.strikeRate).toFixed(2)}</span>
-
-          <span style={center}>{getNumber(player.totalFours)}</span>
-
-          <span style={center}>{getNumber(player.ducks)}</span>
+          {players.map((player) => (
+            <div key={player.playerId ?? player.playerName} className={`${styles.row} ${styles.battingGrid}`}>
+              <button type="button" className={styles.playerButton} onClick={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}>
+                {formatName(player.playerName)}
+                <span className={styles.secondary}>{number(player.totalMatchesPlayed)} matches</span>
+              </button>
+              <span className={styles.stat}>{number(player.inningsPlayed)}</span>
+              <span className={`${styles.stat} ${styles.primaryStat}`}>{number(player.totalRuns)}</span>
+              <span className={styles.stat}>{number(player.totalBallsFaced)}</span>
+              <span className={styles.stat}>{number(player.average).toFixed(1)}</span>
+              <span className={styles.stat}>{number(player.strikeRate).toFixed(1)}</span>
+              <span className={styles.stat}>{number(player.highestScore)}</span>
+            </div>
+          ))}
         </div>
-      ))}
-
-      {!loading && players.length === 0 && (
-        <EmptyState
-          title={
-            statsError ? "Unable to load batting stats" : "No batting stats"
-          }
-          subtitle={
-            statsError ||
-            "Completed matches matching these filters will appear here."
-          }
-        />
-      )}
+      </LeaderboardState>
 
       <StatsFilterSheet
-        open={showFilters}
+        open={state.filtersOpen}
+        onClose={() => dispatch({ type: LEADERBOARD_ACTIONS.CLOSE_FILTERS })}
+        filters={filterDefinitions}
+        selectedFilters={state.filters}
+        onChange={(filters) => dispatch({ type: LEADERBOARD_ACTIONS.APPLY_FILTERS, payload: filters })}
         title="Batting filters"
-        onClose={() => setShowFilters(false)}
-        filters={battingFilters}
-        selectedFilters={selectedFilters}
-        onChange={setSelectedFilters}
       />
     </div>
   );
 }
-
-const topBar = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "flex-start",
-  gap: 12,
-  minHeight: 42,
-  marginBottom: 14,
-};
-
-const filterBtn = {
-  width: 42,
-  height: 42,
-  flexShrink: 0,
-  borderRadius: "50%",
-  border: "none",
-  background:
-    "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
-  color: "var(--color-white)",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  cursor: "pointer",
-  boxShadow: "0 6px 18px rgba(79,70,229,0.25)",
-};
-
-const activeFilters = {
-  display: "flex",
-  flex: 1,
-  gap: 8,
-  flexWrap: "wrap",
-};
-
-const filterPill = {
-  padding: "6px 12px",
-  borderRadius: 999,
-  background: "var(--color-indigo-50)",
-  color: "var(--color-indigo-700)",
-  fontSize: 12,
-  fontWeight: 700,
-};
-
-const warningPill = {
-  ...filterPill,
-  background: "#fff7ed",
-  color: "#c2410c",
-};
-
-const page = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-};
-
-const rowBase = {
-  display: "grid",
-  gridTemplateColumns: "2.6fr repeat(6,1fr)",
-  alignItems: "center",
-};
-
-const headerRow = {
-  position: "sticky",
-  top: "var(--stats-header-top, 68px)",
-  zIndex: 70,
-  margin: "0 -18px 8px -18px",
-  padding: "10px 32px 8px",
-  background: "rgba(248, 250, 252, 0.96)",
-  backdropFilter: "blur(12px)",
-  fontSize: 12,
-  fontWeight: 700,
-  color: "var(--color-slate-500)",
-};
-
-const dataRow = {
-  background: "var(--color-white)",
-  padding: 14,
-  borderRadius: 18,
-  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-  border: "1px solid var(--color-indigo-50)",
-  fontSize: 14,
-};
-
-const sortableHeader = {
-  border: "none",
-  background: "transparent",
-  color: "inherit",
-  font: "inherit",
-  textAlign: "center",
-  cursor: "pointer",
-  userSelect: "none",
-};
-
-const playerHeader = {
-  textAlign: "left",
-};
-
-const playerCell = {
-  minWidth: 0,
-  padding: 0,
-  border: "none",
-  background: "transparent",
-  fontWeight: 700,
-  color: "var(--color-indigo-600)",
-  textAlign: "left",
-  fontSize: 14,
-  overflow: "hidden",
-  textOverflow: "ellipsis",
-  whiteSpace: "nowrap",
-  cursor: "pointer",
-};
-
-const center = {
-  textAlign: "center",
-  fontWeight: 600,
-  color: "var(--color-gray-700)",
-};
-
-const runs = {
-  textAlign: "center",
-  fontWeight: 800,
-  color: "var(--color-indigo-700)",
-};
-
-const hs = {
-  textAlign: "center",
-  fontWeight: 800,
-  color: "#ea580c",
-};
-
-const sr = {
-  textAlign: "center",
-  fontWeight: 700,
-  color: "#1d4ed8",
-};

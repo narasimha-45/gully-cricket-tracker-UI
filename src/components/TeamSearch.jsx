@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api, unwrapApiData } from "../api";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useTeamSearch } from "../hooks/queries";
 import { normalizeName } from "../utils/matchModel";
 import styles from "./TeamSearch.module.css";
 
@@ -36,53 +38,27 @@ export function TeamSearch({
   label,
   value,
   setValue,
-  otherSelectedId,
+  otherSelectedName,
   seasonId,
   onSquadLoadingChange,
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [squadLoading, setSquadLoading] = useState(false);
   const [error, setError] = useState("");
   const containerRef = useRef(null);
 
-  useEffect(() => {
-    const query = value.query?.trim() || "";
-    if (!query) {
-      setResults([]);
-      return undefined;
-    }
-
-    let active = true;
-    const fetchTeams = async () => {
-      try {
-        setSearchLoading(true);
-        setError("");
-        const response = await api.teams.searchTeams(query);
-        const otherTeam = normalizeName(otherSelectedId);
-        const teams = toArray(response).filter(
-          (team) => normalizeName(getTeamName(team)) !== otherTeam,
-        );
-        if (active) setResults(teams);
-      } catch (requestError) {
-        if (active) {
-          setResults([]);
-          setError(
-            "Team search is unavailable. You can still create a new team.",
-          );
-        }
-      } finally {
-        if (active) setSearchLoading(false);
-      }
-    };
-
-    const timer = setTimeout(fetchTeams, 300);
-    return () => {
-      active = false;
-      clearTimeout(timer);
-    };
-  }, [value.query, otherSelectedId]);
+  const searchText = useDebouncedValue(value.query?.trim() || "", 250);
+  const teamsQuery = useTeamSearch(searchText);
+  const searchLoading = Boolean(
+    (value.query?.trim()?.length || 0) >= 2 &&
+      (teamsQuery.isLoading || searchText !== value.query?.trim()),
+  );
+  const results = useMemo(() => {
+    const otherTeam = normalizeName(otherSelectedName);
+    return (teamsQuery.data || []).filter(
+      (team) => normalizeName(getTeamName(team)) !== otherTeam,
+    );
+  }, [otherSelectedName, teamsQuery.data]);
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -205,7 +181,11 @@ export function TeamSearch({
       {squadLoading && (
         <p className={styles.loadedMeta}>Loading saved squad…</p>
       )}
-      {error && <p className={styles.error}>{error}</p>}
+      {(error || teamsQuery.isError) && (
+        <p className={styles.error}>
+          {error || "Team search is unavailable. You can still create a new team."}
+        </p>
+      )}
 
       {isOpen && value.query.trim() && (
         <div className={styles.dropdown} role="listbox">

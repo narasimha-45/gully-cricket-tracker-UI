@@ -133,3 +133,19 @@ button.resultItem {
   text-align: left;
   color: inherit;
 }
+
+.resultIcon {
+  flex: 0 0 34px;
+  background: var(--color-slate-100);
+}
+
+.resultCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.resultCopy small {
+  color: var(--color-slate-500);
+  font-size: 11px;
+}

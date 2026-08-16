@@ -1,129 +1,150 @@
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { api, unwrapApiData } from "../api";
+import { queryKeys } from "../queryKeys";
 
-/**
- * Central place for React Query keys + fetchers. Import these instead of
- * hand-rolling useEffect/useState/try-catch/finally in every page — see
- * pages/Home.jsx, pages/MatchSummary.jsx, pages/AnalyticsOverview.jsx for
- * the converted pattern, and the notes at the bottom of this file for the
- * pages still on the old pattern.
- *
- * Every hook here returns the standard React Query shape:
- *   { data, isLoading, isError, error, refetch }
- */
+const asArray = (response) => {
+  const data = unwrapApiData(response);
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.content)) return data.content;
+  if (Array.isArray(data?.items)) return data.items;
+  return [];
+};
+
+const leaderboardOptions = {
+  staleTime: 30_000,
+  gcTime: 5 * 60_000,
+  retry: 1,
+  placeholderData: keepPreviousData,
+  refetchOnWindowFocus: false,
+};
 
 export function useSeasons() {
   return useQuery({
-    queryKey: ["seasons"],
-    queryFn: async () => unwrapApiData(await api.seasons.getAllSeasons()) || [],
+    queryKey: queryKeys.seasons,
+    queryFn: async ({ signal }) => asArray(await api.seasons.getAllSeasons({ signal })),
+    staleTime: 60_000,
   });
 }
 
 export function useSeasonMatches(seasonId) {
   return useQuery({
-    queryKey: ["seasonMatches", seasonId],
-    queryFn: async () =>
-      unwrapApiData(await api.seasons.getSeasonMatches(seasonId)) || [],
+    queryKey: queryKeys.seasonMatches(seasonId),
+    queryFn: async ({ signal }) => asArray(await api.seasons.getSeasonMatches(seasonId, { signal })),
     enabled: Boolean(seasonId),
+    staleTime: 15_000,
   });
 }
 
-// Completed match, read from the backend — this is the source of truth
-// once a match has synced (see utils/acknowledgeMatchResult.js, which
-// deletes the local copy on a successful sync).
 export function useServerMatch(matchId) {
   return useQuery({
-    queryKey: ["match", matchId],
-    queryFn: () => api.matches.getMatch(matchId),
+    queryKey: queryKeys.match(matchId),
+    queryFn: ({ signal }) => api.matches.getMatch(matchId, { signal }),
     enabled: Boolean(matchId),
   });
 }
 
 export function useBattingLeaderboard(filters = {}) {
   return useQuery({
-    queryKey: ["battingLeaderboard", filters],
-    queryFn: async () =>
-      unwrapApiData(await api.stats.getBattingLeaderboard(filters)) || [],
+    queryKey: queryKeys.leaderboard("batting", filters),
+    queryFn: async ({ signal }) => asArray(await api.stats.getBattingLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
   });
 }
 
 export function useBowlingLeaderboard(filters = {}) {
   return useQuery({
-    queryKey: ["bowlingLeaderboard", filters],
-    queryFn: async () =>
-      unwrapApiData(await api.stats.getBowlingLeaderboard(filters)) || [],
+    queryKey: queryKeys.leaderboard("bowling", filters),
+    queryFn: async ({ signal }) => asArray(await api.stats.getBowlingLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
   });
 }
 
 export function useFieldingLeaderboard(filters = {}) {
   return useQuery({
-    queryKey: ["fieldingLeaderboard", filters],
-    queryFn: async () =>
-      unwrapApiData(await api.stats.getFieldingLeaderboard(filters)) || [],
+    queryKey: queryKeys.leaderboard("fielding", filters),
+    queryFn: async ({ signal }) => asArray(await api.stats.getFieldingLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
   });
 }
 
 export function useTeamLeaderboard(filters = {}) {
   return useQuery({
-    queryKey: ["teamLeaderboard", filters],
-    queryFn: async () =>
-      unwrapApiData(await api.stats.getTeamLeaderboard(filters)) || [],
+    queryKey: queryKeys.leaderboard("teams", filters),
+    queryFn: async ({ signal }) => asArray(await api.stats.getTeamLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
   });
 }
 
 export function usePlayerProfile(playerId, seasonId) {
   return useQuery({
-    queryKey: ["playerProfile", playerId, seasonId],
-    queryFn: () =>
-      seasonId
-        ? api.stats.getPlayerProfileBySeason(playerId, seasonId)
-        : api.stats.getPlayerProfile(playerId),
+    queryKey: queryKeys.playerProfile(playerId, seasonId),
+    queryFn: ({ signal }) => seasonId
+      ? api.stats.getPlayerProfileBySeason(playerId, seasonId, { signal })
+      : api.stats.getPlayerProfile(playerId, { signal }),
     enabled: Boolean(playerId),
+    staleTime: 30_000,
   });
 }
 
 export function useTeamProfile(teamId, seasonId) {
   return useQuery({
-    queryKey: ["teamProfile", teamId, seasonId],
-    queryFn: () => api.stats.getTeamProfile(teamId, seasonId),
+    queryKey: queryKeys.teamProfile(teamId, seasonId),
+    queryFn: ({ signal }) => api.stats.getTeamProfile(teamId, seasonId, { signal }),
     enabled: Boolean(teamId),
+    staleTime: 30_000,
   });
 }
 
 export function useTeamsForSeason(seasonId) {
   return useQuery({
-    queryKey: ["teams", seasonId],
-    queryFn: async () =>
-      unwrapApiData(await api.teams.getTeams(seasonId)) || [],
+    queryKey: queryKeys.teams(seasonId),
+    queryFn: async ({ signal }) => asArray(await api.teams.getTeams(seasonId || "ALL", { signal })),
     enabled: Boolean(seasonId),
+    staleTime: 60_000,
+    retry: 1,
   });
 }
 
-/**
- * NOT converted yet — same recipe applies when you get to them:
- *
- *  - SeasonMatches.jsx: has both a local (IndexedDB) list and a server
- *    list side by side. Server half -> useSeasonMatches(seasonId) above.
- *    Local half can also move to useQuery with a plain async queryFn
- *    calling getMatchesBySeason(seasonId) — React Query works fine over
- *    non-HTTP async functions, it just gives you the same loading/error/
- *    cache shape instead of manual useState wiring.
- *  - BattingStats.jsx / BowlingStats.jsx / MiscStats.jsx / TeamStats.jsx:
- *    already fetch leaderboards on mount with useEffect — swap for the
- *    matching hook above, plus useTeamsForSeason for the team filter list.
- *  - PlayerProfilePlaceholder.jsx / TeamProfilePlaceholder.jsx: swap for
- *    usePlayerProfile / useTeamProfile, plus useSeasons for the season
- *    picker.
- *  - InsightsHub.jsx: swap its season-list fetch for useSeasons().
- *  - MatchupsPlaceholder.jsx / GlobalSearch.jsx / TeamSearch.jsx: these
- *    are debounced search-as-you-type, not fetch-on-mount. Same idea
- *    still applies — queryKey: ["searchPlayers", debouncedQuery], enabled:
- *    debouncedQuery.length > 0 — but debounce the query *value* (e.g. with
- *    a small useDebouncedValue hook) before it reaches the key, rather
- *    than debouncing the fetch call itself.
- *  - LiveMatch.jsx / TossPage.jsx / TeamPlayers.jsx: read the LIVE match
- *    from local IndexedDB, not the backend — leave these on getMatch()
- *    from storage/matchDB.js. Wrapping the local read in useQuery is
- *    optional polish, not required, since there's no network/cache
- *    problem to solve there.
- */
+
+export function useGlobalSearch(query) {
+  const normalized = query?.trim() || "";
+  return useQuery({
+    queryKey: queryKeys.globalSearch(normalized),
+    queryFn: ({ signal }) => api.search.globalSearch(normalized, { signal }),
+    enabled: normalized.length >= 2,
+    staleTime: 30_000,
+    retry: 0,
+  });
+}
+
+export function useTeamSearch(query) {
+  const normalized = query?.trim() || "";
+  return useQuery({
+    queryKey: queryKeys.teamSearch(normalized),
+    queryFn: async ({ signal }) => asArray(await api.teams.searchTeams(normalized, { signal })),
+    enabled: normalized.length >= 2,
+    staleTime: 30_000,
+    retry: 0,
+  });
+}
+
+export function usePlayerSearch(query) {
+  const normalized = query?.trim() || "";
+  return useQuery({
+    queryKey: queryKeys.playerSearch(normalized),
+    queryFn: async ({ signal }) => asArray(await api.players.searchPlayers(normalized, { signal })),
+    enabled: normalized.length >= 2,
+    staleTime: 30_000,
+    retry: 0,
+  });
+}
+
+export function useTeamSeasonPlayers(teamId, seasonId, enabled = true) {
+  return useQuery({
+    queryKey: queryKeys.teamSeasonPlayers(teamId, seasonId),
+    queryFn: async ({ signal }) => asArray(await api.teams.getTeamSeasonPlayers(teamId, seasonId, { signal })),
+    enabled: Boolean(enabled && teamId && seasonId),
+    staleTime: 60_000,
+    retry: 1,
+  });
+}

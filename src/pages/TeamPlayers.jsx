@@ -1,7 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, unwrapApiData } from "../api";
-import { getMatch, saveMatch } from "../storage/matchDB";
+import {
+  MatchSessionProvider,
+  useMatchSession,
+} from "../features/match/state/MatchSessionContext";
+import { MATCH_ACTIONS } from "../features/match/state/matchActions";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { usePlayerSearch } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
 import { normalizeName } from "../utils/matchModel";
 import styles from "./TeamPlayers.module.css";
@@ -32,118 +38,93 @@ const toArray = (response) => {
 };
 
 export default function TeamPlayers({ teamKey }) {
+  const { matchId } = useParams();
+  return (
+    <MatchSessionProvider matchId={matchId}>
+      <TeamPlayersContent teamKey={teamKey} />
+    </MatchSessionProvider>
+  );
+}
+
+function TeamPlayersContent({ teamKey }) {
   const otherTeamKey = teamKey === "teamA" ? "teamB" : "teamA";
   const { seasonId, matchId } = useParams();
   const navigate = useNavigate();
   const searchContainerRef = useRef(null);
-  const latestSearchRef = useRef(0);
+  const squadRequestRef = useRef(null);
+  const {
+    phase,
+    match,
+    error,
+    dispatch,
+    persistReplacement,
+  } = useMatchSession();
 
-  const [match, setMatch] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState([]);
-  const [searchLoading, setSearchLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const [feedback, setFeedback] = useState("");
+  const [squadLoading, setSquadLoading] = useState(false);
+  const [continuing, setContinuing] = useState(false);
 
   useEffect(() => {
+    if (phase !== "ready" || !match?.teams?.[teamKey]) return undefined;
+    const team = match.teams[teamKey];
+    if (!team.id || team.seasonSquadLoaded === true) return undefined;
+
+    const requestKey = `${match.id}:${teamKey}:${team.id}:${seasonId}`;
+    if (squadRequestRef.current === requestKey) return undefined;
+    squadRequestRef.current = requestKey;
     let active = true;
+    const controller = new AbortController();
 
-    const loadMatchAndSquad = async () => {
-      try {
-        let storedMatch = await getMatch(matchId);
-        const storedTeam = storedMatch?.teams?.[teamKey];
-
-        if (
-          storedMatch &&
-          storedTeam?.id &&
-          storedTeam.seasonSquadLoaded !== true
-        ) {
-          try {
-            const response = await api.teams.getTeamSeasonPlayers(
-              storedTeam.id,
-              seasonId,
-            );
-            const loadedPlayers = [
-              ...new Set(toArray(response).map(getPlayerName).filter(Boolean)),
-            ];
-
-            storedMatch = {
-              ...storedMatch,
-              teams: {
-                ...storedMatch.teams,
-                [teamKey]: {
-                  ...storedTeam,
-                  players: loadedPlayers,
-                  seasonSquadLoaded: true,
-                },
+    setSquadLoading(true);
+    api.teams
+      .getTeamSeasonPlayers(team.id, seasonId, { signal: controller.signal })
+      .then((response) => {
+        if (!active) return;
+        const players = [
+          ...new Set(toArray(response).map(getPlayerName).filter(Boolean)),
+        ];
+        dispatch({
+          type: MATCH_ACTIONS.REPLACE_MATCH,
+          payload: {
+            ...match,
+            teams: {
+              ...match.teams,
+              [teamKey]: {
+                ...team,
+                players,
+                seasonSquadLoaded: true,
               },
-              updatedAt: Date.now(),
-            };
-            await saveMatch(storedMatch);
-          } catch (error) {
-            storedMatch = {
-              ...storedMatch,
-              teams: {
-                ...storedMatch.teams,
-                [teamKey]: {
-                  ...storedTeam,
-                  seasonSquadLoaded: true,
-                },
-              },
-            };
-            setFeedback(
-              "Saved squad could not be loaded. Add players manually below.",
-            );
-          }
-        }
-
-        if (active) setMatch(storedMatch || null);
-      } catch {
-        if (active) setMatch(null);
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    loadMatchAndSquad();
+            },
+            updatedAt: Date.now(),
+          },
+        });
+        setFeedback("");
+      })
+      .catch((requestError) => {
+        if (!active || requestError?.message === "Request cancelled") return;
+        setFeedback(
+          "Saved squad could not be loaded. Add players manually or reopen this screen to retry.",
+        );
+      })
+      .finally(() => {
+        if (active) setSquadLoading(false);
+      });
 
     return () => {
       active = false;
+      controller.abort();
     };
-  }, [matchId, seasonId, teamKey]);
+  }, [dispatch, match, phase, seasonId, teamKey]);
 
-  useEffect(() => {
-    const normalizedQuery = query.trim();
-    if (!normalizedQuery) {
-      latestSearchRef.current += 1;
-      setResults([]);
-      setSearchLoading(false);
-      return undefined;
-    }
-
-    const requestId = latestSearchRef.current + 1;
-    latestSearchRef.current = requestId;
-
-    const timer = setTimeout(async () => {
-      try {
-        setSearchLoading(true);
-        const response = await api.players.searchPlayers(normalizedQuery);
-        if (latestSearchRef.current === requestId) {
-          setResults(toArray(response));
-        }
-      } catch (error) {
-        if (latestSearchRef.current === requestId) {
-          setResults([]);
-          setFeedback("Player search is unavailable. You can still add the typed name.");
-        }
-      } finally {
-        if (latestSearchRef.current === requestId) setSearchLoading(false);
-      }
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [query]);
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
+  const playersQuery = usePlayerSearch(debouncedQuery);
+  const results = playersQuery.data || [];
+  const searchLoading = Boolean(
+    query.trim().length >= 2 &&
+      (playersQuery.isLoading || debouncedQuery !== query.trim()),
+  );
 
   useEffect(() => {
     const handleOutsideClick = (event) => {
@@ -155,8 +136,8 @@ export default function TeamPlayers({ teamKey }) {
       }
     };
 
-    document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+    document.addEventListener("pointerdown", handleOutsideClick);
+    return () => document.removeEventListener("pointerdown", handleOutsideClick);
   }, []);
 
   const players = useMemo(
@@ -177,16 +158,20 @@ export default function TeamPlayers({ teamKey }) {
     [match, otherTeamKey],
   );
 
-  if (loading) {
+  if (phase === "loading") {
     return <p className={styles.stateMessage}>Loading squad…</p>;
   }
 
-  if (!match?.teams?.[teamKey]) {
-    return <p className={styles.stateMessage}>Match not found.</p>;
+  if (phase === "error" || !match?.teams?.[teamKey]) {
+    return (
+      <p className={styles.stateMessage} role="alert">
+        {error?.message || "Match not found on this device."}
+      </p>
+    );
   }
 
   const team = match.teams[teamKey];
-  const canContinue = players.length >= MIN_PLAYERS;
+  const canContinue = players.length >= MIN_PLAYERS && !squadLoading;
   const isTeamA = teamKey === "teamA";
   const nextPath = isTeamA
     ? `/season/${seasonId}/match/${matchId}/team-b`
@@ -197,11 +182,10 @@ export default function TeamPlayers({ teamKey }) {
 
   const closeSearch = () => {
     setQuery("");
-    setResults([]);
     setIsOpen(false);
   };
 
-  const addPlayer = async (rawName) => {
+  const addPlayer = (rawName) => {
     const player = normalizeName(rawName);
     if (!player) return;
 
@@ -211,40 +195,36 @@ export default function TeamPlayers({ teamKey }) {
       return;
     }
 
-    const updated = {
-      ...match,
-      teams: {
-        ...match.teams,
-        [teamKey]: {
-          ...team,
-          players: [...players, player],
-        },
-      },
-      updatedAt: Date.now(),
-    };
-
-    await saveMatch(updated);
-    setMatch(updated);
+    dispatch({
+      type: MATCH_ACTIONS.ADD_TEAM_PLAYER,
+      payload: { teamKey, player },
+    });
     setFeedback("");
     closeSearch();
   };
 
-  const removePlayer = async (player) => {
-    const updated = {
-      ...match,
-      teams: {
-        ...match.teams,
-        [teamKey]: {
-          ...team,
-          players: players.filter((item) => item !== player),
-        },
-      },
-      updatedAt: Date.now(),
-    };
-
-    await saveMatch(updated);
-    setMatch(updated);
+  const removePlayer = (player) => {
+    dispatch({
+      type: MATCH_ACTIONS.REMOVE_TEAM_PLAYER,
+      payload: { teamKey, player },
+    });
     setFeedback("");
+  };
+
+  const continueSetup = async () => {
+    if (!canContinue || continuing) return;
+    setContinuing(true);
+    try {
+      // Explicitly await the latest state before navigating to the next route.
+      await persistReplacement(match);
+      navigate(nextPath, { replace: true });
+    } catch (saveError) {
+      setFeedback(
+        saveError?.message || "Could not save this squad on the device.",
+      );
+    } finally {
+      setContinuing(false);
+    }
   };
 
   return (
@@ -286,10 +266,15 @@ export default function TeamPlayers({ teamKey }) {
           {searchLoading && <span className={styles.spinner} aria-label="Searching" />}
         </div>
 
-        {feedback && <p className={styles.feedback}>{feedback}</p>}
+        {(feedback || playersQuery.isError) && (
+          <p className={styles.feedback} role="status">
+            {feedback ||
+              "Player search is unavailable. You can still add the typed name."}
+          </p>
+        )}
 
         {isOpen && query.trim() && (
-          <div className={styles.dropdown} role="listbox">
+          <div className={styles.dropdown} role="listbox" aria-label="Player suggestions">
             {results.map((player, index) => {
               const name = getPlayerName(player);
               const disabled = players.includes(name);
@@ -301,7 +286,7 @@ export default function TeamPlayers({ teamKey }) {
                   disabled={disabled}
                   onClick={() => addPlayer(name)}
                 >
-                  <span className={styles.playerIcon}>👤</span>
+                  <span className={styles.playerIcon} aria-hidden="true">👤</span>
                   <span>
                     <strong>{formatName(name)}</strong>
                     {(disabled || opponentPlayers.has(name)) && (
@@ -325,7 +310,7 @@ export default function TeamPlayers({ teamKey }) {
                   className={styles.dropdownItem}
                   onClick={() => addPlayer(query)}
                 >
-                  <span className={styles.newPlayerIcon}>+</span>
+                  <span className={styles.newPlayerIcon} aria-hidden="true">+</span>
                   <span>
                     <strong>Add “{formatName(query)}”</strong>
                     <small>
@@ -354,7 +339,7 @@ export default function TeamPlayers({ teamKey }) {
         ) : (
           players.map((player) => (
             <div key={player} className={styles.playerRow}>
-              <span className={styles.playerAvatar}>
+              <span className={styles.playerAvatar} aria-hidden="true">
                 {player.charAt(0).toUpperCase()}
               </span>
               <strong className={styles.playerName}>{formatName(player)}</strong>
@@ -375,19 +360,20 @@ export default function TeamPlayers({ teamKey }) {
       </section>
 
       <footer className={styles.footer}>
-        {!canContinue && (
+        {!canContinue && !squadLoading && (
           <p>
-            Add {MIN_PLAYERS - players.length} more player
+            Add {Math.max(0, MIN_PLAYERS - players.length)} more player
             {MIN_PLAYERS - players.length === 1 ? "" : "s"} to continue.
           </p>
         )}
+        {squadLoading && <p>Loading the saved season squad…</p>}
         <button
           type="button"
-          onClick={() => navigate(nextPath, { replace: true })}
-          disabled={!canContinue}
+          onClick={continueSetup}
+          disabled={!canContinue || continuing}
           className={styles.primaryButton}
         >
-          {nextLabel}
+          {continuing ? "Saving…" : nextLabel}
         </button>
       </footer>
     </main>

@@ -1,206 +1,106 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import AppShell from "../components/AppShell";
-import Home from "../pages/Home";
+import LoadingState from "../components/common/LoadingState";
 import styles from "../pages/Home.module.css";
-import SeasonShell from "../pages/SeasonShell";
-import SeasonLayout from "../pages/SeasonLayout";
-import SeasonMatches from "../pages/SeasonMatches";
-import SeasonStats from "../pages/SeasonStats";
-import BattingStats from "../pages/BattingStats";
-import BowlingStats from "../pages/BowlingStats";
-import MiscStats from "../pages/MiscStats";
-import { SeasonStatsProvider } from "../context/SeasonStatsContext";
-import InsightsHub from "../pages/InsightsHub";
-import TeamStats from "../pages/TeamStats";
-import MatchupsPlaceholder from "../pages/MatchupsPlaceholder";
-import PlayerProfilePlaceholder from "../pages/PlayerProfilePlaceholder";
-import TeamProfilePlaceholder from "../pages/TeamProfilePlaceholder";
-import CreateMatchType from "../pages/CreateMatch";
-import TeamPlayers from "../pages/TeamPlayers";
-import TossPage from "../pages/TossPage";
-import LiveMatch from "../pages/LiveMatch";
-import MatchSummary from "../pages/MatchSummary";
-import AnalyticsOverview from "../pages/AnalyticsOverview";
+
+const Home = lazy(() => import("../pages/Home"));
+const SeasonShell = lazy(() => import("../pages/SeasonShell"));
+const SeasonLayout = lazy(() => import("../pages/SeasonLayout"));
+const SeasonMatches = lazy(() => import("../pages/SeasonMatches"));
+const SeasonStats = lazy(() => import("../pages/SeasonStats"));
+const BattingStats = lazy(() => import("../pages/BattingStats"));
+const BowlingStats = lazy(() => import("../pages/BowlingStats"));
+const MiscStats = lazy(() => import("../pages/MiscStats"));
+const InsightsHub = lazy(() => import("../pages/InsightsHub"));
+const TeamStats = lazy(() => import("../pages/TeamStats"));
+const PlayerProfile = lazy(() => import("../pages/PlayerProfile"));
+const TeamProfile = lazy(() => import("../pages/TeamProfile"));
+const CreateMatch = lazy(() => import("../pages/CreateMatch"));
+const TeamPlayers = lazy(() => import("../pages/TeamPlayers"));
+const TossPage = lazy(() => import("../pages/TossPage"));
+const LiveMatch = lazy(() => import("../pages/LiveMatch"));
+const MatchSummary = lazy(() => import("../pages/MatchSummary"));
+const AnalyticsOverview = lazy(() => import("../pages/AnalyticsOverview"));
+
+function RouteFallback() {
+  return <LoadingState label="Loading screen…" />;
+}
+
+function Shell({ children }) {
+  return <AppShell title="Gully Cricket">{children}</AppShell>;
+}
 
 export default function AppRoutes() {
   const [openCreateSeason, setOpenCreateSeason] = useState(false);
 
   return (
     <BrowserRouter>
-      <Routes>
-        {/* ================= HOME ================= */}
-
-        <Route
-          path="/"
-          element={
-            <AppShell
-              title="Gully Cricket"
-              bottomAction={
-                <button
-                  className={styles.createBtn}
-                  onClick={() => setOpenCreateSeason(true)}
-                >
-                  + Create Season
-                </button>
-              }
-            >
-              <Home
-                open={openCreateSeason}
-                onClose={() => setOpenCreateSeason(false)}
-              />
-            </AppShell>
-          }
-        />
-
-        {/* ================= GLOBAL INSIGHTS HUB ================= */}
-
-        <Route
-          path="/insights"
-          element={
-            <SeasonStatsProvider>
-              <AppShell title="Gully Cricket">
-                <InsightsHub />
+      <Suspense fallback={<RouteFallback />}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <AppShell
+                title="Gully Cricket"
+                bottomAction={
+                  <button
+                    type="button"
+                    className={styles.createBtn}
+                    onClick={() => setOpenCreateSeason(true)}
+                  >
+                    + Create Season
+                  </button>
+                }
+              >
+                <Home
+                  open={openCreateSeason}
+                  onClose={() => setOpenCreateSeason(false)}
+                />
               </AppShell>
-            </SeasonStatsProvider>
-          }
-        >
-          <Route index element={<Navigate to="overview" replace />} />
+            }
+          />
 
-          <Route path="overview" element={<AnalyticsOverview />} />
+          <Route path="/insights" element={<Shell><InsightsHub /></Shell>}>
+            <Route index element={<Navigate to="overview" replace />} />
+            <Route path="overview" element={<AnalyticsOverview />} />
+            <Route path="batting" element={<BattingStats isOverall />} />
+            <Route path="bowling" element={<BowlingStats isOverall />} />
+            <Route path="teams" element={<TeamStats />} />
+            <Route path="misc" element={<MiscStats isOverall />} />
+            {/* Backward-compatible redirect while matchup APIs are not part of the stable backend. */}
+            <Route path="matchups" element={<Navigate to="../overview" replace />} />
+          </Route>
 
-          <Route path="batting" element={<BattingStats isOverall />} />
+          <Route path="/player/:id" element={<Shell><PlayerProfile /></Shell>} />
+          <Route path="/team/:id" element={<Shell><TeamProfile /></Shell>} />
 
-          <Route path="bowling" element={<BowlingStats isOverall />} />
-
-          <Route path="teams" element={<TeamStats />} />
-
-          <Route path="misc" element={<MiscStats isOverall />} />
-
-          <Route path="matchups" element={<MatchupsPlaceholder />} />
-        </Route>
-
-        {/* ================= PROFILES ================= */}
-        
-        <Route
-          path="/player/:id"
-          element={
-            <AppShell title="Gully Cricket">
-              <PlayerProfilePlaceholder />
-            </AppShell>
-          }
-        />
-
-        <Route
-          path="/team/:id"
-          element={
-            <AppShell title="Gully Cricket">
-              <TeamProfilePlaceholder />
-            </AppShell>
-          }
-        />
-
-        {/* ================= SEASON ================= */}
-
-        <Route path="/season/:seasonId" element={<SeasonShell />}>
-          <Route index element={<Navigate to="matches" replace />} />
-
-          <Route path="" element={<SeasonLayout />}>
-            {/* MATCHES */}
-            <Route path="matches" element={<SeasonMatches />} />
-
-            {/* STATS */}
-            <Route
-              path="stats"
-              element={
-                <SeasonStatsProvider>
-                  <SeasonStats />
-                </SeasonStatsProvider>
-              }
-            >
-              <Route index element={<Navigate to="overview" replace />} />
-
-              <Route path="overview" element={<AnalyticsOverview />} />
-
-              <Route path="batting" element={<BattingStats />} />
-
-              <Route path="bowling" element={<BowlingStats />} />
-
-              <Route path="teams" element={<TeamStats />} />
-
-              <Route path="misc" element={<MiscStats />} />
-
-              <Route path="matchups" element={<MatchupsPlaceholder />} />
+          <Route path="/season/:seasonId" element={<SeasonShell />}>
+            <Route index element={<Navigate to="matches" replace />} />
+            <Route element={<SeasonLayout />}>
+              <Route path="matches" element={<SeasonMatches />} />
+              <Route path="stats" element={<SeasonStats />}>
+                <Route index element={<Navigate to="overview" replace />} />
+                <Route path="overview" element={<AnalyticsOverview />} />
+                <Route path="batting" element={<BattingStats />} />
+                <Route path="bowling" element={<BowlingStats />} />
+                <Route path="teams" element={<TeamStats />} />
+                <Route path="misc" element={<MiscStats />} />
+                <Route path="matchups" element={<Navigate to="../overview" replace />} />
+              </Route>
             </Route>
           </Route>
-        </Route>
 
-        {/* ================= CREATE MATCH ================= */}
+          <Route path="/season/:seasonId/create-match" element={<Shell><CreateMatch /></Shell>} />
+          <Route path="/season/:seasonId/match/:matchId" element={<Shell><MatchSummary /></Shell>} />
+          <Route path="/season/:seasonId/match/:matchId/team-a" element={<Shell><TeamPlayers teamKey="teamA" /></Shell>} />
+          <Route path="/season/:seasonId/match/:matchId/team-b" element={<Shell><TeamPlayers teamKey="teamB" /></Shell>} />
+          <Route path="/season/:seasonId/match/:matchId/toss" element={<Shell><TossPage /></Shell>} />
+          <Route path="/season/:seasonId/match/:matchId/live" element={<Shell><LiveMatch /></Shell>} />
 
-        <Route
-          path="/season/:seasonId/create-match"
-          element={
-            <AppShell title="Gully Cricket">
-              <CreateMatchType />
-            </AppShell>
-          }
-        />
-
-        {/* ================= MATCH SUMMARY ================= */}
-
-        <Route
-          path="/season/:seasonId/match/:matchId"
-          element={
-            <AppShell title="Gully Cricket">
-              <MatchSummary />
-            </AppShell>
-          }
-        />
-
-        {/* ================= TEAM A ================= */}
-
-        <Route
-          path="/season/:seasonId/match/:matchId/team-a"
-          element={
-            <AppShell title="Gully Cricket">
-              <TeamPlayers teamKey="teamA" />
-            </AppShell>
-          }
-        />
-
-        {/* ================= TEAM B ================= */}
-
-        <Route
-          path="/season/:seasonId/match/:matchId/team-b"
-          element={
-            <AppShell title="Gully Cricket">
-              <TeamPlayers teamKey="teamB" />
-            </AppShell>
-          }
-        />
-
-        {/* ================= TOSS ================= */}
-
-        <Route
-          path="/season/:seasonId/match/:matchId/toss"
-          element={
-            <AppShell title="Gully Cricket">
-              <TossPage />
-            </AppShell>
-          }
-        />
-
-        {/* ================= LIVE MATCH ================= */}
-
-        <Route
-          path="/season/:seasonId/match/:matchId/live"
-          element={
-            <AppShell title="Gully Cricket">
-              <LiveMatch />
-            </AppShell>
-          }
-        />
-      </Routes>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

@@ -1,300 +1,81 @@
-import { useEffect, useState } from "react";
-import { useParams, useOutletContext, useNavigate } from "react-router-dom";
-import { useSeasonStats } from "../context/SeasonStatsContext";
+import { useMemo, useReducer } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import {
+  LeaderboardState,
+  SortButton,
+} from "../features/stats/components/LeaderboardView";
+import {
+  LEADERBOARD_ACTIONS,
+  createLeaderboardState,
+  leaderboardReducer,
+} from "../features/stats/state/leaderboardReducer";
+import { useFieldingLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
-import LoadingState from "../components/common/LoadingState";
-import EmptyState from "../components/common/EmptyState";
-import { api } from "../api";
+import styles from "./MiscStats.module.css";
 
-export default function MiscStats({ isOverall = false }) {
-  const { seasonId } = useParams();
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+
+export default function MiscStats() {
   const navigate = useNavigate();
+  const { globalFilter = "all" } = useOutletContext() || {};
+  const [state, dispatch] = useReducer(
+    leaderboardReducer,
+    createLeaderboardState({}, "manOfTheMatch"),
+  );
 
-  const outletContext = useOutletContext();
-  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : null;
-
-  const context = useSeasonStats();
-
-  const miscStats = !isOverall ? context?.miscStats : null;
-
-  const setMiscStats = !isOverall ? context?.setMiscStats : null;
-
-  /* =====================================
-     OVERALL LOCAL STATE
-  ===================================== */
-
-  const [overallStats, setOverallStats] = useState(null);
-
-  const players = isOverall ? overallStats || [] : miscStats || [];
-
-  const [loading, setLoading] = useState(false);
-
-  const [sortKey, setSortKey] = useState("manOfTheMatch");
-
-  const [sortDir, setSortDir] = useState("desc");
-
-  /* =====================================
-     LOAD ONLY ONCE
-  ===================================== */
-
-  useEffect(() => {
-    if (!isOverall && miscStats) return;
-
-    loadStats();
-  }, [seasonId, isOverall, globalFilter]);
-
-  /* =====================================
-     FETCH
-  ===================================== */
-
-  const loadStats = async () => {
-    try {
-      setLoading(true);
-
-      const json = await api.stats.getFieldingLeaderboard({
-        seasonId: isOverall
-          ? globalFilter !== "all"
-            ? globalFilter
-            : undefined
-          : seasonId,
-      });
-
-      if (isOverall) {
-        setOverallStats(json || []);
-      } else {
-        setMiscStats(json || []);
-      }
-    } catch (e) {
-      console.error("Failed to load misc stats", e);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /* =====================================
-     SORT
-  ===================================== */
-
-  const sortedPlayers = [...players].sort((a, b) => {
-    let av = 0;
-    let bv = 0;
-
-    switch (sortKey) {
-      case "catches":
-        av = a.totalCatches || 0;
-        bv = b.totalCatches || 0;
-        break;
-
-      case "stumpings":
-        av = a.totalStumpings || 0;
-        bv = b.totalStumpings || 0;
-        break;
-
-      case "runOuts":
-        av = a.totalRunOuts || 0;
-        bv = b.totalRunOuts || 0;
-        break;
-
-      case "manOfTheMatch":
-        av = a.manOfTheMatchAwards || 0;
-
-        bv = b.manOfTheMatchAwards || 0;
-
-        break;
-
-      default:
-        av = 0;
-        bv = 0;
-    }
-
-    return sortDir === "asc" ? av - bv : bv - av;
+  const query = useFieldingLeaderboard({
+    seasonId: globalFilter !== "all" ? globalFilter : undefined,
   });
 
-  /* =====================================
-     SORT HEADER
-  ===================================== */
+  const players = useMemo(() => {
+    const getValue = (player) => {
+      switch (state.sortKey) {
+        case "catches": return number(player.totalCatches);
+        case "stumpings": return number(player.totalStumpings);
+        case "runOuts": return number(player.totalRunOuts);
+        case "manOfTheMatch": return number(player.manOfTheMatchAwards);
+        default: return 0;
+      }
+    };
+    return [...(query.data || [])].sort((a, b) => {
+      const delta = getValue(a) - getValue(b);
+      return state.sortDir === "asc" ? delta : -delta;
+    });
+  }, [query.data, state.sortDir, state.sortKey]);
 
-  const SortHeader = ({ label, col }) => (
-    <span
-      style={sortableHeader}
-      onClick={() => {
-        if (sortKey === col) {
-          setSortDir(sortDir === "asc" ? "desc" : "asc");
-        } else {
-          setSortKey(col);
-
-          setSortDir("desc");
-        }
-      }}
-    >
-      {label}
-
-      {sortKey === col && (sortDir === "asc" ? " ▲" : " ▼")}
-    </span>
-  );
-
-  /* =====================================
-     LOADING
-  ===================================== */
-
-  if (loading && players.length === 0) {
-    return <LoadingState label="Loading misc stats..." />;
-  }
-
-  /* =====================================
-     UI
-  ===================================== */
+  const onSort = (column) => dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
-    <div style={page}>
-      {/* HEADER */}
-
-      <div
-        style={{
-          ...rowBase,
-          ...headerRow,
-        }}
-      >
-        <span style={playerHeader}>Player</span>
-
-        <SortHeader label="C" col="catches" />
-
-        <SortHeader label="ST" col="stumpings" />
-
-        <SortHeader label="RO" col="runOuts" />
-
-        <SortHeader label="MoM" col="manOfTheMatch" />
-      </div>
-
-      {/* ROWS */}
-
-      {sortedPlayers.map((p) => (
-        <div
-          key={p.playerId}
-          style={{
-            ...rowBase,
-            ...dataRow,
-          }}
-        >
-          <span
-            style={{ ...playerCell, cursor: "pointer", color: "var(--color-indigo-600)" }}
-            onClick={() =>
-              navigate(`/player/${encodeURIComponent(p.playerId)}`)
-            }
-          >
-            {formatName(p.playerName)}
-          </span>
-
-          <span style={center}>{p.totalCatches || 0}</span>
-
-          <span style={center}>{p.totalStumpings || 0}</span>
-
-          <span style={center}>{p.totalRunOuts || 0}</span>
-
-          <span style={mom}>{p.manOfTheMatchAwards || 0}</span>
+    <LeaderboardState
+      loading={query.isLoading}
+      fetching={query.isFetching && !query.isLoading}
+      error={query.error}
+      empty={players.length === 0}
+      onRetry={query.refetch}
+      emptyTitle="No fielding stats"
+      emptySubtitle="Catches, run-outs, stumpings and awards will appear after completed matches."
+    >
+      <div className={styles.table}>
+        <div className={`${styles.grid} ${styles.header}`}>
+          <span className={styles.playerHeader}>Player</span>
+          <SortButton label="C" column="catches" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by catches" />
+          <SortButton label="ST" column="stumpings" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by stumpings" />
+          <SortButton label="RO" column="runOuts" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by run outs" />
+          <SortButton label="MoM" column="manOfTheMatch" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by Man of the Match awards" />
         </div>
-      ))}
-
-      {/* EMPTY */}
-
-      {players.length === 0 && (
-        <EmptyState
-          title="No misc stats"
-          subtitle="Completed matches will appear here"
-        />
-      )}
-    </div>
+        {players.map((player) => (
+          <div key={player.playerId ?? player.playerName} className={`${styles.grid} ${styles.row}`}>
+            <button type="button" className={styles.playerButton} onClick={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}>
+              {formatName(player.playerName)}
+              <small>{number(player.totalMatchesPlayed)} matches</small>
+            </button>
+            <span>{number(player.totalCatches)}</span>
+            <span>{number(player.totalStumpings)}</span>
+            <span>{number(player.totalRunOuts)}</span>
+            <strong>{number(player.manOfTheMatchAwards)}</strong>
+          </div>
+        ))}
+      </div>
+    </LeaderboardState>
   );
 }
-
-/* ================= STYLES ================= */
-
-const page = {
-  display: "flex",
-
-  flexDirection: "column",
-
-  gap: 10,
-};
-
-const rowBase = {
-  display: "grid",
-
-  gridTemplateColumns: "2.6fr repeat(4,1fr)",
-
-  alignItems: "center",
-};
-
-const headerRow = {
-  position: "sticky",
-
-  top: "var(--stats-header-top, 68px)",
-
-  zIndex: 70,
-
-  margin: "0 -18px 8px -18px",
-
-  padding: "10px 32px 8px",
-
-  background: "rgba(248, 250, 252, 0.96)",
-
-  backdropFilter: "blur(12px)",
-
-  fontSize: 12,
-
-  fontWeight: 700,
-
-  color: "var(--color-slate-500)",
-};
-
-const dataRow = {
-  background: "var(--color-white)",
-
-  padding: "14px",
-
-  borderRadius: 18,
-
-  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-
-  border: "1px solid var(--color-indigo-50)",
-
-  fontSize: 14,
-};
-
-const sortableHeader = {
-  textAlign: "center",
-
-  cursor: "pointer",
-
-  userSelect: "none",
-};
-
-const playerHeader = {
-  textAlign: "left",
-};
-
-const playerCell = {
-  fontWeight: 700,
-
-  color: "var(--color-gray-900)",
-
-  textAlign: "left",
-
-  fontSize: 14,
-};
-
-const center = {
-  textAlign: "center",
-
-  fontWeight: 600,
-
-  color: "var(--color-gray-700)",
-};
-
-const mom = {
-  textAlign: "center",
-
-  fontWeight: 800,
-
-  color: "var(--color-indigo-700)",
-};

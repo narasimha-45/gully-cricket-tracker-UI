@@ -1,4 +1,4 @@
-import { calcCRR } from "./calcutors";
+import { calcCRR } from "./calculators";
 import { formatName } from "./helpers";
 import {
   getFinalInningsTarget,

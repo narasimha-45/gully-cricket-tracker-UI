@@ -1,38 +1,40 @@
 import { NavLink, Outlet, useNavigate, useParams } from "react-router-dom";
+import LoadingState from "../components/common/LoadingState";
+import { useSeasons } from "../hooks/queries";
+import { formatName } from "../utils/helpers";
 import styles from "./SeasonLayout.module.css";
 
 export default function SeasonLayout() {
   const navigate = useNavigate();
   const { seasonId } = useParams();
-
-  // Read season name from sessionStorage using seasonId
-  const seasonName = (() => {
-    try {
-      const stored = JSON.parse(
-        sessionStorage.getItem("seasons") || "{}"
-      );
-      return stored[seasonId] || "Season";
-    } catch {
-      return "Season";
-    }
-  })();
+  const seasonsQuery = useSeasons();
+  const season = (seasonsQuery.data || []).find(
+    (item) => String(item.id) === String(seasonId),
+  );
 
   return (
     <div>
-      {/* UNIFIED STICKY HEADER */}
-      <div className={styles.stickyHeader}>
+      <header className={styles.stickyHeader}>
         <div className={styles.subHeader}>
           <button
+            type="button"
             className={styles.back}
             onClick={() => navigate("/")}
-            aria-label="Back"
+            aria-label="Back to seasons"
           >
             ←
           </button>
-          <div className={styles.seasonName}>{seasonName}</div>
+          <div className={styles.seasonTitleWrap}>
+            <span className={styles.eyebrow}>Season</span>
+            <div className={styles.seasonName}>
+              {seasonsQuery.isLoading
+                ? "Loading…"
+                : formatName(season?.seasonName || "Season")}
+            </div>
+          </div>
         </div>
 
-        <div className={styles.tabs}>
+        <nav className={styles.tabs} aria-label="Season navigation">
           <NavLink
             to="matches"
             className={({ isActive }) =>
@@ -41,7 +43,6 @@ export default function SeasonLayout() {
           >
             Matches
           </NavLink>
-
           <NavLink
             to="stats"
             className={({ isActive }) =>
@@ -50,13 +51,25 @@ export default function SeasonLayout() {
           >
             Stats
           </NavLink>
-        </div>
-      </div>
+        </nav>
+      </header>
 
-      {/* Page content */}
-      <div className={styles.content}>
-        <Outlet />
-      </div>
+      {seasonsQuery.isError ? (
+        <div className={styles.queryError} role="alert">
+          <strong>Season details are temporarily unavailable.</strong>
+          <button type="button" onClick={() => seasonsQuery.refetch()}>
+            Try again
+          </button>
+        </div>
+      ) : seasonsQuery.isLoading && !season ? (
+        <div className={styles.accessibleLoading} aria-hidden="true">
+          <LoadingState label="Loading season…" />
+        </div>
+      ) : (
+        <div className={styles.content}>
+          <Outlet />
+        </div>
+      )}
     </div>
   );
 }

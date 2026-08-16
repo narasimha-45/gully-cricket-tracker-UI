@@ -1,5 +1,5 @@
 /**
- * Builds the payload sent to POST /matches/create.
+ * Builds the payload sent to POST /matches.
  * Extracted so both the "finish match" flow and the background retry queue
  * build the exact same shape from a stored match — one place to change it.
  */

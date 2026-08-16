@@ -1,177 +1,124 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { useGlobalSearch } from "../hooks/queries";
 import styles from "./GlobalSearch.module.css";
-import { api } from "../api";
+
+const EMPTY = Object.freeze({ players: [], teams: [], seasons: [] });
 
 export default function GlobalSearch() {
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
-  const [results, setResults] = useState(null);
-  const [loading, setLoading] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
+  const searchQuery = useGlobalSearch(debouncedQuery);
 
-  // Close dropdown when clicking outside
+  const results = useMemo(() => ({
+    players: Array.isArray(searchQuery.data?.players) ? searchQuery.data.players : [],
+    teams: Array.isArray(searchQuery.data?.teams) ? searchQuery.data.teams : [],
+    seasons: Array.isArray(searchQuery.data?.seasons) ? searchQuery.data.seasons : [],
+  }), [searchQuery.data]);
+
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (searchRef.current && !searchRef.current.contains(event.target)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    const handleOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener("pointerdown", handleOutside);
+    return () => document.removeEventListener("pointerdown", handleOutside);
   }, []);
 
-  // Fetch Results from Real API
-  useEffect(() => {
-    if (!query.trim()) {
-      setResults(null);
-      return;
-    }
-
-    let active = true;
-    const fetchResults = async () => {
-      try {
-        setLoading(true);
-        const json = await api.search.globalSearch(query.trim());
-        if (active) setResults(json || { players: [], teams: [], seasons: [] });
-      } catch (err) {
-        if (active) setResults({ players: [], teams: [], seasons: [] });
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    const debounce = setTimeout(() => {
-      fetchResults();
-    }, 300);
-
-    return () => {
-      active = false;
-      clearTimeout(debounce);
-    };
-  }, [query]);
-
-  const handleSelect = (type, id) => {
+  const choose = (path) => {
     setIsOpen(false);
     setQuery("");
-
-    // Navigate to the respective profile or page
-    if (type === "player") navigate(`/player/${id}`);
-    if (type === "team") navigate(`/team/${id}`);
-    if (type === "season") navigate(`/season/${id}`);
+    navigate(path);
   };
 
-  const hasResults =
-    results &&
-    (results.players.length > 0 ||
-      results.teams.length > 0 ||
-      results.seasons.length > 0);
+  const hasResults = results.players.length + results.teams.length + results.seasons.length > 0;
+  const canSearch = query.trim().length >= 2;
+  const searching = canSearch && (searchQuery.isLoading || debouncedQuery !== query.trim());
 
   return (
     <div className={styles.container} ref={searchRef}>
       <div className={styles.searchWrapper}>
-        <div className={styles.searchIcon}>🔍</div>
+        <span className={styles.searchIcon} aria-hidden="true">⌕</span>
         <input
-          type="text"
+          type="search"
           className={styles.input}
-          placeholder="Search team, player, or season..."
+          placeholder="Search players, teams or seasons"
           value={query}
-          onChange={(e) => {
-            setQuery(e.target.value);
+          autoComplete="off"
+          aria-label="Search players, teams or seasons"
+          aria-expanded={isOpen && canSearch}
+          onChange={(event) => {
+            setQuery(event.target.value);
             setIsOpen(true);
           }}
-          onFocus={() => {
-            if (query.trim()) setIsOpen(true);
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={(event) => {
+            if (event.key === "Escape") setIsOpen(false);
           }}
         />
       </div>
 
       {isOpen && query.trim() && (
-        <div className={styles.dropdown}>
-          {loading ? (
-            <div className={styles.noResults}>Searching...</div>
+        <div className={styles.dropdown} role="region" aria-label="Search results">
+          {!canSearch ? (
+            <div className={styles.noResults}>Type at least 2 characters</div>
+          ) : searching ? (
+            <div className={styles.noResults}>Searching…</div>
+          ) : searchQuery.isError ? (
+            <div className={styles.noResults}>Search is unavailable. Try again.</div>
           ) : !hasResults ? (
-            <div className={styles.noResults}>
-              No results found for "{query}"
-            </div>
+            <div className={styles.noResults}>No results for “{query.trim()}”</div>
           ) : (
             <>
-              {/* PLAYERS */}
-              {results.players.length > 0 && (
-                <div className={styles.category}>
-                  <div className={styles.categoryTitle}>Players</div>
-                  {results.players.map((p) => (
-                    <button
-                      type="button"
-                      key={p.playerId}
-                      className={styles.resultItem}
-                      onClick={() => handleSelect("player", p.playerId)}
-                    >
-                      <div
-                        className={`${styles.resultIcon} ${styles.iconPlayer}`}
-                      >
-                        👤
-                      </div>
-                      <div>
-                        <div className={styles.resultName}>{p.playerName}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* TEAMS */}
-              {results.teams.length > 0 && (
-                <div className={styles.category}>
-                  <div className={styles.categoryTitle}>Teams</div>
-                  {results.teams.map((t) => (
-                    <button
-                      type="button"
-                      key={t.teamId}
-                      className={styles.resultItem}
-                      onClick={() => handleSelect("team", t.teamId)}
-                    >
-                      <div
-                        className={`${styles.resultIcon} ${styles.iconTeam}`}
-                      >
-                        🛡️
-                      </div>
-                      <div>
-                        <div className={styles.resultName}>{t.teamName}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
-
-              {/* SEASONS */}
-              {results.seasons.length > 0 && (
-                <div className={styles.category}>
-                  <div className={styles.categoryTitle}>Seasons</div>
-                  {results.seasons.map((s) => (
-                    <button
-                      type="button"
-                      key={s.seasonId}
-                      className={styles.resultItem}
-                      onClick={() => handleSelect("season", s.seasonId)}
-                    >
-                      <div
-                        className={`${styles.resultIcon} ${styles.iconSeason}`}
-                      >
-                        🏆
-                      </div>
-                      <div>
-                        <div className={styles.resultName}>{s.seasonName}</div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              )}
+              <ResultGroup title="Players" rows={results.players} render={(player) => ({
+                key: player.playerId,
+                icon: "👤",
+                title: player.playerName,
+                meta: `${player.matchesPlayed || 0} matches`,
+                onClick: () => choose(`/player/${encodeURIComponent(player.playerId)}`),
+              })} />
+              <ResultGroup title="Teams" rows={results.teams} render={(team) => ({
+                key: team.teamId,
+                icon: "🛡️",
+                title: team.teamName,
+                meta: "Team profile",
+                onClick: () => choose(`/team/${encodeURIComponent(team.teamId)}`),
+              })} />
+              <ResultGroup title="Seasons" rows={results.seasons} render={(season) => ({
+                key: season.seasonId,
+                icon: "🏆",
+                title: season.seasonName,
+                meta: `${season.totalMatches || 0} matches`,
+                onClick: () => choose(`/season/${encodeURIComponent(season.seasonId)}`),
+              })} />
             </>
           )}
         </div>
       )}
+    </div>
+  );
+}
+
+function ResultGroup({ title, rows = EMPTY.players, render }) {
+  if (!rows.length) return null;
+  return (
+    <div className={styles.category}>
+      <div className={styles.categoryTitle}>{title}</div>
+      {rows.map((row) => {
+        const item = render(row);
+        return (
+          <button key={item.key} type="button" className={styles.resultItem} onClick={item.onClick}>
+            <span className={styles.resultIcon} aria-hidden="true">{item.icon}</span>
+            <span className={styles.resultCopy}>
+              <strong className={styles.resultName}>{item.title}</strong>
+              <small>{item.meta}</small>
+            </span>
+          </button>
+        );
+      })}
     </div>
   );
 }

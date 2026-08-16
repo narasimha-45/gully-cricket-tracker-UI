@@ -1,0 +1,27 @@
+.backdrop {
+  position: fixed; inset: 0; z-index: 110; display: grid; align-items: end;
+  background: rgba(15,23,42,.44); backdrop-filter: blur(5px);
+  animation: fadeIn 140ms ease-out;
+}
+.sheet {
+  width: min(100%, 520px); max-height: min(78dvh, 720px); justify-self: center;
+  display: flex; flex-direction: column; padding: 8px 16px calc(16px + env(safe-area-inset-bottom));
+  border: 1px solid rgba(255,255,255,.6); border-radius: 24px 24px 0 0;
+  background: var(--color-white); box-shadow: 0 -24px 60px rgba(15,23,42,.2);
+  outline: none; animation: slideUp 180ms cubic-bezier(.2,.8,.2,1);
+}
+.handle { width: 42px; height: 4px; margin: 1px auto 8px; border-radius: 999px; background: var(--color-slate-200); }
+.header { min-height: 48px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--color-slate-100); }
+.header h2 { margin: 0; color: var(--color-slate-900); font-size: 16px; font-weight: 900; letter-spacing: -.02em; }
+.closeButton { width: 38px; height: 38px; display: grid; place-items: center; border: 0; border-radius: 12px; background: var(--color-slate-100); color: var(--color-slate-600); cursor: pointer; }
+.body { min-height: 0; padding-top: 12px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+.itemList { display: grid; gap: 8px; }
+.item { width: 100%; min-height: 52px; display: flex; align-items: center; gap: 11px; padding: 8px 12px; border: 1px solid var(--color-slate-200); border-radius: 14px; background: var(--color-white); color: var(--color-slate-800); text-align: left; font-size: 13px; font-weight: 800; cursor: pointer; }
+.item:hover:not(:disabled) { border-color: var(--color-indigo-200); background: var(--color-indigo-50); }
+.item:disabled { opacity: .45; cursor: not-allowed; }
+.avatar { width: 32px; height: 32px; display: grid; place-items: center; flex: 0 0 auto; border-radius: 50%; background: var(--color-indigo-50); color: var(--color-indigo-700); font-size: 12px; font-weight: 950; }
+.muted { margin: 12px 0 22px; color: var(--color-slate-500); font-size: 12px; text-align: center; }
+@keyframes fadeIn { from { opacity: 0; } }
+@keyframes slideUp { from { transform: translateY(22px); opacity: .8; } }
+@media (min-width: 600px) { .backdrop { align-items: center; padding: 20px; } .sheet { border-radius: 24px; padding-bottom: 16px; } }
+@media (prefers-reduced-motion: reduce) { .backdrop, .sheet { animation: none; } }

@@ -1,170 +1,61 @@
-import { useEffect, useState } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { LeaderboardState } from "../features/stats/components/LeaderboardView";
+import { useTeamLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
-import LoadingState from "../components/common/LoadingState";
-import { api } from "../api";
+import styles from "./TeamStats.module.css";
+
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 export default function TeamStats() {
-  const { globalFilter } = useOutletContext();
   const navigate = useNavigate();
-  const [standings, setStandings] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { globalFilter = "all" } = useOutletContext() || {};
+  const query = useTeamLeaderboard({
+    seasonId: globalFilter !== "all" ? globalFilter : undefined,
+  });
 
-  useEffect(() => {
-    fetchStandings();
-  }, [globalFilter]);
-
-  const fetchStandings = async () => {
-    try {
-      setLoading(true);
-      const json = await api.stats.getTeamLeaderboard({
-        seasonId:
-          globalFilter && globalFilter !== "all" ? globalFilter : undefined,
-      });
-      setStandings(json || []);
-    } catch (err) {
-      console.error("Failed to fetch standings", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return <LoadingState label="Loading standings..." />;
+  const standings = useMemo(
+    () => [...(query.data || [])].sort((a, b) => {
+      const wins = number(b.matchesWon) - number(a.matchesWon);
+      if (wins !== 0) return wins;
+      return number(b.winPercentage) - number(a.winPercentage);
+    }),
+    [query.data],
+  );
 
   return (
-    <div style={container}>
-      {/* TABLE HEADER */}
-      <div style={headerRow}>
-        <span style={{ flex: 2 }}>Team</span>
-        <span style={centerCol}>P</span>
-        <span style={centerCol}>W</span>
-        <span style={centerCol}>L</span>
-        <span style={centerCol}>NRR</span>
-        {/* <span style={centerCol}>Pts</span> */}
-      </div>
-
-      {/* ROWS */}
-      {standings.length > 0 ? (
-        standings.map((t, i) => (
-          <div
-            key={t.name}
-            style={row}
-            onClick={() => navigate(`/team/${encodeURIComponent(t.name)}`)}
+    <LeaderboardState
+      loading={query.isLoading}
+      fetching={query.isFetching && !query.isLoading}
+      error={query.error}
+      empty={standings.length === 0}
+      onRetry={query.refetch}
+      emptyTitle="No team standings"
+      emptySubtitle="Complete matches to build the team table."
+    >
+      <div className={styles.table}>
+        <div className={`${styles.grid} ${styles.header}`}>
+          <span>Team</span><span>P</span><span>W</span><span>L</span><span>T</span><span>Win%</span>
+        </div>
+        {standings.map((team, index) => (
+          <button
+            type="button"
+            key={team.teamId ?? team.teamName}
+            className={`${styles.grid} ${styles.row}`}
+            onClick={() => navigate(`/team/${encodeURIComponent(team.teamId)}`)}
           >
-            <div
-              style={{
-                flex: 2,
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-              }}
-            >
-              <span style={rank}>{i + 1}</span>
-              <span style={teamName}>{formatName(t.name)}</span>
-            </div>
-            <span style={centerCol}>{t.matchesPlayed}</span>
-            <span style={centerCol}>{t.matchesWon}</span>
-            <span style={centerCol}>{t.matchesLost}</span>
-            <span
-              style={{
-                ...centerCol,
-                color:
-                  t.derived.netRunRate >= 0
-                    ? "var(--color-green-600)"
-                    : "var(--color-red-600)",
-                fontWeight: 600,
-              }}
-            >
-              {t.derived.netRunRate > 0 ? "+" : ""}
-              {t.derived.netRunRate}
+            <span className={styles.teamCell}>
+              <span className={styles.rank}>{index + 1}</span>
+              <span><strong>{formatName(team.teamName)}</strong><small>{number(team.timesWonChasing)} chase wins · {number(team.timesWonBattingFirst)} defend wins</small></span>
             </span>
-            {/* <span style={{ ...centerCol, fontWeight: 800, color: "var(--color-slate-800)" }}>{t.stats.points}</span> */}
-          </div>
-        ))
-      ) : (
-        <div style={empty}>No standings data available for this filter.</div>
-      )}
-    </div>
+            <span>{number(team.matchesPlayed)}</span>
+            <strong>{number(team.matchesWon)}</strong>
+            <span>{number(team.matchesLost)}</span>
+            <span>{number(team.matchesTied)}</span>
+            <span className={styles.winRate}>{number(team.winPercentage).toFixed(1)}</span>
+          </button>
+        ))}
+      </div>
+    </LeaderboardState>
   );
 }
-
-const container = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 10,
-};
-
-const headerRow = {
-  display: "flex",
-  padding: "10px 16px",
-  background: "var(--color-slate-100)",
-  borderRadius: 12,
-  fontSize: 12,
-  fontWeight: 700,
-  color: "var(--color-slate-500)",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-};
-
-const row = {
-  display: "flex",
-  alignItems: "center",
-  padding: "16px",
-  background: "white",
-  borderRadius: 16,
-  border: "1px solid var(--color-indigo-50)",
-  cursor: "pointer",
-  transition: "transform 0.2s",
-};
-
-const rank = {
-  fontSize: 12,
-  color: "var(--color-slate-400)",
-  fontWeight: 600,
-  width: 20,
-};
-
-const teamName = {
-  fontWeight: 700,
-  color: "var(--color-slate-800)",
-  fontSize: 15,
-};
-
-const centerCol = {
-  flex: 1,
-  textAlign: "center",
-  fontSize: 14,
-  color: "var(--color-slate-600)",
-};
-
-const loadingWrap = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  padding: "40px 0",
-};
-
-const spinner = {
-  width: 32,
-  height: 32,
-  border: "3px solid var(--color-slate-200)",
-  borderTop: "3px solid var(--color-indigo-600)",
-  borderRadius: "50%",
-  animation: "spin 0.8s linear infinite",
-};
-
-const loadingText = {
-  marginTop: 16,
-  color: "var(--color-slate-500)",
-  fontSize: 14,
-};
-
-const empty = {
-  textAlign: "center",
-  padding: "40px 20px",
-  color: "var(--color-slate-500)",
-  fontSize: 14,
-  background: "var(--color-slate-50)",
-  borderRadius: 16,
-  border: "1px dashed var(--color-slate-300)",
-};

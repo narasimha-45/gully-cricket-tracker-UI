@@ -90,7 +90,7 @@ export default function CreateMatch() {
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      schemaVersion: 2,
+      schemaVersion: 3,
       syncStatus: "local",
     };
 
@@ -130,7 +130,7 @@ export default function CreateMatch() {
             label="Team A"
             value={teamA}
             setValue={setTeamA}
-            otherSelectedId={teamB.name}
+            otherSelectedName={teamB.name}
             seasonId={seasonId}
             onSquadLoadingChange={setTeamALoading}
           />
@@ -139,7 +139,7 @@ export default function CreateMatch() {
             label="Team B"
             value={teamB}
             setValue={setTeamB}
-            otherSelectedId={teamA.name}
+            otherSelectedName={teamA.name}
             seasonId={seasonId}
             onSquadLoadingChange={setTeamBLoading}
           />

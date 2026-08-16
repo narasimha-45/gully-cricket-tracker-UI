@@ -1,38 +1,25 @@
 import { apiClient } from "./client";
 
 export const statsApi = {
-  // GET /api/stats/player/{playerId}
-  getPlayerProfile: (playerId) =>
-    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`),
+  getPlayerProfile: (playerId, options) =>
+    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, undefined, options),
 
-  // GET /api/stats/player/{playerId}/season/{seasonId}
-  getPlayerProfileBySeason: (playerId, seasonId) =>
-    apiClient.get(
-      `/stats/player/${encodeURIComponent(playerId)}/season/${encodeURIComponent(seasonId)}`,
-    ),
+  getPlayerProfileBySeason: (playerId, seasonId, options) =>
+    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, { seasonId }, options),
 
-  // GET /api/stats/team/{teamId}
-  getTeamProfile: (teamId, seasonId) =>
-    apiClient.get(`/stats/team/${encodeURIComponent(teamId)}`, { seasonId }),
+  getTeamProfile: (teamId, seasonId, options) =>
+    apiClient.get(`/stats/team/${encodeURIComponent(teamId)}`, { seasonId }, options),
 
-  // GET /api/stats/search/players?q=
-  searchPlayers: (query) =>
-    apiClient.get(`/stats/search/players`, { q: query }),
 
-  getBattingLeaderboard: (filters = {}) =>
-    apiClient.get(`/stats/leaderboard/batting`, filters),
+  getBattingLeaderboard: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/batting`, filters, options),
 
-  getBowlingLeaderboard: (filters = {}) =>
-    apiClient.get(`/stats/leaderboard/bowling`, filters),
+  getBowlingLeaderboard: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/bowling`, filters, options),
 
-  getFieldingLeaderboard: (filters = {}) =>
-    apiClient.get(`/stats/leaderboard/fielding`, filters),
+  getFieldingLeaderboard: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/fielding`, filters, options),
 
-  getTeamLeaderboard: (filters = {}) =>
-    apiClient.get(`/stats/leaderboard/teams`, filters),
-
-  getRivalryStats: (params) => apiClient.get(`/stats/rivalry`, params),
-
-  getHeadToHeadStats: (params) =>
-    apiClient.get(`/stats/head-to-head/player`, params),
+  getTeamLeaderboard: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/teams`, filters, options),
 };

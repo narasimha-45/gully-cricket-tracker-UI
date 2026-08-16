@@ -1,4 +1,5 @@
 import { openDB } from "idb";
+import { migrateStoredMatch } from "./matchSchema";
 
 const DB_NAME = "gully-cricket-db";
 const DB_VERSION = 2;
@@ -37,12 +38,14 @@ const cloneForStorage = (value) => {
 };
 
 const notifyMatchesChanged = (matchId) => {
+  if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent("gully:matches-changed", { detail: { matchId } }),
   );
 };
 
 const notifyPersistenceError = (error, matchId) => {
+  if (typeof window === "undefined") return;
   window.dispatchEvent(
     new CustomEvent("gully:local-save-error", {
       detail: { matchId, message: error?.message || "Local save failed" },
@@ -85,7 +88,7 @@ export async function getMatch(matchId) {
   const pending = pendingWrites.get(matchId);
   if (pending) await pending.catch(() => undefined);
   const db = await dbPromise;
-  return db.get(STORE, matchId);
+  return migrateStoredMatch(await db.get(STORE, matchId));
 }
 
 export function updateMatch(match) {
@@ -95,7 +98,8 @@ export function updateMatch(match) {
 export async function getMatchesBySeason(seasonId) {
   await Promise.allSettled([...pendingWrites.values()]);
   const db = await dbPromise;
-  return db.getAllFromIndex(STORE, "by-season", seasonId);
+  const matches = await db.getAllFromIndex(STORE, "by-season", seasonId);
+  return matches.map(migrateStoredMatch);
 }
 
 export async function deleteMatch(matchId) {
@@ -109,5 +113,6 @@ export async function deleteMatch(matchId) {
 export async function getAllMatches() {
   await Promise.allSettled([...pendingWrites.values()]);
   const db = await dbPromise;
-  return db.getAll(STORE);
+  const matches = await db.getAll(STORE);
+  return matches.map(migrateStoredMatch);
 }

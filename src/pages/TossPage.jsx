@@ -1,66 +1,103 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { getMatch, saveMatch } from "../storage/matchDB";
+import {
+  MatchSessionProvider,
+  useMatchSession,
+} from "../features/match/state/MatchSessionContext";
 import { formatName } from "../utils/helpers";
 import { createEmptyInnings, normalizeName } from "../utils/matchModel";
 import styles from "./TossPage.module.css";
 
+const initialUi = {
+  winnerKey: null,
+  decision: null,
+  isFlipping: false,
+  flipResult: null,
+  saving: false,
+  error: "",
+};
+
+function tossUiReducer(state, action) {
+  switch (action.type) {
+    case "winner":
+      return { ...state, winnerKey: action.value, error: "" };
+    case "decision":
+      return { ...state, decision: action.value, error: "" };
+    case "flip/start":
+      return { ...state, isFlipping: true, flipResult: null };
+    case "flip/result":
+      return { ...state, isFlipping: false, flipResult: action.value };
+    case "save/start":
+      return { ...state, saving: true, error: "" };
+    case "save/error":
+      return { ...state, saving: false, error: action.error || "Unable to save toss" };
+    default:
+      return state;
+  }
+}
+
 export default function TossPage() {
+  const { matchId } = useParams();
+  return (
+    <MatchSessionProvider matchId={matchId}>
+      <TossPageContent />
+    </MatchSessionProvider>
+  );
+}
+
+function TossPageContent() {
   const { seasonId, matchId } = useParams();
   const navigate = useNavigate();
   const timersRef = useRef([]);
+  const { phase, match, error: sessionError, persistReplacement } = useMatchSession();
+  const [ui, uiDispatch] = useReducer(tossUiReducer, initialUi);
 
-  const [match, setMatch] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [winnerKey, setWinnerKey] = useState(null);
-  const [decision, setDecision] = useState(null);
-  const [isFlipping, setIsFlipping] = useState(false);
-  const [flipResult, setFlipResult] = useState(null);
+  useEffect(
+    () => () => timersRef.current.forEach((timer) => clearTimeout(timer)),
+    [],
+  );
 
-  useEffect(() => {
-    getMatch(matchId)
-      .then(setMatch)
-      .finally(() => setLoading(false));
-
-    return () => timersRef.current.forEach(clearTimeout);
-  }, [matchId]);
-
-  if (loading) return <p className={styles.stateMessage}>Loading toss…</p>;
-  if (!match) return <p className={styles.stateMessage}>Match not found.</p>;
+  if (phase === "loading") return <p className={styles.stateMessage}>Loading toss…</p>;
+  if (phase === "error" || !match) {
+    return (
+      <p className={styles.stateMessage} role="alert">
+        {sessionError?.message || "Match not found on this device."}
+      </p>
+    );
+  }
 
   const teamAName = formatName(match.teams.teamA.name);
   const teamBName = formatName(match.teams.teamB.name);
-  const canProceed = Boolean(winnerKey && decision);
+  const canProceed = Boolean(ui.winnerKey && ui.decision && !ui.saving);
 
   const flipCoin = () => {
-    if (isFlipping) return;
-
-    setIsFlipping(true);
-    setFlipResult(null);
-
-    const resultTimer = setTimeout(() => {
-      setFlipResult(Math.random() <= 0.5 ? "heads" : "tails");
-      setIsFlipping(false);
-    }, 1500);
-
-    timersRef.current.push(resultTimer);
+    if (ui.isFlipping) return;
+    uiDispatch({ type: "flip/start" });
+    const timer = setTimeout(() => {
+      uiDispatch({
+        type: "flip/result",
+        value: crypto.getRandomValues(new Uint8Array(1))[0] % 2 === 0 ? "heads" : "tails",
+      });
+    }, 700);
+    timersRef.current.push(timer);
   };
 
   const handleProceed = async () => {
     if (!canProceed) return;
+    uiDispatch({ type: "save/start" });
 
-    const winnerTeam = match.teams[winnerKey];
-    const loserKey = winnerKey === "teamA" ? "teamB" : "teamA";
+    const winnerTeam = match.teams[ui.winnerKey];
+    const loserKey = ui.winnerKey === "teamA" ? "teamB" : "teamA";
     const loserTeam = match.teams[loserKey];
-    const battingTeam = decision === "bat" ? winnerTeam : loserTeam;
-    const bowlingTeam = decision === "bat" ? loserTeam : winnerTeam;
+    const battingTeam = ui.decision === "bat" ? winnerTeam : loserTeam;
+    const bowlingTeam = ui.decision === "bat" ? loserTeam : winnerTeam;
 
     const updatedMatch = {
       ...match,
       status: "LIVE",
       toss: {
         winner: normalizeName(winnerTeam.name),
-        decision,
+        decision: ui.decision,
       },
       innings: [
         createEmptyInnings({
@@ -84,8 +121,15 @@ export default function TossPage() {
       updatedAt: Date.now(),
     };
 
-    await saveMatch(updatedMatch);
-    navigate(`/season/${seasonId}/match/${matchId}/live`, { replace: true });
+    try {
+      await persistReplacement(updatedMatch);
+      navigate(`/season/${seasonId}/match/${matchId}/live`, { replace: true });
+    } catch (saveError) {
+      uiDispatch({
+        type: "save/error",
+        error: saveError?.message || "Could not save the toss on this device.",
+      });
+    }
   };
 
   return (
@@ -104,20 +148,20 @@ export default function TossPage() {
             <h2>Coin flip</h2>
             <p>Optional helper for deciding the toss.</p>
           </div>
-          {flipResult && (
-            <span className={styles.resultBadge}>{formatName(flipResult)}</span>
+          {ui.flipResult && (
+            <span className={styles.resultBadge}>{formatName(ui.flipResult)}</span>
           )}
         </div>
 
         <button
           type="button"
-          className={`${styles.coin} ${isFlipping ? styles.flipping : ""}`}
+          className={`${styles.coin} ${ui.isFlipping ? styles.flipping : ""}`}
           onClick={flipCoin}
-          disabled={isFlipping}
+          disabled={ui.isFlipping || ui.saving}
           aria-label="Flip coin"
         >
-          <span>🪙</span>
-          <strong>{isFlipping ? "Flipping" : flipResult || "Flip"}</strong>
+          <span aria-hidden="true">🪙</span>
+          <strong>{ui.isFlipping ? "Flipping" : ui.flipResult || "Flip"}</strong>
         </button>
       </section>
 
@@ -133,22 +177,26 @@ export default function TossPage() {
         <div className={styles.choiceGrid}>
           <button
             type="button"
-            className={winnerKey === "teamA" ? styles.selected : ""}
-            onClick={() => setWinnerKey("teamA")}
+            className={ui.winnerKey === "teamA" ? styles.selected : ""}
+            onClick={() => uiDispatch({ type: "winner", value: "teamA" })}
+            disabled={ui.saving}
+            aria-pressed={ui.winnerKey === "teamA"}
           >
             {teamAName}
           </button>
           <button
             type="button"
-            className={winnerKey === "teamB" ? styles.selected : ""}
-            onClick={() => setWinnerKey("teamB")}
+            className={ui.winnerKey === "teamB" ? styles.selected : ""}
+            onClick={() => uiDispatch({ type: "winner", value: "teamB" })}
+            disabled={ui.saving}
+            aria-pressed={ui.winnerKey === "teamB"}
           >
             {teamBName}
           </button>
         </div>
       </section>
 
-      <section className={`${styles.card} ${!winnerKey ? styles.muted : ""}`}>
+      <section className={`${styles.card} ${!ui.winnerKey ? styles.muted : ""}`}>
         <div className={styles.cardHeader}>
           <div>
             <h2>Toss decision</h2>
@@ -160,22 +208,26 @@ export default function TossPage() {
         <div className={styles.choiceGrid}>
           <button
             type="button"
-            className={decision === "bat" ? styles.selected : ""}
-            onClick={() => setDecision("bat")}
-            disabled={!winnerKey}
+            className={ui.decision === "bat" ? styles.selected : ""}
+            onClick={() => uiDispatch({ type: "decision", value: "bat" })}
+            disabled={!ui.winnerKey || ui.saving}
+            aria-pressed={ui.decision === "bat"}
           >
             🏏 Bat first
           </button>
           <button
             type="button"
-            className={decision === "bowl" ? styles.selected : ""}
-            onClick={() => setDecision("bowl")}
-            disabled={!winnerKey}
+            className={ui.decision === "bowl" ? styles.selected : ""}
+            onClick={() => uiDispatch({ type: "decision", value: "bowl" })}
+            disabled={!ui.winnerKey || ui.saving}
+            aria-pressed={ui.decision === "bowl"}
           >
             🔴 Bowl first
           </button>
         </div>
       </section>
+
+      {ui.error && <p className={styles.stateMessage} role="alert">{ui.error}</p>}
 
       <button
         type="button"
@@ -183,7 +235,7 @@ export default function TossPage() {
         disabled={!canProceed}
         onClick={handleProceed}
       >
-        Start match
+        {ui.saving ? "Saving match…" : "Start match"}
       </button>
     </main>
   );

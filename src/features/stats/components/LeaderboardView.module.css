@@ -1,0 +1,92 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.filterSummary { display: flex; flex-wrap: wrap; gap: 6px; min-width: 0; }
+.filterChip, .allChip, .warningChip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 5px 9px;
+  border-radius: var(--radius-full);
+  font-size: 10px;
+  font-weight: 800;
+}
+.filterChip { background: var(--color-indigo-50); color: var(--color-indigo-700); border: 1px solid var(--color-indigo-100); }
+.allChip { background: var(--color-slate-100); color: var(--color-slate-600); }
+.warningChip { background: var(--color-amber-50); color: var(--color-amber-900); border: 1px solid var(--color-amber-200); }
+
+.filterButton {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  border: 1px solid var(--color-slate-200);
+  border-radius: 11px;
+  background: var(--color-white);
+  color: var(--color-slate-700);
+  cursor: pointer;
+}
+.filterButton:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.sortButton {
+  width: 100%;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  cursor: pointer;
+}
+.activeSort { color: var(--color-indigo-700); }
+.sortDirection { font-size: 8px; }
+
+.resultsWrap { position: relative; }
+.refreshing {
+  position: sticky;
+  top: calc(var(--stats-header-top, 68px) + 2px);
+  z-index: 80;
+  width: max-content;
+  margin: 0 auto -22px;
+  padding: 4px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-slate-800);
+  color: white;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.errorCard {
+  display: grid;
+  justify-items: start;
+  gap: 7px;
+  padding: 18px;
+  border: 1px solid var(--color-red-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-red-50);
+  color: var(--color-red-800);
+}
+.errorCard span { font-size: 12px; line-height: 1.45; }
+.errorCard button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: var(--color-red-700);
+  color: white;
+  font-weight: 800;
+  cursor: pointer;
+}

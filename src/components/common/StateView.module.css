@@ -1,0 +1,4 @@
+.wrap { min-height: 160px; display: grid; place-items: center; gap: 10px; padding: 34px 18px; text-align: center; }
+.spinner { width: 30px; height: 30px; border: 3px solid var(--color-indigo-100); border-top-color: var(--color-indigo-600); border-radius: 50%; animation: spin .75s linear infinite; }
+.title { margin: 0; color: var(--color-text-primary); font-size: 15px; font-weight: 850; }
+.subtitle { max-width: 320px; margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.55; }

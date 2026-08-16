@@ -1,237 +1,69 @@
+import { useId } from "react";
+import { createPortal } from "react-dom";
+import { useDialogA11y } from "../hooks/useDialogA11y";
+import styles from "./MatchPopup.module.css";
+
 export default function MatchPopup({
   open,
   title,
   subtitle,
-
   primaryText,
-  primaryLoadingText = "Loading...",
+  primaryLoadingText = "Working…",
   loading = false,
   onPrimary,
-
   secondaryText,
   onSecondary,
-
   tertiaryText,
   onTertiary,
 }) {
-  if (!open) return null;
+  const titleId = useId();
+  const dialogRef = useDialogA11y(open, undefined);
 
-  return (
-    <div style={overlay}>
-      <div style={card}>
-        {/* TOP ACCENT */}
-        <div style={accentBar} />
+  if (!open || typeof document === "undefined") return null;
 
-        {/* TITLE */}
-        <h2 style={titleStyle}>{title}</h2>
+  return createPortal(
+    <div className={styles.overlay}>
+      <section
+        ref={dialogRef}
+        className={styles.card}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={subtitle ? `${titleId}-description` : undefined}
+        tabIndex={-1}
+      >
+        <div className={styles.accentBar} aria-hidden="true" />
+        <h2 id={titleId} className={styles.title}>{title}</h2>
+        {subtitle && (
+          <p id={`${titleId}-description`} className={styles.subtitle}>{subtitle}</p>
+        )}
 
-        {/* SUBTITLE */}
-        {subtitle && <p style={subtitleStyle}>{subtitle}</p>}
+        <div className={styles.actions}>
+          <button
+            type="button"
+            data-dialog-autofocus="true"
+            className={styles.primary}
+            disabled={loading}
+            onClick={onPrimary}
+          >
+            {loading && <span className={styles.spinner} aria-hidden="true" />}
+            <span>{loading ? primaryLoadingText : primaryText}</span>
+          </button>
 
-        {/* PRIMARY BUTTON */}
-        <button
-          style={{
-            ...primaryBtn,
-            opacity: loading ? 0.8 : 1,
-          }}
-          disabled={loading}
-          onClick={onPrimary}
-        >
-          {loading ? (
-            <div style={loaderRow}>
-              <div style={spinner}></div>
-              {primaryLoadingText}
-            </div>
-          ) : (
-            primaryText
+          {secondaryText && onSecondary && (
+            <button type="button" className={styles.secondary} disabled={loading} onClick={onSecondary}>
+              {secondaryText}
+            </button>
           )}
-        </button>
 
-        {/* SECONDARY */}
-        {secondaryText && onSecondary && (
-          <button style={secondaryBtn} onClick={onSecondary}>
-            {secondaryText}
-          </button>
-        )}
-
-        {tertiaryText && onTertiary && (
-          <button style={tertiaryBtn} onClick={onTertiary}>
-            {tertiaryText}
-          </button>
-        )}
-      </div>
-    </div>
+          {tertiaryText && onTertiary && (
+            <button type="button" className={styles.tertiary} disabled={loading} onClick={onTertiary}>
+              {tertiaryText}
+            </button>
+          )}
+        </div>
+      </section>
+    </div>,
+    document.body,
   );
 }
-
-/* ---------------- STYLES ---------------- */
-
-const overlay = {
-  position: "fixed",
-  inset: 0,
-
-  background: "rgba(15,23,42,0.42)",
-
-  backdropFilter: "blur(10px)",
-
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-
-  padding: 20,
-
-  zIndex: 100,
-};
-
-const card = {
-  width: "100%",
-  maxWidth: 360,
-
-  background: "rgba(255,255,255,0.96)",
-
-  borderRadius: 30,
-
-  padding: "0 26px 24px",
-
-  boxSizing: "border-box",
-
-  textAlign: "center",
-
-  boxShadow: "0 25px 60px rgba(15,23,42,0.18)",
-
-  overflow: "hidden",
-};
-
-const accentBar = {
-  height: 6,
-
-  width: 70,
-
-  borderRadius: 999,
-
-  margin: "18px auto 24px",
-
-  background:
-    "linear-gradient(90deg,var(--color-indigo-600),var(--color-indigo-500))",
-};
-
-const titleStyle = {
-  margin: 0,
-
-  fontSize: 28,
-
-  fontWeight: 700,
-
-  letterSpacing: -0.8,
-
-  color: "var(--color-slate-900)",
-
-  lineHeight: 1.2,
-};
-
-const subtitleStyle = {
-  marginTop: 14,
-
-  marginBottom: 0,
-
-  fontSize: 16,
-
-  fontWeight: 500,
-
-  color: "var(--color-slate-600)",
-
-  lineHeight: 1.6,
-};
-
-const primaryBtn = {
-  width: "100%",
-
-  height: 54,
-
-  marginTop: 28,
-
-  border: "none",
-
-  borderRadius: 18,
-
-  background:
-    "linear-gradient(135deg,var(--color-indigo-600),var(--color-indigo-700))",
-
-  color: "var(--color-white)",
-
-  fontSize: 15,
-
-  fontWeight: 700,
-
-  cursor: "pointer",
-
-  boxShadow: "0 10px 30px rgba(79,70,229,0.28)",
-
-  transition: "all 0.2s ease",
-};
-
-const secondaryBtn = {
-  width: "100%",
-
-  minHeight: 46,
-
-  marginTop: 12,
-
-  border: "1px solid var(--color-slate-200)",
-
-  borderRadius: 15,
-
-  background: "var(--color-white)",
-
-  color: "var(--color-slate-700)",
-
-  fontSize: 14,
-
-  fontWeight: 700,
-
-  cursor: "pointer",
-
-  padding: "10px 12px",
-
-  transition: "all 0.2s ease",
-};
-
-const tertiaryBtn = {
-  marginTop: 12,
-
-  border: "none",
-
-  background: "transparent",
-
-  color: "var(--color-slate-500)",
-
-  fontSize: 14,
-
-  fontWeight: 600,
-
-  cursor: "pointer",
-
-  padding: 6,
-
-  transition: "color 0.2s ease",
-};
-
-const loaderRow = {
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: 10,
-};
-
-const spinner = {
-  width: 16,
-  height: 16,
-
-  border: "2px solid rgba(255,255,255,0.35)",
-
-  borderTop: "2px solid var(--color-white)",
-
-  borderRadius: "50%",
-
-  animation: "spin 0.8s linear infinite",
-};

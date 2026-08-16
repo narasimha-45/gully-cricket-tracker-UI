@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import EditMatchSheet from "../components/EditMatchSheet";
 import InsightsTab from "../components/InsightsTab";
@@ -8,68 +8,48 @@ import MatchPopup from "../components/MatchPopup";
 import MatchSummaryTab from "../components/MatchSummaryTab";
 import OversTimeline from "../components/OversTimeline";
 import Scorecard from "../components/Scorecard";
-import { getMatch } from "../storage/matchDB";
-import { acknowledgeMatchResult } from "../utils/acknowledgeMatchResult";
-import { formatName } from "../utils/helpers";
-import { startNextInnings, startSuperOver } from "../utils/matchEvents";
+import MatchPersistenceStatus from "../features/match/components/MatchPersistenceStatus";
+import { finalizeAndSyncMatch } from "../features/match/services/finalizeMatch";
+import { MATCH_ACTIONS } from "../features/match/state/matchActions";
 import {
-  canEnforceFollowOn,
-  getFollowOnLead,
-} from "../utils/matchModel";
+  MatchSessionProvider,
+  useMatchSession,
+} from "../features/match/state/MatchSessionContext";
+import { formatName } from "../utils/helpers";
+import { canEnforceFollowOn, getFollowOnLead } from "../utils/matchModel";
 import { formatMatchResult } from "../utils/matchPresentation";
 import { recreateMatch } from "../utils/recreateMatch";
-import {
-  undoFromInningsPopup,
-  undoFromMatchPopup,
-} from "../utils/undos";
+import { logger } from "../observability/logger";
 import styles from "./LiveMatch.module.css";
 
 const tabs = ["live", "scorecard", "overs", "insights"];
 
 export default function LiveMatch() {
   const { matchId } = useParams();
+  return (
+    <MatchSessionProvider matchId={matchId}>
+      <LiveMatchContent />
+    </MatchSessionProvider>
+  );
+}
+
+function LiveMatchContent() {
   const navigate = useNavigate();
-  const [match, setMatch] = useState(undefined);
+  const { phase, match, dispatch, error } = useMatchSession();
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState("live");
-  const [extraMode, setExtraMode] = useState("NORMAL");
   const [ackSubmitting, setAckSubmitting] = useState(false);
+  const [finalizeError, setFinalizeError] = useState("");
 
-  useEffect(() => {
-    let active = true;
-
-    getMatch(matchId)
-      .then((storedMatch) => {
-        if (active) setMatch(storedMatch || null);
-      })
-      .catch(() => {
-        if (active) setMatch(null);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [matchId]);
-
-  useEffect(() => {
-    if (!match?.seasonId) return undefined;
-
-    const handlePopState = () =>
-      navigate(`/season/${match.seasonId}/matches`, { replace: true });
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, [match?.seasonId, navigate]);
-
-  if (match === undefined) {
+  if (phase === "loading") {
     return <p className={styles.stateMessage}>Loading match…</p>;
   }
 
-  if (!match) {
+  if (phase === "error" || !match) {
     return (
       <main className={styles.page}>
         <p className={`${styles.stateMessage} ${styles.errorState}`}>
-          Match not found on this device.
+          {error?.message || "Match not found on this device."}
         </p>
         <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
           ← Go back
@@ -84,11 +64,7 @@ export default function LiveMatch() {
         <p className={`${styles.stateMessage} ${styles.errorState}`}>
           Complete the toss before starting scoring.
         </p>
-        <button
-          type="button"
-          className={styles.backButton}
-          onClick={() => navigate(`/season/${match.seasonId}/matches`)}
-        >
+        <button type="button" className={styles.backButton} onClick={() => navigate(`/season/${match.seasonId}/matches`)}>
           ← Back to matches
         </button>
       </main>
@@ -109,23 +85,42 @@ export default function LiveMatch() {
     setEditOpen(true);
   };
 
+  const finishMatch = async () => {
+    if (ackSubmitting) return;
+    setAckSubmitting(true);
+    setFinalizeError("");
+    try {
+      await finalizeAndSyncMatch({ match, dispatch });
+      navigate(`/season/${match.seasonId}/matches`, { replace: true });
+    } catch (syncError) {
+      logger.error("match.finalize.failed", { matchId: match.id, error: syncError });
+      setFinalizeError(
+        "The final score could not be saved on this device. Keep this screen open and try again.",
+      );
+    } finally {
+      setAckSubmitting(false);
+    }
+  };
+
   return (
     <main className={styles.page}>
-      <EditMatchSheet
-        open={editOpen}
-        match={match}
-        onClose={() => setEditOpen(false)}
-        onSave={setMatch}
-      />
+      <EditMatchSheet open={editOpen} onClose={() => setEditOpen(false)} />
 
-      <button
-        type="button"
-        className={styles.backButton}
-        onClick={() => navigate(`/season/${match.seasonId}/matches`)}
-      >
-        ← Back to matches
-      </button>
+      <div className={styles.topRow}>
+        <button type="button" className={styles.backButton} onClick={() => navigate(`/season/${match.seasonId}/matches`)}>
+          ← Matches
+        </button>
+        <span className={styles.liveBadge}>{match.status === "LIVE" ? "Live scoring" : "Match complete"}</span>
+      </div>
 
+      <MatchPersistenceStatus />
+      {finalizeError && (
+        <div className={styles.finalizeError} role="alert">
+          <strong>Finish match needs attention</strong>
+          <span>{finalizeError}</span>
+          <button type="button" onClick={() => setFinalizeError("")}>Dismiss</button>
+        </div>
+      )}
       <MatchHero match={match} onAction={handleHeroAction} />
 
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
@@ -140,16 +135,11 @@ export default function LiveMatch() {
           <button
             key={item}
             type="button"
-            className={`${styles.tabButton} ${
-              tab === item ? styles.activeTab : ""
-            }`}
+            className={`${styles.tabButton} ${tab === item ? styles.activeTab : ""}`}
             onClick={() => setTab(item)}
+            aria-current={tab === item ? "page" : undefined}
           >
-            {item === "live"
-              ? match.status === "COMPLETED"
-                ? "Summary"
-                : "Live"
-              : formatName(item)}
+            {item === "live" ? (match.status === "COMPLETED" ? "Summary" : "Live") : formatName(item)}
           </button>
         ))}
       </nav>
@@ -157,70 +147,37 @@ export default function LiveMatch() {
       {tab === "scorecard" && <Scorecard match={match} />}
       {tab === "overs" && <OversTimeline match={match} />}
       {tab === "insights" && <InsightsTab match={match} />}
-      {tab === "live" && match.status === "COMPLETED" && (
-        <MatchSummaryTab match={match} />
-      )}
-      {tab === "live" && match.status === "LIVE" && (
-        <LiveScoringPanel
-          match={match}
-          setMatch={setMatch}
-          extraMode={extraMode}
-          setExtraMode={setExtraMode}
-        />
-      )}
+      {tab === "live" && match.status === "COMPLETED" && <MatchSummaryTab match={match} />}
+      {tab === "live" && match.status === "LIVE" && <LiveScoringPanel />}
 
       {match.status === "COMPLETED" && match.result && (
         <MatchPopup
           open={!match.ui?.matchResultSeen}
           title={formatMatchResult(match.result)}
-          subtitle="Review the scorecard or undo the final scoring action before finishing."
+          subtitle="The score is already safe on this device. Finish to sync the completed match when a connection is available."
           primaryText="Finish match"
           primaryLoadingText="Finalizing…"
           loading={ackSubmitting}
-          onPrimary={() =>
-            acknowledgeMatchResult(
-              match,
-              setMatch,
-              setAckSubmitting,
-              ackSubmitting,
-              () => navigate(`/season/${match.seasonId}/matches`, { replace: true }),
-            )
-          }
+          onPrimary={finishMatch}
           secondaryText="Undo last action"
-          onSecondary={() => undoFromMatchPopup(match, setMatch, setExtraMode)}
+          onSecondary={() => dispatch({ type: MATCH_ACTIONS.UNDO, payload: { allowCompleted: true } })}
         />
       )}
 
       <MatchPopup
         open={Boolean(live.pendingNextInnings)}
         title="Innings complete"
-        subtitle={`${formatName(currentInnings.battingTeam)} finished on ${
-          currentInnings.totalRuns
-        }-${currentInnings.wickets}${
-          currentInnings.completionReason === "DECLARED" ? " declared" : ""
-        }.${
-          followOnAvailable
-            ? ` ${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} and may enforce the follow-on.`
-            : ""
-        }`}
+        subtitle={`${formatName(currentInnings.battingTeam)} finished on ${currentInnings.totalRuns}-${currentInnings.wickets}${currentInnings.completionReason === "DECLARED" ? " declared" : ""}.${followOnAvailable ? ` ${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} and may enforce the follow-on.` : ""}`}
         primaryText={`Start innings ${nextInningsIndex + 1}`}
-        onPrimary={() => startNextInnings({ match, setMatch })}
-        secondaryText={
-          followOnAvailable
-            ? `Enforce follow-on · Start innings ${nextInningsIndex + 1}`
-            : "Undo last action"
-        }
+        onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_NEXT_INNINGS })}
+        secondaryText={followOnAvailable ? `Enforce follow-on · Start innings ${nextInningsIndex + 1}` : "Undo last action"}
         onSecondary={
           followOnAvailable
-            ? () => startNextInnings({ match, setMatch, followOn: true })
-            : () => undoFromInningsPopup({ match, setMatch, setExtraMode })
+            ? () => dispatch({ type: MATCH_ACTIONS.START_NEXT_INNINGS, payload: { followOn: true } })
+            : () => dispatch({ type: MATCH_ACTIONS.UNDO, payload: { allowCompleted: true } })
         }
         tertiaryText={followOnAvailable ? "Undo last action" : null}
-        onTertiary={
-          followOnAvailable
-            ? () => undoFromInningsPopup({ match, setMatch, setExtraMode })
-            : null
-        }
+        onTertiary={followOnAvailable ? () => dispatch({ type: MATCH_ACTIONS.UNDO, payload: { allowCompleted: true } }) : null}
       />
 
       <MatchPopup
@@ -228,11 +185,9 @@ export default function LiveMatch() {
         title="Match tied"
         subtitle="Scores are level. Start a Super Over to decide the winner."
         primaryText="Start Super Over"
-        onPrimary={() => startSuperOver({ match, setMatch })}
+        onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_SUPER_OVER })}
         secondaryText="Undo last action"
-        onSecondary={() =>
-          undoFromInningsPopup({ match, setMatch, setExtraMode })
-        }
+        onSecondary={() => dispatch({ type: MATCH_ACTIONS.UNDO, payload: { allowCompleted: true } })}
       />
     </main>
   );
