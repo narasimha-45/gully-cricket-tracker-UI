@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import InsightsTab from "../components/InsightsTab";
 import MatchHero from "../components/MatchHero";
+import LoadingState from "../components/common/LoadingState";
 import MatchSummaryTab from "../components/MatchSummaryTab";
 import OversTimeline from "../components/OversTimeline";
 import Scorecard from "../components/Scorecard";
@@ -92,18 +93,7 @@ export default function MatchSummary() {
   };
 
   if (loading) {
-    return (
-      <div className={styles.loadingPage}>
-        <div className={styles.loadingCard}>
-          <div className={styles.pulseIcon}>🏏</div>
-          <strong>Getting match summary</strong>
-          <p>Loading scorecard, innings, and match insights…</p>
-          <div className={styles.loaderTrack}>
-            <span className={styles.loaderBar} />
-          </div>
-        </div>
-      </div>
-    );
+    return <LoadingState label="Loading match summary…" />;
   }
 
   if (!match || isError) {

@@ -1,4 +1,51 @@
-.wrap { min-height: 160px; display: grid; place-items: center; gap: 10px; padding: 34px 18px; text-align: center; }
-.spinner { width: 30px; height: 30px; border: 3px solid var(--color-indigo-100); border-top-color: var(--color-indigo-600); border-radius: 50%; animation: spin .75s linear infinite; }
-.title { margin: 0; color: var(--color-text-primary); font-size: 15px; font-weight: 850; }
-.subtitle { max-width: 320px; margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.55; }
+.wrap {
+  min-height: 132px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  text-align: center;
+}
+.compact { min-height: 88px; padding: 16px 12px; }
+.ball {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  display: block;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #b91c1c;
+  box-shadow: inset -4px -4px 7px rgba(69, 10, 10, .18), 0 2px 7px rgba(15, 23, 42, .12);
+  animation: cricketBallSpin .9s linear infinite;
+}
+.seam,
+.seam::before,
+.seam::after {
+  position: absolute;
+  content: "";
+  display: block;
+}
+.seam {
+  width: 23px;
+  height: 32px;
+  left: 1px;
+  top: -3px;
+  border-left: 2px solid rgba(255, 255, 255, .92);
+  border-radius: 50%;
+  transform: rotate(18deg);
+}
+.seam::before,
+.seam::after {
+  width: 3px;
+  height: 1px;
+  left: -3px;
+  background: rgba(255, 255, 255, .75);
+  box-shadow: 0 4px 0 rgba(255, 255, 255, .75), 0 8px 0 rgba(255, 255, 255, .75), 0 12px 0 rgba(255, 255, 255, .75), 0 16px 0 rgba(255, 255, 255, .75), 0 20px 0 rgba(255, 255, 255, .75);
+}
+.seam::before { top: 5px; transform: rotate(-24deg); }
+.seam::after { top: 7px; left: 0; transform: rotate(24deg); }
+.title { margin: 0; color: var(--color-text-primary); font-size: 14px; font-weight: 700; }
+.subtitle { max-width: 320px; margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.45; }
+@keyframes cricketBallSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ball { animation: none; } }

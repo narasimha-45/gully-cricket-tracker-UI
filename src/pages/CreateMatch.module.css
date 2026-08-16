@@ -1,252 +1,33 @@
-.page {
-  width: 100%;
-  margin: 0 auto;
-  padding: 20px 0 24px;
-}
-
-.header {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 22px;
-}
-
-.backButton {
-  width: 42px;
-  height: 42px;
-  border-radius: 14px;
-  border: 1px solid var(--color-slate-200);
-  background: var(--color-white);
-  color: var(--color-slate-800);
-  font-size: 20px;
-  cursor: pointer;
-}
-
-.headerCopy {
-  min-width: 0;
-  flex: 1;
-}
-
-.headerCopy h1 {
-  margin: 0;
-  color: var(--color-slate-900);
-  font-size: clamp(24px, 5vw, 30px);
-  line-height: 1.1;
-}
-
-.headerCopy p,
-.sectionHeading p {
-  margin: 5px 0 0;
-  color: var(--color-slate-500);
-  font-size: 13px;
-}
-
-.seasonBadge {
-  border-radius: 999px;
-  padding: 7px 11px;
-  background: var(--color-indigo-50);
-  color: var(--color-indigo-700);
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.card {
-  margin-bottom: 16px;
-  padding: 20px;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 22px;
-  background: var(--color-white);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.05);
-}
-
-.sectionHeading {
-  display: flex;
-  align-items: flex-start;
-  gap: 11px;
-  margin-bottom: 18px;
-}
-
-.sectionHeading > span {
-  font-size: 21px;
-}
-
-.sectionHeading h2 {
-  margin: 0;
-  color: var(--color-slate-800);
-  font-size: 16px;
-}
-
-.teamGrid {
-  display: grid;
-  gap: 10px;
-}
-
-.vs {
-  justify-self: center;
-  color: var(--color-slate-400);
-  font-size: 11px;
-  font-weight: 900;
-  letter-spacing: 0.2em;
-}
-
-.segmentedControl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 5px;
-  padding: 5px;
-  border-radius: 14px;
-  background: var(--color-slate-100);
-}
-
-.segmentedControl button,
-.optionGrid button {
-  border: 1px solid transparent;
-  background: transparent;
-  cursor: pointer;
-}
-
-.segmentedControl button {
-  min-height: 44px;
-  border-radius: 11px;
-  color: var(--color-slate-600);
-  font-size: 13px;
-  font-weight: 750;
-}
-
-.segmentedControl button.active {
-  border-color: var(--color-slate-200);
-  background: var(--color-white);
-  color: var(--color-indigo-700);
-  box-shadow: 0 3px 9px rgba(15, 23, 42, 0.08);
-}
-
-.field {
-  display: grid;
-  gap: 8px;
-  margin-top: 18px;
-  color: var(--color-slate-600);
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.field input {
-  width: 140px;
-  min-height: 46px;
-  border: 1px solid var(--color-slate-200);
-  border-radius: 13px;
-  background: var(--color-slate-50);
-  color: var(--color-slate-900);
-  font-size: 16px;
-  font-weight: 800;
-  text-align: center;
-}
-
-.testOptions {
-  margin-top: 18px;
-}
-
-.fieldLabel {
-  display: grid;
-  gap: 3px;
-  margin-bottom: 10px;
-}
-
-.fieldLabel strong {
-  color: var(--color-slate-700);
-  font-size: 13px;
-}
-
-.fieldLabel span {
-  color: var(--color-slate-500);
-  font-size: 12px;
-}
-
-.optionGrid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.optionGrid button {
-  display: grid;
-  gap: 4px;
-  min-height: 76px;
-  padding: 13px;
-  border-color: var(--color-slate-200);
-  border-radius: 14px;
-  background: var(--color-slate-50);
-  color: var(--color-slate-700);
-  text-align: left;
-}
-
-.optionGrid button span {
-  color: var(--color-slate-500);
-  font-size: 11px;
-}
-
-.optionGrid button.selectedOption {
-  border-color: var(--color-indigo-500);
-  background: var(--color-indigo-50);
-  color: var(--color-indigo-800);
-  box-shadow: inset 0 0 0 1px var(--color-indigo-200);
-}
-
-.footer {
-  position: sticky;
-  z-index: 20;
-  bottom: 10px;
-  width: 100%;
-  margin-top: 18px;
-  padding: 9px;
-  border: 1px solid rgba(226, 232, 240, 0.95);
-  border-radius: 17px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.12);
-  backdrop-filter: blur(12px);
-}
-
-.validation {
-  margin: 0 0 7px;
-  color: var(--color-red-600);
-  font-size: 12px;
-  font-weight: 700;
-  text-align: center;
-}
-
-.primaryButton {
-  width: 100%;
-  min-height: 52px;
-  border: none;
-  border-radius: 14px;
-  background: linear-gradient(135deg, var(--color-indigo-600), var(--color-indigo-700));
-  color: var(--color-white);
-  font-size: 15px;
-  font-weight: 800;
-  cursor: pointer;
-  box-shadow: 0 10px 22px rgba(79, 70, 229, 0.24);
-}
-
-.primaryButton:disabled {
-  background: var(--color-slate-200);
-  color: var(--color-slate-400);
-  box-shadow: none;
-  cursor: not-allowed;
-}
-
-@media (max-width: 440px) {
-  .card {
-    padding: 17px;
-  }
-
-  .optionGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .seasonBadge {
-    display: none;
-  }
-}
+.page { width: 100%; margin: 0 auto; padding: 4px 0 18px; }
+.header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.backButton { width: 36px; height: 36px; display: grid; place-items: center; border: 1px solid var(--color-border); border-radius: 9px; background: white; color: var(--color-slate-800); font-size: 18px; cursor: pointer; }
+.headerCopy { min-width: 0; flex: 1; }
+.headerCopy h1 { margin: 0; color: var(--color-slate-900); font-size: 21px; line-height: 1.15; }
+.headerCopy p, .sectionHeading p { margin: 3px 0 0; color: var(--color-slate-500); font-size: 11px; }
+.seasonBadge { border-radius: 999px; padding: 5px 8px; background: var(--color-indigo-50); color: var(--color-indigo-700); font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; }
+.card { margin-bottom: 10px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: white; box-shadow: var(--shadow-xs); }
+.sectionHeading { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 12px; }
+.sectionHeading > span { font-size: 18px; }
+.sectionHeading h2 { margin: 0; color: var(--color-slate-800); font-size: 14px; }
+.teamGrid { display: grid; gap: 8px; }
+.vs { justify-self: center; color: var(--color-slate-400); font-size: 9px; font-weight: 700; letter-spacing: .18em; }
+.segmentedControl { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 10px; background: var(--color-slate-100); }
+.segmentedControl button, .optionGrid button { border: 1px solid transparent; background: transparent; cursor: pointer; }
+.segmentedControl button { min-height: 40px; border-radius: 8px; color: var(--color-slate-600); font-size: 12px; font-weight: 600; }
+.segmentedControl button.active { border-color: var(--color-border); background: white; color: var(--color-indigo-700); box-shadow: var(--shadow-xs); font-weight: 700; }
+.field { display: grid; gap: 6px; margin-top: 12px; color: var(--color-slate-600); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+.field input { width: 126px; min-height: 40px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-slate-50); color: var(--color-slate-900); font-size: 14px; font-weight: 700; text-align: center; }
+.testOptions { margin-top: 12px; }
+.fieldLabel { display: grid; gap: 2px; margin-bottom: 8px; }
+.fieldLabel strong { color: var(--color-slate-700); font-size: 12px; }
+.fieldLabel span { color: var(--color-slate-500); font-size: 10px; }
+.optionGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.optionGrid button { display: grid; gap: 3px; min-height: 62px; padding: 10px; border-color: var(--color-border); border-radius: 10px; background: var(--color-slate-50); color: var(--color-slate-700); text-align: left; font-size: 12px; }
+.optionGrid button span { color: var(--color-slate-500); font-size: 9px; }
+.optionGrid button.selectedOption { border-color: var(--color-indigo-300); background: var(--color-indigo-50); color: var(--color-indigo-800); box-shadow: inset 0 0 0 1px var(--color-indigo-100); }
+.footer { position: sticky; z-index: 20; bottom: 8px; width: 100%; margin-top: 12px; padding: 7px; border: 1px solid var(--color-border); border-radius: 12px; background: rgba(255,255,255,.96); box-shadow: var(--shadow-md); backdrop-filter: blur(10px); }
+.validation { margin: 0 0 5px; color: var(--color-red-600); font-size: 10px; font-weight: 600; text-align: center; }
+.primaryButton { width: 100%; min-height: 46px; border: 0; border-radius: 10px; background: var(--color-indigo-600); color: white; font-size: 13px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(79,70,229,.16); }
+.primaryButton:disabled { background: var(--color-slate-200); color: var(--color-slate-400); box-shadow: none; cursor: not-allowed; }
+@media (max-width: 440px) { .card { padding: 12px; } .seasonBadge { display: none; } }
+@media (max-width: 340px) { .optionGrid { grid-template-columns: 1fr; } }

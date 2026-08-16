@@ -1,98 +1,14 @@
-.summaryWrapper {
-  display: grid;
-  gap: 10px;
-}
-
-.summarySection {
-  background: white;
-  border-radius: 18px;
-  padding: 14px;
-  border: 1px solid var(--color-slate-100);
-  margin-bottom: 10px;
-}
-
-.summaryHeaderRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 12px;
-}
-
-.summaryLabel {
-  font-size: 11px;
-  font-weight: 800;
-  color: var(--color-indigo-600);
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-}
-
-.summaryTeam {
-  font-size: 18px;
-  font-weight: 800;
-  margin-top: 2px;
-  color: var(--color-slate-900);
-}
-
-.summaryScore {
-  text-align: right;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--color-slate-900);
-  line-height: 1;
-}
-
-.summaryOvers {
-  margin-top: 3px;
-  font-size: 12px;
-  color: var(--color-slate-500);
-}
-
-.summaryStatsGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-top: 6px;
-}
-
-.summaryMiniTitle {
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--color-slate-400);
-  margin-bottom: 8px;
-}
-
-.summaryCompactRow {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 5px 0;
-  gap: 10px;
-}
-
-.summaryHeading {
-  font-size: 14px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .04em;
-  color: var(--color-indigo-700);
-}
-
-.summaryCompactName {
-  font-size: 15px;
-  font-weight: 450;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-  color: var(--color-slate-900);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.summaryCompactValue {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-slate-900);
-  white-space: nowrap;
-}
+.summaryWrapper { display: grid; gap: 8px; }
+.summarySection { margin: 0; padding: 11px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-white); }
+.summaryHeaderRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 9px; }
+.summaryLabel { color: var(--color-indigo-600); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.summaryTeam { margin-top: 2px; color: var(--color-slate-900); font-size: 15px; font-weight: 700; }
+.summaryScore { color: var(--color-slate-900); font-size: 16px; font-weight: 700; line-height: 1.1; text-align: right; font-variant-numeric: tabular-nums; }
+.summaryOvers { margin-top: 2px; color: var(--color-slate-500); font-size: 10px; }
+.summaryStatsGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 4px; }
+.summaryMiniTitle { margin-bottom: 5px; color: var(--color-slate-500); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.summaryCompactRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 28px; padding: 3px 0; border-top: 1px solid var(--color-slate-100); }
+.summaryHeading { color: var(--color-indigo-700); font-size: 11px; font-weight: 700; }
+.summaryCompactName { min-width: 0; overflow: hidden; color: var(--color-slate-800); font-size: 11px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.summaryCompactValue { color: var(--color-slate-900); font-size: 11px; font-weight: 700; white-space: nowrap; }
+@media (max-width: 360px) { .summaryStatsGrid { grid-template-columns: 1fr; gap: 8px; } }

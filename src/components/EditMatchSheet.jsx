@@ -142,8 +142,17 @@ export default function EditMatchSheet({ open, onClose }) {
 function RuleToggle({ title, description, checked, onChange }) {
   return (
     <label className={styles.settingsRow}>
-      <span><strong>{title}</strong><small>{description}</small></span>
-      <input type="checkbox" checked={checked} onChange={(event) => onChange(event.target.checked)} />
+      <span className={styles.settingCopy}><strong>{title}</strong><small>{description}</small></span>
+      <span className={styles.switchControl}>
+        <input
+          className={styles.switchInput}
+          type="checkbox"
+          checked={checked}
+          onChange={(event) => onChange(event.target.checked)}
+          aria-label={title}
+        />
+        <span className={styles.switchTrack} aria-hidden="true"><span className={styles.switchThumb} /></span>
+      </span>
     </label>
   );
 }

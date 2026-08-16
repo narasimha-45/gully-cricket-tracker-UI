@@ -1,54 +1,30 @@
 .page { display: flex; flex-direction: column; gap: 8px; }
-.table { display: grid; gap: 8px; }
-.header, .row {
-  display: grid;
-  align-items: center;
-  gap: 4px;
-}
-.battingGrid { grid-template-columns: minmax(110px, 2.4fr) repeat(6, minmax(38px, 1fr)); }
-.bowlingGrid { grid-template-columns: minmax(110px, 2.4fr) repeat(6, minmax(38px, 1fr)); }
+.table { display: grid; gap: 6px; width: 100%; }
+.header, .row { display: grid; align-items: center; gap: 2px; }
+.battingGrid, .bowlingGrid { grid-template-columns: minmax(94px, 2.2fr) repeat(6, minmax(30px, .72fr)); }
 .header {
   position: sticky;
-  top: var(--stats-header-top, 68px);
+  top: var(--stats-header-top, 158px);
   z-index: 60;
-  margin: 0 -10px;
-  padding: 9px 12px;
-  border-bottom: 1px solid var(--color-slate-200);
-  background: color-mix(in srgb, var(--color-background) 94%, transparent);
-  backdrop-filter: blur(14px);
+  min-height: 34px;
+  padding: 6px 8px;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: rgba(247, 248, 251, .97);
+  backdrop-filter: blur(10px);
   color: var(--color-slate-500);
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 9px;
+  font-weight: 700;
 }
-.playerHeader { text-align: left; padding-left: 5px; }
-.row {
-  min-height: 54px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-slate-100);
-  border-radius: 14px;
-  background: var(--color-white);
-  box-shadow: var(--shadow-sm);
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-.playerButton {
-  min-width: 0;
-  overflow: hidden;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--color-indigo-700);
-  font-weight: 800;
-  text-align: left;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: pointer;
-}
-.stat { text-align: center; color: var(--color-slate-700); font-weight: 700; }
-.primaryStat { color: var(--color-slate-900); font-weight: 900; }
-.secondary { display: block; color: var(--color-slate-400); font-size: 9px; font-weight: 700; margin-top: 2px; }
-
-@media (max-width: 520px) {
-  .table { overflow-x: auto; padding-bottom: 4px; }
-  .header, .row { min-width: 600px; }
+.playerHeader { text-align: left; padding-left: 3px; }
+.row { min-height: 50px; padding: 7px 8px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-white); box-shadow: var(--shadow-xs); font-size: 10px; font-variant-numeric: tabular-nums; }
+.playerButton { min-width: 0; overflow: hidden; padding: 0; border: 0; background: transparent; color: var(--color-indigo-700); font-size: 11px; font-weight: 700; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.stat { text-align: center; color: var(--color-slate-700); font-weight: 600; }
+.primaryStat { color: var(--color-slate-900); font-weight: 800; }
+.secondary { display: block; margin-top: 1px; color: var(--color-slate-400); font-size: 8px; font-weight: 500; }
+@media (max-width: 360px) {
+  .battingGrid, .bowlingGrid { grid-template-columns: minmax(82px, 2fr) repeat(6, minmax(27px, .7fr)); }
+  .header, .row { padding-inline: 5px; }
+  .row { font-size: 9px; }
+  .playerButton { font-size: 10px; }
 }

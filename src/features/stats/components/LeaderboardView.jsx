@@ -1,6 +1,5 @@
 import { Filter, RefreshCw } from "lucide-react";
 import EmptyState from "../../../components/common/EmptyState";
-import LoadingState from "../../../components/common/LoadingState";
 import styles from "./LeaderboardView.module.css";
 
 export function LeaderboardToolbar({ activeLabels, onOpenFilters, filtersDisabled, warning }) {
@@ -29,7 +28,7 @@ export function SortButton({ label, column, activeColumn, direction, onSort, ari
 }
 
 export function LeaderboardState({ loading, fetching, error, empty, onRetry, emptyTitle, emptySubtitle, children }) {
-  if (loading && empty) return <LoadingState label="Loading statistics…" />;
+  if (loading && empty) return <StatsSkeleton />;
   if (error && empty) {
     return (
       <div className={styles.errorCard} role="alert">
@@ -44,6 +43,25 @@ export function LeaderboardState({ loading, fetching, error, empty, onRetry, emp
     <div className={styles.resultsWrap} aria-busy={fetching}>
       {fetching && <div className={styles.refreshing} role="status">Refreshing…</div>}
       {children}
+    </div>
+  );
+}
+
+function StatsSkeleton() {
+  return (
+    <div className={styles.skeletonList} role="status" aria-label="Loading statistics">
+      <div className={styles.skeletonHeader} />
+      {[0, 1, 2, 3, 4].map((row) => (
+        <div className={styles.skeletonRow} key={row}>
+          <span className={styles.skeletonRank} />
+          <span className={styles.skeletonCopy}>
+            <span className={styles.skeletonName} />
+            <span className={styles.skeletonMeta} />
+          </span>
+          <span className={styles.skeletonStat} />
+        </div>
+      ))}
+      <span className={styles.srOnly}>Loading statistics…</span>
     </div>
   );
 }

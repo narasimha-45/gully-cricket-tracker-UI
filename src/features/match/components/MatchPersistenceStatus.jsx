@@ -14,7 +14,7 @@ export default function MatchPersistenceStatus() {
     <div className={styles.bar} role="status" aria-live="polite">
       <span className={`${styles.item} ${online ? styles.online : styles.offline}`}>
         {online ? <CheckCircle2 size={14} /> : <CloudOff size={14} />}
-        {online ? "Online" : "Offline scoring"}
+        {online ? "Online" : "Offline"}
       </span>
       <span className={`${styles.item} ${isError ? styles.error : ""}`}>
         {isSaving ? (
@@ -24,7 +24,7 @@ export default function MatchPersistenceStatus() {
         ) : (
           <CheckCircle2 size={14} />
         )}
-        {isSaving ? "Saving on device…" : isError ? "Local save needs attention" : "Saved on device"}
+        {isSaving ? "Saving locally…" : isError ? "Save failed" : "Saved locally"}
       </span>
     </div>
   );
