@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { api, unwrapApiData } from "../api";
-import {
-  MatchSessionProvider,
-  useMatchSession,
-} from "../features/match/state/MatchSessionContext";
+import { MatchSessionProvider } from "../features/match/state/MatchSessionContext.jsx";
+import { useMatchSession } from "../features/match/state/useMatchSession";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
 import { useDebouncedValue } from "../hooks/useDebouncedValue";
 import { usePlayerSearch } from "../hooks/queries";

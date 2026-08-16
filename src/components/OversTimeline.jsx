@@ -30,6 +30,45 @@ function getInningsFullLabel(match, innings, index) {
   return `Super Over ${soNumber} — ${formatName(innings.battingTeam)}`;
 }
 
+function buildOversTimeline(ballByBall) {
+  let cumulativeRuns = 0;
+  let cumulativeWickets = 0;
+  const groupedOvers = {};
+
+  for (const ball of ballByBall) {
+    if (ball.type === "RETIRE") continue;
+
+    const overNum = ball.over;
+    const over = groupedOvers[overNum] || {
+      overNum,
+      bowler: ball.bowler,
+      facingBatters: new Set(),
+      balls: [],
+      overRuns: 0,
+      overWickets: 0,
+      scoreAfterOver: "",
+    };
+
+    over.balls.push(ball);
+    over.overRuns += Number(ball.runs || 0);
+    cumulativeRuns += Number(ball.runs || 0);
+
+    if (ball.type !== "WIDE") {
+      over.facingBatters.add(ball.striker);
+    }
+
+    if (ball.isWicket) {
+      over.overWickets += 1;
+      cumulativeWickets += 1;
+    }
+
+    over.scoreAfterOver = `${cumulativeRuns}-${cumulativeWickets}`;
+    groupedOvers[overNum] = over;
+  }
+
+  return Object.values(groupedOvers).reverse();
+}
+
 /* ─────────────────────────────────────────────────────────────
    Main component
 ───────────────────────────────────────────────────────────── */
@@ -121,45 +160,7 @@ function InningsTimeline({ match, innings }) {
     );
   }
 
-  // Group balls by over
-  let cumulativeRuns = 0;
-  let cumulativeWickets = 0;
-
-  const groupedOvers = innings.ballByBall.reduce((acc, ball) => {
-    if (ball.type === "RETIRE") {
-      return acc;
-    }
-    const overNum = ball.over;
-    if (!acc[overNum]) {
-      acc[overNum] = {
-        overNum,
-        bowler: ball.bowler,
-        facingBatters: new Set(),
-        balls: [],
-        overRuns: 0,
-        overWickets: 0,
-        scoreAfterOver: "",
-      };
-    }
-
-    acc[overNum].balls.push(ball);
-    acc[overNum].overRuns += ball.runs;
-    cumulativeRuns += ball.runs;
-
-    if (ball.type !== "WIDE") {
-      acc[overNum].facingBatters.add(ball.striker);
-    }
-
-    if (ball.isWicket) {
-      acc[overNum].overWickets += 1;
-      cumulativeWickets += 1;
-    }
-
-    acc[overNum].scoreAfterOver = `${cumulativeRuns}-${cumulativeWickets}`;
-    return acc;
-  }, {});
-
-  const overs = Object.values(groupedOvers).reverse();
+  const overs = buildOversTimeline(innings.ballByBall);
 
   const toggleExpand = (overNum) =>
     setExpandedOver(expandedOver === overNum ? null : overNum);

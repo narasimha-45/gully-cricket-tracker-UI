@@ -2,10 +2,18 @@ import BottomSheetSelector from "./BottomSheetSelector";
 import { formatName } from "../utils/helpers";
 import { getPlayersForTeam } from "../utils/matchModel";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
-import { useMatchSession } from "../features/match/state/MatchSessionContext";
+import { useMatchSession } from "../features/match/state/useMatchSession";
 import styles from "./WicketSheet.module.css";
 
-const WICKET_TYPES = ["BOWLED", "CAUGHT", "LBW", "STUMPED", "RUN_OUT", "HIT_WICKET", "SPECIAL"];
+const WICKET_TYPES = [
+  "BOWLED",
+  "CAUGHT",
+  "LBW",
+  "STUMPED",
+  "RUN_OUT",
+  "HIT_WICKET",
+  "SPECIAL",
+];
 const ALLOWED_ON_NO_BALL = new Set(["RUN_OUT"]);
 const ALLOWED_ON_WIDE = new Set(["RUN_OUT", "STUMPED"]);
 
@@ -16,7 +24,12 @@ const isAllowedForExtra = (wicketType, extraMode) => {
   return true;
 };
 
-const initialWicketUi = { open: false, type: null, helper: null, runOut: { outBatsman: null, runs: 0 } };
+const initialWicketUi = {
+  open: false,
+  type: null,
+  helper: null,
+  runOut: { outBatsman: null, runs: 0 },
+};
 
 export default function WicketSheet({ open, wicketUI, setWicketUI }) {
   const { match, extraMode, dispatch } = useMatchSession();
@@ -24,13 +37,15 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
   const innings = match.innings[live.inningsIndex];
   const bowlingPlayers = getPlayersForTeam(match, innings.bowlingTeam);
   const isInvalidWicket = !isAllowedForExtra(wicketUI.type, extraMode);
-  const requiresHelper = ["CAUGHT", "RUN_OUT", "STUMPED"].includes(wicketUI.type);
+  const requiresHelper = ["CAUGHT", "RUN_OUT", "STUMPED"].includes(
+    wicketUI.type,
+  );
   const runOutBatter = wicketUI.runOut.outBatsman;
   const canConfirm = Boolean(
     wicketUI.type &&
-      !isInvalidWicket &&
-      (wicketUI.type !== "RUN_OUT" || runOutBatter) &&
-      (!requiresHelper || wicketUI.helper),
+    !isInvalidWicket &&
+    (wicketUI.type !== "RUN_OUT" || runOutBatter) &&
+    (!requiresHelper || wicketUI.helper),
   );
 
   const close = () => setWicketUI(initialWicketUi);
@@ -66,7 +81,12 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
                 key={player}
                 type="button"
                 className={runOutBatter === player ? styles.selectedRow : ""}
-                onClick={() => setWicketUI({ ...wicketUI, runOut: { ...wicketUI.runOut, outBatsman: player } })}
+                onClick={() =>
+                  setWicketUI({
+                    ...wicketUI,
+                    runOut: { ...wicketUI.runOut, outBatsman: player },
+                  })
+                }
               >
                 {formatName(player)}
               </button>
@@ -79,7 +99,12 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
                 key={run}
                 type="button"
                 className={wicketUI.runOut.runs === run ? styles.active : ""}
-                onClick={() => setWicketUI({ ...wicketUI, runOut: { ...wicketUI.runOut, runs: run } })}
+                onClick={() =>
+                  setWicketUI({
+                    ...wicketUI,
+                    runOut: { ...wicketUI.runOut, runs: run },
+                  })
+                }
               >
                 {run}
               </button>
@@ -93,7 +118,12 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
           <h4>{wicketUI.type === "CAUGHT" ? "Fielder" : "Fielder / keeper"}</h4>
           <div className={styles.fielderList}>
             {bowlingPlayers.map((player) => (
-              <button key={player} type="button" className={wicketUI.helper === player ? styles.selectedRow : ""} onClick={() => setWicketUI({ ...wicketUI, helper: player })}>
+              <button
+                key={player}
+                type="button"
+                className={wicketUI.helper === player ? styles.selectedRow : ""}
+                onClick={() => setWicketUI({ ...wicketUI, helper: player })}
+              >
                 {formatName(player)}
               </button>
             ))}
@@ -103,7 +133,8 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
 
       {isInvalidWicket && (
         <p className={styles.errorText}>
-          {wicketUI.type.replaceAll("_", " ")} is not valid on a {extraMode.toLowerCase().replace("_", "-")}.
+          {wicketUI.type.replaceAll("_", " ")} is not valid on a{" "}
+          {extraMode.toLowerCase().replace("_", "-")}.
         </p>
       )}
 
@@ -112,7 +143,8 @@ export default function WicketSheet({ open, wicketUI, setWicketUI }) {
         className={styles.confirmButton}
         disabled={!canConfirm}
         onClick={() => {
-          const outBatsman = wicketUI.type === "RUN_OUT" ? runOutBatter : live.striker;
+          const outBatsman =
+            wicketUI.type === "RUN_OUT" ? runOutBatter : live.striker;
           dispatch({
             type: MATCH_ACTIONS.TAKE_WICKET,
             payload: {

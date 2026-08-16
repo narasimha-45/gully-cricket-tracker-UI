@@ -17,7 +17,7 @@ const normalizeInnings = (innings = {}, index = 0) => ({
   ...innings,
   battingTeam: normalizeName(innings.battingTeam),
   bowlingTeam: normalizeName(innings.bowlingTeam),
-  inningsNumber: Number(innings.inningsNumber || 1),
+  inningsNumber: Number(innings.inningsNumber || index + 1),
   totalRuns: Number(innings.totalRuns ?? innings.score ?? 0),
   wickets: Number(innings.wickets || 0),
   balls: Number(innings.balls || 0),
@@ -33,7 +33,6 @@ const normalizeInnings = (innings = {}, index = 0) => ({
   thisOverBowlerChanged: Boolean(innings.thisOverBowlerChanged),
   completed: Boolean(innings.completed),
   ...(innings.isSuperOver ? { isSuperOver: true } : {}),
-  _sequence: index + 1,
 });
 
 /**
@@ -66,7 +65,7 @@ export function migrateStoredMatch(value) {
       },
     },
     innings: Array.isArray(value.innings)
-      ? value.innings.map(normalizeInnings).map(({ _sequence, ...innings }) => innings)
+      ? value.innings.map(normalizeInnings)
       : [],
     live: value.live
       ? {

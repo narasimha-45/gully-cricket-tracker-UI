@@ -1,6 +1,7 @@
 import { useMemo } from "react";
+import { RefreshCw } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { LeaderboardState } from "../features/stats/components/LeaderboardView";
+import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
 import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
 import styles from "./AnalyticsOverview.module.css";
@@ -8,14 +9,70 @@ import styles from "./AnalyticsOverview.module.css";
 const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 const decimal = (value) => number(value).toFixed(2);
 
-function LeaderCard({ rank, name, primary, secondary, onOpen }) {
+function PerformancePanel({
+  eyebrow,
+  title,
+  items,
+  loading,
+  fetching,
+  error,
+  onRetry,
+  onViewAll,
+  primaryValue,
+  secondaryValue,
+  onOpenPlayer,
+}) {
+  const empty = !loading && items.length === 0;
+
   return (
-    <button type="button" className={styles.leaderCard} onClick={onOpen}>
-      <span className={styles.rank} aria-label={`Rank ${rank}`}>{rank}</span>
-      <span className={styles.playerName}>{formatName(name)}</span>
-      <strong className={styles.primaryValue}>{primary}</strong>
-      <span className={styles.secondaryValue}>{secondary}</span>
-    </button>
+    <section className={styles.section} aria-busy={Boolean(fetching)}>
+      <div className={styles.sectionHeading}>
+        <div className={styles.titleGroup}>
+          <span className={styles.eyebrow}>{eyebrow}</span>
+          <h2>{title}</h2>
+        </div>
+        <button type="button" className={styles.textAction} onClick={onViewAll}>View all</button>
+      </div>
+
+      <div className={styles.panel}>
+        {loading ? (
+          <StatsSkeleton rows={3} compact />
+        ) : error && empty ? (
+          <div className={styles.panelMessage} role="alert">
+            <div>
+              <strong>Couldn’t load {eyebrow.toLowerCase()} stats</strong>
+              <span>Try again without leaving this page.</span>
+            </div>
+            <button type="button" onClick={onRetry}><RefreshCw size={15} /> Retry</button>
+          </div>
+        ) : empty ? (
+          <div className={styles.panelMessage}>
+            <div>
+              <strong>No {eyebrow.toLowerCase()} stats yet</strong>
+              <span>Complete a match to start the leaderboard.</span>
+            </div>
+          </div>
+        ) : (
+          <div className={styles.leaderList}>
+            {items.map((player, index) => (
+              <button
+                type="button"
+                className={styles.leaderRow}
+                key={player.playerId || player.playerName}
+                onClick={() => onOpenPlayer(player)}
+              >
+                <span className={styles.rank} aria-label={`Rank ${index + 1}`}>{index + 1}</span>
+                <span className={styles.playerCopy}>
+                  <strong className={styles.playerName}>{formatName(player.playerName)}</strong>
+                  <span className={styles.secondaryValue}>{secondaryValue(player)}</span>
+                </span>
+                <span className={styles.primaryValue}>{primaryValue(player)}</span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -37,65 +94,40 @@ export default function AnalyticsOverview() {
       .sort((a, b) => number(b.totalWickets) - number(a.totalWickets))
       .slice(0, 3), [bowlingQuery.data]);
 
-  const loading = battingQuery.isLoading || bowlingQuery.isLoading;
-  const error = battingQuery.error || bowlingQuery.error;
-  const empty = !loading && topBatters.length === 0 && topBowlers.length === 0;
+  const openPlayer = (player) => {
+    if (!player.playerId) return;
+    navigate(`/player/${encodeURIComponent(player.playerId)}`);
+  };
 
   return (
     <div className={styles.page}>
-      <LeaderboardState
-        loading={loading}
-        fetching={(battingQuery.isFetching || bowlingQuery.isFetching) && !loading}
-        error={error}
-        empty={empty}
-        onRetry={() => { battingQuery.refetch(); bowlingQuery.refetch(); }}
-        emptyTitle="No analytics yet"
-        emptySubtitle="Complete a match to start building batting and bowling insights."
-      >
-        <section className={styles.section}>
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.eyebrow}>Batting</span>
-              <h2>Leading run scorers</h2>
-            </div>
-            <button type="button" className={styles.textAction} onClick={() => navigate("../batting")}>View all</button>
-          </div>
-          <div className={styles.cards}>
-            {topBatters.map((player, index) => (
-              <LeaderCard
-                key={player.playerId || player.playerName}
-                rank={index + 1}
-                name={player.playerName}
-                primary={`${number(player.totalRuns)} runs`}
-                secondary={`${number(player.inningsPlayed)} innings · ${decimal(player.strikeRate)} SR`}
-                onOpen={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}
-              />
-            ))}
-          </div>
-        </section>
+      <PerformancePanel
+        eyebrow="Batting"
+        title="Leading run scorers"
+        items={topBatters}
+        loading={battingQuery.isLoading}
+        fetching={battingQuery.isFetching && !battingQuery.isLoading}
+        error={battingQuery.error}
+        onRetry={battingQuery.refetch}
+        onViewAll={() => navigate("../batting")}
+        primaryValue={(player) => <><strong>{number(player.totalRuns)}</strong><span>runs</span></>}
+        secondaryValue={(player) => `${number(player.inningsPlayed)} innings · ${decimal(player.strikeRate)} SR`}
+        onOpenPlayer={openPlayer}
+      />
 
-        <section className={styles.section}>
-          <div className={styles.sectionHeading}>
-            <div>
-              <span className={styles.eyebrow}>Bowling</span>
-              <h2>Top wicket takers</h2>
-            </div>
-            <button type="button" className={styles.textAction} onClick={() => navigate("../bowling")}>View all</button>
-          </div>
-          <div className={styles.cards}>
-            {topBowlers.map((player, index) => (
-              <LeaderCard
-                key={player.playerId || player.playerName}
-                rank={index + 1}
-                name={player.playerName}
-                primary={`${number(player.totalWickets)} wickets`}
-                secondary={`${decimal(player.economyRate)} economy · ${number(player.totalWickets) === 0 ? "—" : decimal(player.average)} avg`}
-                onOpen={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}
-              />
-            ))}
-          </div>
-        </section>
-      </LeaderboardState>
+      <PerformancePanel
+        eyebrow="Bowling"
+        title="Top wicket takers"
+        items={topBowlers}
+        loading={bowlingQuery.isLoading}
+        fetching={bowlingQuery.isFetching && !bowlingQuery.isLoading}
+        error={bowlingQuery.error}
+        onRetry={bowlingQuery.refetch}
+        onViewAll={() => navigate("../bowling")}
+        primaryValue={(player) => <><strong>{number(player.totalWickets)}</strong><span>wickets</span></>}
+        secondaryValue={(player) => `${decimal(player.economyRate)} economy · ${number(player.totalWickets) === 0 || player.average == null ? "—" : decimal(player.average)} avg`}
+        onOpenPlayer={openPlayer}
+      />
     </div>
   );
 }

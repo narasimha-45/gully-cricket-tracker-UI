@@ -1,41 +1,339 @@
-.wrapper { display: flex; flex-direction: column; gap: 7px; }
-.inningsTabs { display: flex; gap: 5px; overflow-x: auto; scrollbar-width: none; }
-.inningsTabs::-webkit-scrollbar { display: none; }
-.inningsTab { flex: 0 0 auto; min-width: 68px; min-height: 34px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-white); color: var(--color-slate-600); font-size: 10px; font-weight: 600; cursor: pointer; white-space: nowrap; }
-.inningsTab:hover:not(.inningsTabActive) { background: var(--color-slate-50); }
-.inningsTabActive { border-color: var(--color-indigo-600); background: var(--color-indigo-50); color: var(--color-indigo-700); box-shadow: inset 0 0 0 1px var(--color-indigo-600); }
-.inningsTabSO { border-color: var(--color-red-200); color: var(--color-red-700); }
-.inningsTabSO.inningsTabActive { border-color: var(--color-red-600); background: var(--color-red-50); color: var(--color-red-700); box-shadow: inset 0 0 0 1px var(--color-red-600); }
-.inningsTitle { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 1px; color: var(--color-slate-800); font-size: 12px; font-weight: 700; }
-.inningsSummary { color: var(--color-slate-500); font-size: 10px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.timelineContainer { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-white); }
-.tableHeader, .overSummaryRow { display: grid; grid-template-columns: 48px minmax(0,1fr) 44px; }
-.tableHeader { padding: 7px 9px; border-bottom: 1px solid var(--color-border); background: var(--color-slate-50); color: var(--color-slate-500); font-size: 9px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
-.colOver { text-align: left; } .colBalls { padding: 0 7px; }
-.overWrapper { border-bottom: 1px solid var(--color-slate-100); } .overWrapper:last-child { border-bottom: 0; }
-.overSummaryRow { align-items: flex-start; min-height: 58px; padding: 8px 9px; cursor: pointer; transition: background .15s ease; }
-.overSummaryRow:hover, .overSummaryRow:active, .overSummaryRow.expanded { background: var(--color-slate-50); }
-.ovNum { color: var(--color-slate-900); font-size: 12px; font-weight: 700; }
-.ovScore { margin-top: 1px; color: var(--color-slate-500); font-size: 9px; font-variant-numeric: tabular-nums; }
-.ovMatchup { margin-bottom: 5px; color: var(--color-slate-600); font-size: 10px; font-weight: 500; line-height: 1.35; word-break: break-word; }
-.ovBowler { color: var(--color-slate-800); font-weight: 600; } .ovBatters { color: var(--color-slate-500); }
-.ovChips { display: flex; flex-wrap: wrap; gap: 4px; }
-.colRuns { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; min-width: 0; }
-.ovTotalRuns { color: var(--color-slate-900); font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.chevron { display: inline-block; color: var(--color-slate-400); font-size: 12px; line-height: 1; transition: transform .2s ease; } .chevronOpen { transform: rotate(90deg); }
-.miniChip { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; border-radius: 50%; font-size: 8px; font-weight: 700; }
-.detailedBalls { padding: 2px 9px 7px; border-top: 1px dashed var(--color-border); background: var(--color-slate-50); }
-.detailRow { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-height: 38px; padding: 6px 0; border-bottom: 1px solid var(--color-slate-100); }
-.detailRow:last-child { border-bottom: 0; }
-.detailMeta { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.detailNum { color: var(--color-slate-500); font-size: 9px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.detailText { color: var(--color-slate-600); font-size: 10px; line-height: 1.4; }
-.detailText strong { color: var(--color-slate-800); font-weight: 600; }
-.wicketText { color: var(--color-red-600); font-weight: 600; } .extraText { color: #b45309; font-weight: 600; }
-.detailChip { display: flex; align-items: center; justify-content: center; min-width: 25px; height: 25px; flex-shrink: 0; border-radius: 50%; font-size: 9px; font-weight: 700; }
-.normal, .dot { border: 1px solid var(--color-slate-200); background: var(--color-slate-100); color: var(--color-slate-600); } .dot { color: var(--color-slate-400); }
-.four { background: #3b82f6; color: white; } .six { background: var(--color-violet-600); color: white; } .wicket { background: var(--color-red-600); color: white; }
-.wide { background: var(--color-amber-500); color: var(--color-amber-900); } .noBall { background: var(--color-orange-500); color: #7c2d12; }
-.emptyState { padding: 24px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-white); color: var(--color-slate-500); text-align: center; }
-.emptyState p { margin: 0 0 3px; color: var(--color-slate-700); font-size: 12px; font-weight: 600; } .emptyState span { color: var(--color-slate-500); font-size: 10px; }
-@media (max-width: 350px) { .tableHeader, .overSummaryRow { grid-template-columns: 42px minmax(0,1fr) 38px; } .tableHeader, .overSummaryRow { padding-left: 7px; padding-right: 7px; } }
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+}
+
+.inningsTabs {
+    display: flex;
+    gap: 5px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.inningsTabs::-webkit-scrollbar {
+    display: none;
+}
+
+.inningsTab {
+    flex: 0 0 auto;
+    min-width: 68px;
+    min-height: 34px;
+    padding: 0 10px;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-white);
+    color: var(--color-slate-600);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+.inningsTab:hover:not(.inningsTabActive) {
+    background: var(--color-slate-50);
+}
+
+.inningsTabActive {
+    border-color: var(--color-indigo-600);
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-700);
+    box-shadow: inset 0 0 0 1px var(--color-indigo-600);
+}
+
+.inningsTabSO {
+    border-color: var(--color-red-200);
+    color: var(--color-red-700);
+}
+
+.inningsTabSO.inningsTabActive {
+    border-color: var(--color-red-600);
+    background: var(--color-red-50);
+    color: var(--color-red-700);
+    box-shadow: inset 0 0 0 1px var(--color-red-600);
+}
+
+.inningsTitle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 2px 1px;
+    color: var(--color-slate-800);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.inningsSummary {
+    color: var(--color-slate-500);
+    font-size: 10px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+.timelineContainer {
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+}
+
+.tableHeader,
+.overSummaryRow {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr) 44px;
+}
+
+.tableHeader {
+    padding: 7px 9px;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-slate-50);
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+}
+
+.colOver {
+    text-align: left;
+}
+
+.colBalls {
+    padding: 0 7px;
+}
+
+.overWrapper {
+    border-bottom: 1px solid var(--color-slate-100);
+}
+
+.overWrapper:last-child {
+    border-bottom: 0;
+}
+
+.overSummaryRow {
+    align-items: flex-start;
+    min-height: 58px;
+    padding: 8px 9px;
+    cursor: pointer;
+    transition: background .15s ease;
+}
+
+.overSummaryRow:hover,
+.overSummaryRow:active,
+.overSummaryRow.expanded {
+    background: var(--color-slate-50);
+}
+
+.ovNum {
+    color: var(--color-slate-900);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.ovScore {
+    margin-top: 1px;
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+}
+
+.ovMatchup {
+    margin-bottom: 5px;
+    color: var(--color-slate-600);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.ovBowler {
+    color: var(--color-slate-800);
+    font-weight: 600;
+}
+
+.ovBatters {
+    color: var(--color-slate-500);
+}
+
+.ovChips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.colRuns {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 3px;
+    min-width: 0;
+}
+
+.ovTotalRuns {
+    color: var(--color-slate-900);
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.chevron {
+    display: inline-block;
+    color: var(--color-slate-400);
+    font-size: 12px;
+    line-height: 1;
+    transition: transform .2s ease;
+}
+
+.chevronOpen {
+    transform: rotate(90deg);
+}
+
+.miniChip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    font-size: 8px;
+    font-weight: 700;
+}
+
+.detailedBalls {
+    padding: 2px 9px 7px;
+    border-top: 1px dashed var(--color-border);
+    background: var(--color-slate-50);
+}
+
+.detailRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    min-height: 38px;
+    padding: 6px 0;
+    border-bottom: 1px solid var(--color-slate-100);
+}
+
+.detailRow:last-child {
+    border-bottom: 0;
+}
+
+.detailMeta {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+}
+
+.detailNum {
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.detailText {
+    color: var(--color-slate-600);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.detailText strong {
+    color: var(--color-slate-800);
+    font-weight: 600;
+}
+
+.wicketText {
+    color: var(--color-red-600);
+    font-weight: 600;
+}
+
+.extraText {
+    color: #b45309;
+    font-weight: 600;
+}
+
+.detailChip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 25px;
+    height: 25px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.normal,
+.dot {
+    border: 1px solid var(--color-slate-200);
+    background: var(--color-slate-100);
+    color: var(--color-slate-600);
+}
+
+.dot {
+    color: var(--color-slate-400);
+}
+
+.four {
+    background: #3b82f6;
+    color: white;
+}
+
+.six {
+    background: var(--color-violet-600);
+    color: white;
+}
+
+.wicket {
+    background: var(--color-red-600);
+    color: white;
+}
+
+.wide {
+    background: var(--color-amber-500);
+    color: var(--color-amber-900);
+}
+
+.noBall {
+    background: var(--color-orange-500);
+    color: #7c2d12;
+}
+
+.emptyState {
+    padding: 24px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-white);
+    color: var(--color-slate-500);
+    text-align: center;
+}
+
+.emptyState p {
+    margin: 0 0 3px;
+    color: var(--color-slate-700);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.emptyState span {
+    color: var(--color-slate-500);
+    font-size: 10px;
+}
+
+@media (max-width: 350px) {
+
+    .tableHeader,
+    .overSummaryRow {
+        grid-template-columns: 42px minmax(0, 1fr) 38px;
+    }
+
+    .tableHeader,
+    .overSummaryRow {
+        padding-left: 7px;
+        padding-right: 7px;
+    }
+}

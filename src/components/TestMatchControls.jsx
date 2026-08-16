@@ -8,7 +8,7 @@ import {
   getTestInningsPerTeam,
 } from "../utils/matchModel";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
-import { useMatchSession } from "../features/match/state/MatchSessionContext";
+import { useMatchSession } from "../features/match/state/useMatchSession";
 import styles from "./TestMatchControls.module.css";
 
 export default function TestMatchControls() {
@@ -38,23 +38,50 @@ export default function TestMatchControls() {
       <section className={styles.card}>
         <div className={styles.copy}>
           <span className={styles.badge}>Test scoring</span>
-          <strong>{formatName(current.battingTeam)} · {inningsOrdinal === 1 ? "1st" : "2nd"} innings</strong>
-          <p>No over limit. This innings ends when the side is all out or you declare it.</p>
+          <strong>
+            {formatName(current.battingTeam)} ·{" "}
+            {inningsOrdinal === 1 ? "1st" : "2nd"} innings
+          </strong>
+          <p>
+            No over limit. This innings ends when the side is all out or you
+            declare it.
+          </p>
           <span className={styles.meta}>
-            {inningsPerTeam === 1 ? "Single innings" : "Double innings"} per team
+            {inningsPerTeam === 1 ? "Single innings" : "Double innings"} per
+            team
             {match.testConfig?.followOnEnforced ? " · Follow-on enforced" : ""}
             {target ? ` · Target ${target}` : ""}
           </span>
         </div>
         <div className={styles.actions}>
-          {!isFinalInnings && <button type="button" className={styles.declareButton} onClick={() => setConfirmAction("DECLARE")}>Declare innings</button>}
-          <button type="button" className={styles.drawButton} onClick={() => setConfirmAction("DRAW")}>End as draw</button>
+          {!isFinalInnings && (
+            <button
+              type="button"
+              className={styles.declareButton}
+              onClick={() => setConfirmAction("DECLARE")}
+            >
+              Declare innings
+            </button>
+          )}
+          <button
+            type="button"
+            className={styles.drawButton}
+            onClick={() => setConfirmAction("DRAW")}
+          >
+            End as draw
+          </button>
         </div>
       </section>
       <MatchPopup
         open={Boolean(confirmAction)}
-        title={confirmAction === "DRAW" ? "End match as draw?" : "Declare innings?"}
-        subtitle={confirmAction === "DRAW" ? "The current score will be saved and the Test match will be completed as a draw." : `${formatName(current.battingTeam)} will close this innings at ${current.totalRuns}-${current.wickets}.`}
+        title={
+          confirmAction === "DRAW" ? "End match as draw?" : "Declare innings?"
+        }
+        subtitle={
+          confirmAction === "DRAW"
+            ? "The current score will be saved and the Test match will be completed as a draw."
+            : `${formatName(current.battingTeam)} will close this innings at ${current.totalRuns}-${current.wickets}.`
+        }
         primaryText={confirmAction === "DRAW" ? "Confirm Draw" : "Declare"}
         onPrimary={confirm}
         secondaryText="Cancel"

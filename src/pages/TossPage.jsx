@@ -1,9 +1,7 @@
 import { useEffect, useReducer, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import {
-  MatchSessionProvider,
-  useMatchSession,
-} from "../features/match/state/MatchSessionContext";
+import { MatchSessionProvider } from "../features/match/state/MatchSessionContext.jsx";
+import { useMatchSession } from "../features/match/state/useMatchSession";
 import { formatName } from "../utils/helpers";
 import { createEmptyInnings, normalizeName } from "../utils/matchModel";
 import styles from "./TossPage.module.css";

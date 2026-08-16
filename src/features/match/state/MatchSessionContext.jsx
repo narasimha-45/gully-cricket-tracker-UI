@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useReducer,
@@ -11,9 +9,9 @@ import { getMatch, saveMatch } from "../../../storage/matchDB";
 import { logger } from "../../../observability/logger";
 import { getMatchInvariantViolations } from "../domain/matchInvariants";
 import { MATCH_ACTIONS } from "./matchActions";
+import { MatchSessionContext } from "./matchSessionContext";
 import { initialMatchSessionState, matchSessionReducer } from "./matchReducer";
 
-const MatchSessionContext = createContext(null);
 
 export function MatchSessionProvider({ matchId, children }) {
   const [state, dispatch] = useReducer(
@@ -145,12 +143,4 @@ export function MatchSessionProvider({ matchId, children }) {
       {children}
     </MatchSessionContext.Provider>
   );
-}
-
-export function useMatchSession() {
-  const context = useContext(MatchSessionContext);
-  if (!context) {
-    throw new Error("useMatchSession must be used inside MatchSessionProvider");
-  }
-  return context;
 }

@@ -11,10 +11,8 @@ import Scorecard from "../components/Scorecard";
 import MatchPersistenceStatus from "../features/match/components/MatchPersistenceStatus";
 import { finalizeAndSyncMatch } from "../features/match/services/finalizeMatch";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
-import {
-  MatchSessionProvider,
-  useMatchSession,
-} from "../features/match/state/MatchSessionContext";
+import { MatchSessionProvider } from "../features/match/state/MatchSessionContext.jsx";
+import { useMatchSession } from "../features/match/state/useMatchSession";
 import { formatName } from "../utils/helpers";
 import { canEnforceFollowOn, getFollowOnLead } from "../utils/matchModel";
 import { formatMatchResult } from "../utils/matchPresentation";

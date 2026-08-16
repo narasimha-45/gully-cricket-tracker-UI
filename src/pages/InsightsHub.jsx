@@ -17,20 +17,25 @@ export default function InsightsHub() {
   const location = useLocation();
   const [filter, setFilter] = useState("all");
   const seasonsQuery = useSeasons();
-  const seasons = seasonsQuery.data || [];
 
   useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, [location.pathname]);
 
-  const seasonOptions = useMemo(() => seasons.map((season) => ({
-    id: season.id || season._id,
-    name: season.seasonName || season.name || "Season",
-  })).filter((season) => season.id), [seasons]);
+  const seasonOptions = useMemo(
+    () =>
+      (seasonsQuery.data || [])
+        .map((season) => ({
+          id: season.id || season._id,
+          name: season.seasonName || season.name || "Season",
+        }))
+        .filter((season) => season.id),
+    [seasonsQuery.data],
+  );
 
-  useEffect(() => {
-    if (filter !== "all" && !seasonOptions.some((season) => String(season.id) === String(filter))) {
-      setFilter("all");
-    }
-  }, [filter, seasonOptions]);
+  const effectiveFilter =
+    filter === "all" ||
+    seasonOptions.some((season) => String(season.id) === String(filter))
+      ? filter
+      : "all";
 
   return (
     <div className={styles.page}>
@@ -48,7 +53,7 @@ export default function InsightsHub() {
 
         <label className={styles.filterWrapper}>
           <span className={styles.srOnly}>Season</span>
-          <select className={styles.filterSelect} value={filter} onChange={(event) => setFilter(event.target.value)} disabled={seasonsQuery.isLoading}>
+          <select className={styles.filterSelect} value={effectiveFilter} onChange={(event) => setFilter(event.target.value)} disabled={seasonsQuery.isLoading}>
             <option value="all">All seasons · Overall</option>
             {seasonOptions.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
           </select>
@@ -63,7 +68,7 @@ export default function InsightsHub() {
 
       <main className={styles.content}>
         {seasonsQuery.isLoading ? <LoadingState label="Loading seasons…" /> : (
-          <Outlet context={{ globalFilter: filter }} />
+          <Outlet context={{ globalFilter: effectiveFilter }} />
         )}
       </main>
     </div>

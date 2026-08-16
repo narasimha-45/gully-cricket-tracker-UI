@@ -3,14 +3,12 @@ import { useState } from "react";
 import { deriveInsights } from "../utils/deriveInsights";
 import styles from "./InsightsTab.module.css";
 
-const INN_COLORS = ["var(--color-indigo-600)", "var(--color-amber-500)", "var(--color-red-600)", "var(--color-green-600)"];
-
-/** Convert ball count → overs string: 7 balls → "1.1", 12 → "2.0" */
-function ballsToOvers(balls) {
-  const fullOvers = Math.floor(balls / 6);
-  const rem = balls % 6;
-  return `${fullOvers}.${rem}`;
-}
+const INN_COLORS = [
+  "var(--color-indigo-600)",
+  "var(--color-amber-500)",
+  "var(--color-red-600)",
+  "var(--color-green-600)",
+];
 
 export default function InsightsTab({ match }) {
   const data = deriveInsights(match);
@@ -73,7 +71,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
   const chartH = H - PAD.top - PAD.bottom;
 
   const allCum = oversByInnings.flatMap((inn) =>
-    inn.points.map((p) => p.cumulative)
+    inn.points.map((p) => p.cumulative),
   );
   const maxRuns = Math.max(...allCum, 10);
 
@@ -94,14 +92,14 @@ function LineGraph({ oversByInnings, totalOvers }) {
   const xTickStep = totalOvers <= 10 ? 1 : totalOvers <= 20 ? 2 : 5;
   const xTicks = Array.from(
     { length: Math.floor(totalOvers / xTickStep) + 1 },
-    (_, i) => i * xTickStep
+    (_, i) => i * xTickStep,
   );
 
   const toPath = (points) =>
     points
       .map(
         (p, i) =>
-          `${i === 0 ? "M" : "L"} ${xScale(p.over).toFixed(1)} ${yScale(p.cumulative).toFixed(1)}`
+          `${i === 0 ? "M" : "L"} ${xScale(p.over).toFixed(1)} ${yScale(p.cumulative).toFixed(1)}`,
       )
       .join(" ");
 
@@ -115,7 +113,9 @@ function LineGraph({ oversByInnings, totalOvers }) {
   // Build lookup: over → point, per innings
   const overLookup = oversByInnings.map((inn) => {
     const map = {};
-    inn.points.forEach((p) => { map[p.over] = p; });
+    inn.points.forEach((p) => {
+      map[p.over] = p;
+    });
     return { battingTeam: inn.battingTeam, map };
   });
 
@@ -128,27 +128,31 @@ function LineGraph({ oversByInnings, totalOvers }) {
     const svg = e.currentTarget;
     const rect = svg.getBoundingClientRect();
     const rawX = (e.clientX - rect.left) * (W / rect.width) - PAD.left;
-    const rawY = (e.clientY - rect.top) * (H / rect.height) - PAD.top;
-
     // Snap to nearest over
     const overUnder = (rawX / chartW) * totalOvers;
-    let nearest = allOvers.reduce((best, o) =>
-      Math.abs(o - overUnder) < Math.abs(best - overUnder) ? o : best,
-      allOvers[0]
+    let nearest = allOvers.reduce(
+      (best, o) =>
+        Math.abs(o - overUnder) < Math.abs(best - overUnder) ? o : best,
+      allOvers[0],
     );
 
-    const items = oversByInnings.map((inn, i) => {
-      const pt = overLookup[i].map[nearest];
-      return {
-        team: inn.battingTeam,
-        color: INN_COLORS[i % INN_COLORS.length],
-        runs: pt ? pt.cumulative : null,
-        wickets: pt ? (pt.wickets ?? 0) : null,
-        overRuns: pt ? (pt.runs ?? 0) : null,
-      };
-    }).filter((it) => it.runs !== null);
+    const items = oversByInnings
+      .map((inn, i) => {
+        const pt = overLookup[i].map[nearest];
+        return {
+          team: inn.battingTeam,
+          color: INN_COLORS[i % INN_COLORS.length],
+          runs: pt ? pt.cumulative : null,
+          wickets: pt ? (pt.wickets ?? 0) : null,
+          overRuns: pt ? (pt.runs ?? 0) : null,
+        };
+      })
+      .filter((it) => it.runs !== null);
 
-    if (!items.length) { setTooltip(null); return; }
+    if (!items.length) {
+      setTooltip(null);
+      return;
+    }
 
     // Position tooltip in SVG space
     const tx = xScale(nearest) + PAD.left;
@@ -171,14 +175,20 @@ function LineGraph({ oversByInnings, totalOvers }) {
           {yTicks.map((t) => (
             <g key={t}>
               <line
-                x1={0} y1={yScale(t).toFixed(1)}
-                x2={chartW} y2={yScale(t).toFixed(1)}
-                stroke="var(--color-slate-200)" strokeWidth="1"
+                x1={0}
+                y1={yScale(t).toFixed(1)}
+                x2={chartW}
+                y2={yScale(t).toFixed(1)}
+                stroke="var(--color-slate-200)"
+                strokeWidth="1"
               />
               <text
-                x={-6} y={yScale(t).toFixed(1)}
-                textAnchor="end" dominantBaseline="middle"
-                fontSize="9" fill="var(--color-slate-400)"
+                x={-6}
+                y={yScale(t).toFixed(1)}
+                textAnchor="end"
+                dominantBaseline="middle"
+                fontSize="9"
+                fill="var(--color-slate-400)"
               >
                 {t}
               </text>
@@ -213,14 +223,19 @@ function LineGraph({ oversByInnings, totalOvers }) {
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
-                {inn.points.filter((p) => p.wicketsThisOver > 0).map((p) => (
-                  <circle
-                    key={p.over}
-                    cx={xScale(p.over).toFixed(1)}
-                    cy={yScale(p.cumulative).toFixed(1)}
-                    r="4" fill="var(--color-red-500)" stroke="white" strokeWidth="1.5"
-                  />
-                ))}
+                {inn.points
+                  .filter((p) => p.wicketsThisOver > 0)
+                  .map((p) => (
+                    <circle
+                      key={p.over}
+                      cx={xScale(p.over).toFixed(1)}
+                      cy={yScale(p.cumulative).toFixed(1)}
+                      r="4"
+                      fill="var(--color-red-500)"
+                      stroke="white"
+                      strokeWidth="1.5"
+                    />
+                  ))}
               </g>
             );
           })}
@@ -228,54 +243,89 @@ function LineGraph({ oversByInnings, totalOvers }) {
           {/* Hover vertical line */}
           {tooltip && (
             <line
-              x1={tooltip.x - PAD.left} y1={0}
-              x2={tooltip.x - PAD.left} y2={chartH}
-              stroke="var(--color-slate-500)" strokeWidth="1" strokeDasharray="3,3"
+              x1={tooltip.x - PAD.left}
+              y1={0}
+              x2={tooltip.x - PAD.left}
+              y2={chartH}
+              stroke="var(--color-slate-500)"
+              strokeWidth="1"
+              strokeDasharray="3,3"
             />
           )}
 
           {/* Axes */}
-          <line x1={0} y1={0} x2={0} y2={chartH} stroke="var(--color-slate-200)" strokeWidth="1" />
-          <line x1={0} y1={chartH} x2={chartW} y2={chartH} stroke="var(--color-slate-200)" strokeWidth="1" />
+          <line
+            x1={0}
+            y1={0}
+            x2={0}
+            y2={chartH}
+            stroke="var(--color-slate-200)"
+            strokeWidth="1"
+          />
+          <line
+            x1={0}
+            y1={chartH}
+            x2={chartW}
+            y2={chartH}
+            stroke="var(--color-slate-200)"
+            strokeWidth="1"
+          />
         </g>
 
         {/* Tooltip box */}
-        {tooltip && (() => {
-          const boxW = 110;
-          const lineH = 16;
-          const boxH = 20 + tooltip.items.length * lineH + 4;
-          let bx = tooltip.x + 6;
-          if (bx + boxW > W - 4) bx = tooltip.x - boxW - 6;
-          const by = Math.min(tooltip.y, H - boxH - 4);
+        {tooltip &&
+          (() => {
+            const boxW = 110;
+            const lineH = 16;
+            const boxH = 20 + tooltip.items.length * lineH + 4;
+            let bx = tooltip.x + 6;
+            if (bx + boxW > W - 4) bx = tooltip.x - boxW - 6;
+            const by = Math.min(tooltip.y, H - boxH - 4);
 
-          return (
-            <g>
-              <rect
-                x={bx} y={by} width={boxW} height={boxH}
-                rx="6" fill="white"
-                stroke="var(--color-slate-200)" strokeWidth="1"
-                style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.12))" }}
-              />
-              <text x={bx + 8} y={by + 13} fontSize="9" fontWeight="700" fill="var(--color-slate-600)">
-                Over {tooltip.over}
-              </text>
-              {tooltip.items.map((it, idx) => (
-                <g key={idx}>
-                  <circle
-                    cx={bx + 10} cy={by + 22 + idx * lineH}
-                    r="3.5" fill={it.color}
-                  />
-                  <text
-                    x={bx + 18} y={by + 26 + idx * lineH}
-                    fontSize="9" fontWeight="600" fill="var(--color-slate-800)"
-                  >
-                    {it.team}: {it.runs}/{it.wickets}
-                  </text>
-                </g>
-              ))}
-            </g>
-          );
-        })()}
+            return (
+              <g>
+                <rect
+                  x={bx}
+                  y={by}
+                  width={boxW}
+                  height={boxH}
+                  rx="6"
+                  fill="white"
+                  stroke="var(--color-slate-200)"
+                  strokeWidth="1"
+                  style={{ filter: "drop-shadow(0 2px 6px rgba(0,0,0,0.12))" }}
+                />
+                <text
+                  x={bx + 8}
+                  y={by + 13}
+                  fontSize="9"
+                  fontWeight="700"
+                  fill="var(--color-slate-600)"
+                >
+                  Over {tooltip.over}
+                </text>
+                {tooltip.items.map((it, idx) => (
+                  <g key={idx}>
+                    <circle
+                      cx={bx + 10}
+                      cy={by + 22 + idx * lineH}
+                      r="3.5"
+                      fill={it.color}
+                    />
+                    <text
+                      x={bx + 18}
+                      y={by + 26 + idx * lineH}
+                      fontSize="9"
+                      fontWeight="600"
+                      fill="var(--color-slate-800)"
+                    >
+                      {it.team}: {it.runs}/{it.wickets}
+                    </text>
+                  </g>
+                ))}
+              </g>
+            );
+          })()}
       </svg>
       <div className={styles.graphXLabel}>Overs</div>
     </div>
@@ -317,15 +367,14 @@ function H2HSection({ h2hList }) {
   const grouped = {};
   for (const r of filteredH2H) {
     const groupKey = direction === "bvb" ? r.batter : r.bowler;
-    const rowKey   = direction === "bvb" ? r.bowler : r.batter;
+    const rowKey = direction === "bvb" ? r.bowler : r.batter;
     if (!grouped[groupKey]) grouped[groupKey] = [];
     grouped[groupKey].push({ ...r, rowKey });
   }
 
   // In bvb: group header = batter name, row label col = "Bowler"
   // In bvs: group header = bowler name, row label col = "Batter"
-  const groupLabel = direction === "bvb" ? "Batter" : "Bowler";
-  const rowLabel   = direction === "bvb" ? "Bowler" : "Batter";
+  const rowLabel = direction === "bvb" ? "Bowler" : "Batter";
 
   return (
     <div className={styles.section}>
@@ -358,9 +407,7 @@ function H2HSection({ h2hList }) {
           <div key={groupName} className={styles.h2hGroup}>
             {/* Group header */}
             <div className={styles.h2hGroupHeader}>
-              <span className={styles.h2hGroupLabel}>
-                {groupName}
-              </span>
+              <span className={styles.h2hGroupLabel}>{groupName}</span>
             </div>
 
             {/* Row header */}

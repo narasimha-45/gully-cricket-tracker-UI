@@ -51,7 +51,7 @@ export function TeamSearch({
   const teamsQuery = useTeamSearch(searchText);
   const searchLoading = Boolean(
     (value.query?.trim()?.length || 0) >= 2 &&
-      (teamsQuery.isLoading || searchText !== value.query?.trim()),
+    (teamsQuery.isLoading || searchText !== value.query?.trim()),
   );
   const results = useMemo(() => {
     const otherTeam = normalizeName(otherSelectedName);
@@ -107,7 +107,7 @@ export function TeamSearch({
         players,
         playersLoaded: true,
       });
-    } catch (requestError) {
+    } catch {
       setValue({
         id,
         name,
@@ -183,7 +183,8 @@ export function TeamSearch({
       )}
       {(error || teamsQuery.isError) && (
         <p className={styles.error}>
-          {error || "Team search is unavailable. You can still create a new team."}
+          {error ||
+            "Team search is unavailable. You can still create a new team."}
         </p>
       )}
 

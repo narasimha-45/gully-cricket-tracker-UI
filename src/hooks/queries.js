@@ -11,8 +11,11 @@ const asArray = (response) => {
 };
 
 const leaderboardOptions = {
-  staleTime: 30_000,
-  gcTime: 5 * 60_000,
+  // Match finalization explicitly invalidates statistic queries, so a longer
+  // freshness window avoids pointless background refetches while users switch
+  // between Overview/Batting/Bowling tabs.
+  staleTime: 2 * 60_000,
+  gcTime: 10 * 60_000,
   retry: 1,
   placeholderData: keepPreviousData,
   refetchOnWindowFocus: false,

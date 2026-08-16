@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { ChevronDown, X } from "lucide-react";
 import { useDialogA11y } from "../../hooks/useDialogA11y";
@@ -7,8 +7,13 @@ import styles from "./StatsFilterSheet.module.css";
 
 const ALL_VALUE = "All";
 
-export default function StatsFilterSheet({
-  open,
+export default function StatsFilterSheet(props) {
+  if (!props.open || typeof document === "undefined") return null;
+
+  return <StatsFilterDialog {...props} />;
+}
+
+function StatsFilterDialog({
   onClose,
   filters,
   selectedFilters,
@@ -16,15 +21,10 @@ export default function StatsFilterSheet({
   title = "Filter leaderboard",
 }) {
   const titleId = useId();
-  const [draftFilters, setDraftFilters] = useState(selectedFilters);
-
-  useEffect(() => {
-    if (open) {
-      setDraftFilters(selectedFilters);
-    }
-  }, [open, selectedFilters]);
-
-  const dialogRef = useDialogA11y(open, onClose);
+  const [draftFilters, setDraftFilters] = useState(() => ({
+    ...selectedFilters,
+  }));
+  const dialogRef = useDialogA11y(true, onClose);
 
   const activeFilterCount = useMemo(
     () =>
@@ -34,8 +34,6 @@ export default function StatsFilterSheet({
       }, 0),
     [draftFilters, filters],
   );
-
-  if (!open || typeof document === "undefined") return null;
 
   const handleSelect = (key, value) => {
     setDraftFilters((previous) => ({

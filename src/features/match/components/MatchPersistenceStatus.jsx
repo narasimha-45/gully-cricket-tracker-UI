@@ -1,6 +1,6 @@
 import { CheckCircle2, CloudOff, LoaderCircle, TriangleAlert } from "lucide-react";
 import { useNetworkStatus } from "../../../hooks/useNetworkStatus";
-import { useMatchSession } from "../state/MatchSessionContext";
+import { useMatchSession } from "../state/useMatchSession";
 import styles from "./MatchPersistenceStatus.module.css";
 
 export default function MatchPersistenceStatus() {

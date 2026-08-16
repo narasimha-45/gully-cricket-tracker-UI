@@ -40,8 +40,8 @@ export default function SeasonMatches() {
 
   const localQuery = useLocalSeasonMatches(seasonId);
   const serverQuery = useSeasonMatches(seasonId);
-  const localMatches = localQuery.data || [];
-  const serverMatches = serverQuery.data || [];
+  const localMatches = useMemo(() => localQuery.data || [], [localQuery.data]);
+  const serverMatches = useMemo(() => serverQuery.data || [], [serverQuery.data]);
 
   const liveMatches = useMemo(() => localMatches
     .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))

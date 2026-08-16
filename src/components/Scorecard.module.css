@@ -1,53 +1,488 @@
-.page { display: flex; flex-direction: column; gap: 10px; }
-.superOverSection { display: grid; gap: 6px; }
-.superOverHeading { margin: 0; padding: 2px 2px 0; color: var(--color-red-700); font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
-.superOverCards { display: grid; gap: 10px; }
-.inningsCard { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-white); box-shadow: var(--shadow-xs); }
-.inningsHeader { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 12px; color: var(--color-white); }
-.primary { background: var(--color-indigo-800); }
-.danger { background: var(--color-red-700); }
-.inningsLabel { min-width: 0; overflow: hidden; font-size: 13px; font-weight: 700; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
-.inningsScore { display: flex; flex: 0 0 auto; align-items: baseline; gap: 5px; font-size: 22px; font-weight: 800; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
-.overs { font-size: 11px; font-weight: 600; opacity: .88; white-space: nowrap; }
-.tableScroller { width: 100%; overflow-x: hidden; }
-.statTable { width: 100%; min-width: 0; }
-.tableHeader, .tableRow { display: grid; grid-template-columns: minmax(108px, 2.2fr) repeat(4, minmax(28px, .55fr)) minmax(42px, .78fr); align-items: center; text-align: right; }
-.tableHeader { min-height: 34px; border-bottom: 1px solid var(--color-border); background: #f6f7fb; color: var(--color-slate-600); font-size: 10px; font-weight: 700; }
-.tableHeader > *, .tableRow > * { min-width: 0; padding: 7px 3px; }
-.tableHeader > :first-child, .tableRow > :first-child { padding-left: 12px; }
-.tableHeader > :last-child, .tableRow > :last-child { padding-right: 12px; }
-.tableRow { min-height: 48px; border-bottom: 1px solid #f0f2f5; color: var(--color-slate-700); background: var(--color-white); font-size: 11px; font-variant-numeric: tabular-nums; }
-.tableRow:last-child { border-bottom: 0; }
-.textLeft, .playerCell, .playerName { text-align: left; }
-.playerCell { display: flex; min-width: 0; flex-direction: column; align-items: flex-start; gap: 1px; }
-.playerName { min-width: 0; max-width: 100%; overflow: hidden; color: var(--color-slate-900); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.dismissal { max-width: 100%; overflow: hidden; color: var(--color-slate-500); font-size: 9px; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-.runs { color: var(--color-slate-900); font-weight: 800; }
-.summary { border-top: 1px solid #f0f2f5; }
-.summaryRow { display: grid; grid-template-columns: minmax(70px, auto) 1fr; align-items: start; gap: 10px; padding: 9px 12px; border-bottom: 1px solid #f0f2f5; background: var(--color-white); color: var(--color-slate-800); font-size: 11px; }
-.summaryLabel { font-weight: 700; }
-.summaryValue, .summaryValueStrong { min-width: 0; text-align: right; line-height: 1.4; }
-.summaryValueStrong { font-weight: 700; }
-.yetToBat { color: var(--color-indigo-700); font-weight: 600; }
-.sectionTitle { margin: 0; padding: 12px 12px 6px; border-top: 1px solid #f0f2f5; color: var(--color-slate-900); font-size: 13px; font-weight: 700; }
-.partnershipList { border-top: 1px solid #f0f2f5; }
-.partnershipRow { padding: 9px 12px; border-bottom: 1px solid #f0f2f5; background: var(--color-white); }
-.activePartnership { background: #f0fdf4; }
-.partnershipTopRow, .partnershipNames { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.partnershipTopRow { margin-bottom: 4px; }
-.partnershipNames { color: var(--color-slate-600); font-size: 10px; }
-.partnershipRuns { color: var(--color-slate-900); font-size: 12px; font-weight: 700; }
-.partnershipBalls { color: var(--color-slate-500); font-size: 10px; }
-.empty { padding: 24px 16px; border: 1px dashed var(--color-slate-300); border-radius: var(--radius-lg); background: var(--color-white); text-align: center; }
-.empty h3 { margin: 0 0 4px; font-size: 14px; }
-.empty p { margin: 0; color: var(--color-slate-500); font-size: 12px; }
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.superOverSection {
+  display: grid;
+  gap: 6px;
+}
+
+.superOverHeading {
+  margin: 0;
+  padding: 2px 2px 0;
+  color: var(--color-red-700);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.superOverCards {
+  display: grid;
+  gap: 10px;
+}
+
+.inningsCard {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+}
+
+.inningsHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 11px 12px;
+  color: var(--color-white);
+}
+
+.primary {
+  background: var(--color-indigo-800);
+}
+
+.danger {
+  background: var(--color-red-700);
+}
+
+.inningsLabel {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inningsScore {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: baseline;
+  gap: 5px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.overs {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: .88;
+  white-space: nowrap;
+}
+
+.tableScroller {
+  width: 100%;
+  overflow-x: hidden;
+}
+
+.statTable {
+  width: 100%;
+  min-width: 0;
+}
+
+.tableHeader,
+.tableRow {
+  display: grid;
+  grid-template-columns: minmax(108px, 2.2fr) repeat(4, minmax(28px, .55fr)) minmax(42px, .78fr);
+  align-items: center;
+  text-align: right;
+}
+
+.tableHeader {
+  min-height: 34px;
+  border-bottom: 1px solid var(--color-border);
+  background: #f6f7fb;
+  color: var(--color-slate-600);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.tableHeader>*,
+.tableRow>* {
+  min-width: 0;
+  padding: 7px 3px;
+}
+
+.tableHeader> :first-child,
+.tableRow> :first-child {
+  padding-left: 12px;
+}
+
+.tableHeader> :last-child,
+.tableRow> :last-child {
+  padding-right: 12px;
+}
+
+.tableRow {
+  min-height: 48px;
+  border-bottom: 1px solid #f0f2f5;
+  color: var(--color-slate-700);
+  background: var(--color-white);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tableRow:last-child {
+  border-bottom: 0;
+}
+
+.textLeft,
+.playerCell,
+.playerName {
+  text-align: left;
+}
+
+.playerCell {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+}
+
+.playerName {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-slate-900);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dismissal {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--color-slate-500);
+  font-size: 9px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.runs {
+  color: var(--color-slate-900);
+  font-weight: 800;
+}
+
+.summary {
+  border-top: 1px solid #f0f2f5;
+}
+
+.summaryRow {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) 1fr;
+  align-items: start;
+  gap: 10px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #f0f2f5;
+  background: var(--color-white);
+  color: var(--color-slate-800);
+  font-size: 11px;
+}
+
+.summaryLabel {
+  font-weight: 700;
+}
+
+.summaryValue,
+.summaryValueStrong {
+  min-width: 0;
+  text-align: right;
+  line-height: 1.4;
+}
+
+.summaryValueStrong {
+  font-weight: 700;
+}
+
+.yetToBat {
+  color: var(--color-indigo-700);
+  font-weight: 600;
+}
+
+.sectionTitle {
+  margin: 0;
+  padding: 12px 12px 6px;
+  border-top: 1px solid #f0f2f5;
+  color: var(--color-slate-900);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.empty {
+  padding: 24px 16px;
+  border: 1px dashed var(--color-slate-300);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  text-align: center;
+}
+
+.empty h3 {
+  margin: 0 0 4px;
+  font-size: 14px;
+}
+
+.empty p {
+  margin: 0;
+  color: var(--color-slate-500);
+  font-size: 12px;
+}
 
 /* 320px devices still fit the scorecard without a horizontal scrollbar. */
 @media (max-width: 360px) {
-  .tableHeader, .tableRow { grid-template-columns: minmax(94px, 2fr) repeat(4, 26px) 38px; }
-  .tableHeader > :first-child, .tableRow > :first-child { padding-left: 9px; }
-  .tableHeader > :last-child, .tableRow > :last-child { padding-right: 9px; }
-  .inningsHeader { padding-inline: 10px; }
-  .inningsScore { font-size: 20px; }
-  .overs { font-size: 10px; }
+
+  .tableHeader,
+  .tableRow {
+    grid-template-columns: minmax(94px, 2fr) repeat(4, 26px) 38px;
+  }
+
+  .tableHeader> :first-child,
+  .tableRow> :first-child {
+    padding-left: 9px;
+  }
+
+  .tableHeader> :last-child,
+  .tableRow> :last-child {
+    padding-right: 9px;
+  }
+
+  .inningsHeader {
+    padding-inline: 10px;
+  }
+
+  .inningsScore {
+    font-size: 20px;
+  }
+
+  .overs {
+    font-size: 10px;
+  }
+}
+
+/* Partnerships are intentionally a structured scorecard section rather than a
+   collection of mini cards. The innings card is already the containing surface. */
+.partnershipSection {
+  border-top: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.partnershipSectionHeader {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px 8px;
+}
+
+.sectionEyebrow {
+  display: block;
+  margin-bottom: 1px;
+  color: var(--color-slate-500);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.partnershipHeading {
+  margin: 0;
+  color: var(--color-slate-900);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.partnershipCount {
+  min-width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 7px;
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.partnershipList {
+  border-top: 1px solid var(--color-border);
+}
+
+.partnershipRow {
+  position: relative;
+  padding: 11px 12px 12px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-white);
+}
+
+.partnershipRow:last-child {
+  border-bottom: 0;
+}
+
+.activePartnership {
+  box-shadow: inset 3px 0 0 var(--color-emerald-500);
+  background: linear-gradient(90deg, rgba(16, 185, 129, .045), transparent 34%);
+}
+
+.partnershipTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.partnershipIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-top: 1px;
+}
+
+.partnershipIdentity strong {
+  overflow: hidden;
+  color: var(--color-slate-800);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.livePartnershipBadge {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--color-emerald-100);
+  color: var(--color-emerald-700);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.partnershipTotal {
+  flex: 0 0 auto;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: baseline;
+  justify-content: end;
+  column-gap: 4px;
+  color: var(--color-slate-500);
+  font-variant-numeric: tabular-nums;
+}
+
+.partnershipTotal strong {
+  color: var(--color-slate-900);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.partnershipTotal span {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.partnershipTotal small {
+  grid-column: 1 / -1;
+  justify-self: end;
+  margin-top: -1px;
+  color: var(--color-slate-500);
+  font-size: 9px;
+  font-weight: 500;
+}
+
+.partnershipBar {
+  height: 4px;
+  display: flex;
+  overflow: hidden;
+  margin: 9px 0 8px;
+  border-radius: 999px;
+  background: var(--color-slate-100);
+}
+
+.partnershipBarPrimary {
+  flex: 0 0 auto;
+  height: 100%;
+  background: var(--color-indigo-500);
+}
+
+.partnershipBarSecondary {
+  flex: 1;
+  height: 100%;
+  background: var(--color-indigo-200);
+}
+
+.partnershipPlayers {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 14px;
+}
+
+.partnershipPlayer {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.alignEnd {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.partnershipPlayerName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-slate-700);
+  font-size: 11px;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.partnershipContribution {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  color: var(--color-slate-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.partnershipContribution strong {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.partnershipContribution small {
+  color: var(--color-slate-500);
+  font-size: 9px;
+}
+
+@media (max-width: 360px) {
+
+  .partnershipSectionHeader,
+  .partnershipRow {
+    padding-inline: 10px;
+  }
+
+  .partnershipPlayers {
+    gap: 8px;
+  }
+
+  .partnershipPlayer {
+    gap: 4px;
+  }
 }

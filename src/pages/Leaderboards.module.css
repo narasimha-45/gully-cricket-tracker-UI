@@ -1,27 +1,59 @@
 .page { display: flex; flex-direction: column; gap: 8px; }
-.table { display: grid; gap: 6px; width: 100%; }
+.table {
+  display: grid;
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+}
 .header, .row { display: grid; align-items: center; gap: 2px; }
 .battingGrid, .bowlingGrid { grid-template-columns: minmax(94px, 2.2fr) repeat(6, minmax(30px, .72fr)); }
 .header {
   position: sticky;
   top: var(--stats-header-top, 158px);
   z-index: 60;
-  min-height: 34px;
+  min-height: 36px;
   padding: 6px 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 9px;
-  background: rgba(247, 248, 251, .97);
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 12px 12px 0 0;
+  background: rgba(248, 250, 252, .98);
   backdrop-filter: blur(10px);
   color: var(--color-slate-500);
   font-size: 9px;
   font-weight: 700;
 }
 .playerHeader { text-align: left; padding-left: 3px; }
-.row { min-height: 50px; padding: 7px 8px; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-white); box-shadow: var(--shadow-xs); font-size: 10px; font-variant-numeric: tabular-nums; }
-.playerButton { min-width: 0; overflow: hidden; padding: 0; border: 0; background: transparent; color: var(--color-indigo-700); font-size: 11px; font-weight: 700; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.row {
+  min-height: 58px;
+  padding: 8px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-white);
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+.row:last-child { border-bottom: 0; border-radius: 0 0 12px 12px; }
+.row:hover { background: var(--color-slate-50); }
+.playerButton {
+  min-width: 0;
+  overflow: hidden;
+  padding: 0 3px;
+  border: 0;
+  background: transparent;
+  color: var(--color-indigo-700);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
 .stat { text-align: center; color: var(--color-slate-700); font-weight: 600; }
-.primaryStat { color: var(--color-slate-900); font-weight: 800; }
-.secondary { display: block; margin-top: 1px; color: var(--color-slate-400); font-size: 8px; font-weight: 500; }
+.primaryStat { color: var(--color-slate-900); font-weight: 700; }
+.secondary { display: block; margin-top: 2px; color: var(--color-slate-500); font-size: 9px; font-weight: 500; }
+
 @media (max-width: 360px) {
   .battingGrid, .bowlingGrid { grid-template-columns: minmax(82px, 2fr) repeat(6, minmax(27px, .7fr)); }
   .header, .row { padding-inline: 5px; }

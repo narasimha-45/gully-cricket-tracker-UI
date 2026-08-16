@@ -131,9 +131,17 @@ async function request(
     }
 
     const callerCancelled = Boolean(signal?.aborted);
-    const timedOut = controller.signal.aborted && !callerCancelled;
+    if (callerCancelled) {
+      // React Query intentionally cancels abandoned requests during route changes
+      // and React StrictMode's development remount. This is expected control flow,
+      // not a network failure, so keep it out of warning/error telemetry.
+      logger.debug("api.request.cancelled", { requestId, method, path, durationMs });
+      throw error;
+    }
+
+    const timedOut = controller.signal.aborted;
     const apiError = new ApiError(
-      callerCancelled ? "Request cancelled" : timedOut ? "Request timed out" : "Network request failed",
+      timedOut ? "Request timed out" : "Network request failed",
       { status: 0, cause: error, requestId, path },
     );
     logger.warn("api.request.failed", { requestId, method, path, durationMs, error: apiError });
