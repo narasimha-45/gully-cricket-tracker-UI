@@ -21,7 +21,8 @@ export default function Home({ open, onClose }) {
             Score fast. Remember every match.
           </h1>
           <p className={styles.heroSubtitle}>
-            Local-first cricket scoring that keeps working even when the ground has poor signal.
+            Local-first cricket scoring that keeps working even when the ground
+            has poor signal.
           </p>
         </section>
 
@@ -38,7 +39,9 @@ export default function Home({ open, onClose }) {
               })
             }
           >
-            <span className={styles.cardIcon} aria-hidden="true">🏆</span>
+            <span className={styles.cardIcon} aria-hidden="true">
+              🏆
+            </span>
             <span>
               <strong>Seasons</strong>
               <small>Create, resume, and review matches</small>
@@ -50,7 +53,9 @@ export default function Home({ open, onClose }) {
             className={`${styles.dashboardCard} ${styles.leaderboardCard}`}
             onClick={() => navigate("/insights")}
           >
-            <span className={styles.cardIcon} aria-hidden="true">📊</span>
+            <span className={styles.cardIcon} aria-hidden="true">
+              📊
+            </span>
             <span>
               <strong>Stats</strong>
               <small>Batting, bowling, teams, and fielding</small>
@@ -58,7 +63,11 @@ export default function Home({ open, onClose }) {
           </button>
         </section>
 
-        <section id="seasons-section" className={styles.section} aria-labelledby="seasons-title">
+        <section
+          id="seasons-section"
+          className={styles.section}
+          aria-labelledby="seasons-title"
+        >
           <div className={styles.sectionHeader}>
             <div>
               <span className={styles.sectionEyebrow}>Your cricket</span>
@@ -72,41 +81,53 @@ export default function Home({ open, onClose }) {
           {seasonsQuery.isError && (
             <div className={styles.errorState} role="alert">
               <strong>Could not load seasons</strong>
-              <span>{seasonsQuery.error?.message || "Check your connection and try again."}</span>
+              <span>
+                {seasonsQuery.error?.message ||
+                  "Check your connection and try again."}
+              </span>
               <button type="button" onClick={() => seasonsQuery.refetch()}>
                 Try again
               </button>
             </div>
           )}
 
-          {!seasonsQuery.isLoading && !seasonsQuery.isError && seasons.length === 0 && (
-            <EmptyState
-              title="No seasons yet"
-              subtitle="Create your first season, add two teams, and start scoring."
-            />
-          )}
+          {!seasonsQuery.isLoading &&
+            !seasonsQuery.isError &&
+            seasons.length === 0 && (
+              <EmptyState
+                title="No seasons yet"
+                subtitle="Create your first season, add two teams, and start scoring."
+              />
+            )}
 
-          {!seasonsQuery.isLoading && !seasonsQuery.isError && seasons.length > 0 && (
-            <div className={styles.list}>
-              {seasons.map((season) => (
-                <button
-                  type="button"
-                  key={season.id}
-                  className={styles.card}
-                  onClick={() => navigate(`/season/${season.id}`)}
-                  aria-label={`Open ${formatName(season.seasonName)} season`}
-                >
-                  <span className={styles.cardTop}>
-                    <strong className={styles.name}>{formatName(season.seasonName)}</strong>
-                    <span className={styles.cardArrow} aria-hidden="true">→</span>
-                  </span>
-                  <span className={styles.meta}>
-                    {season.matchesPlayed || 0} {(season.matchesPlayed || 0) === 1 ? "match" : "matches"}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+          {!seasonsQuery.isLoading &&
+            !seasonsQuery.isError &&
+            seasons.length > 0 && (
+              <div className={styles.list}>
+                {seasons.map((season) => (
+                  <button
+                    type="button"
+                    key={season.id}
+                    className={styles.card}
+                    onClick={() => navigate(`/season/${season.id}`)}
+                    aria-label={`Open ${formatName(season.seasonName)} season`}
+                  >
+                    <span className={styles.cardTop}>
+                      <strong className={styles.name}>
+                        {formatName(season.seasonName)}
+                      </strong>
+                      <span className={styles.cardArrow} aria-hidden="true">
+                        →
+                      </span>
+                    </span>
+                    <span className={styles.meta}>
+                      {season.matchesPlayed || 0}{" "}
+                      {(season.matchesPlayed || 0) === 1 ? "match" : "matches"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
         </section>
       </main>
 

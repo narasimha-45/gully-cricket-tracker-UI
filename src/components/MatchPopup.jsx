@@ -33,9 +33,13 @@ export default function MatchPopup({
         tabIndex={-1}
       >
         <div className={styles.accentBar} aria-hidden="true" />
-        <h2 id={titleId} className={styles.title}>{title}</h2>
+        <h2 id={titleId} className={styles.title}>
+          {title}
+        </h2>
         {subtitle && (
-          <p id={`${titleId}-description`} className={styles.subtitle}>{subtitle}</p>
+          <p id={`${titleId}-description`} className={styles.subtitle}>
+            {subtitle}
+          </p>
         )}
 
         <div className={styles.actions}>
@@ -51,13 +55,23 @@ export default function MatchPopup({
           </button>
 
           {secondaryText && onSecondary && (
-            <button type="button" className={styles.secondary} disabled={loading} onClick={onSecondary}>
+            <button
+              type="button"
+              className={styles.secondary}
+              disabled={loading}
+              onClick={onSecondary}
+            >
               {secondaryText}
             </button>
           )}
 
           {tertiaryText && onTertiary && (
-            <button type="button" className={styles.tertiary} disabled={loading} onClick={onTertiary}>
+            <button
+              type="button"
+              className={styles.tertiary}
+              disabled={loading}
+              onClick={onTertiary}
+            >
               {tertiaryText}
             </button>
           )}

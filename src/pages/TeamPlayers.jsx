@@ -50,13 +50,8 @@ function TeamPlayersContent({ teamKey }) {
   const navigate = useNavigate();
   const searchContainerRef = useRef(null);
   const squadRequestRef = useRef(null);
-  const {
-    phase,
-    match,
-    error,
-    dispatch,
-    persistReplacement,
-  } = useMatchSession();
+  const { phase, match, error, dispatch, persistReplacement } =
+    useMatchSession();
 
   const [query, setQuery] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -121,7 +116,7 @@ function TeamPlayersContent({ teamKey }) {
   const results = playersQuery.data || [];
   const searchLoading = Boolean(
     query.trim().length >= 2 &&
-      (playersQuery.isLoading || debouncedQuery !== query.trim()),
+    (playersQuery.isLoading || debouncedQuery !== query.trim()),
   );
 
   useEffect(() => {
@@ -135,7 +130,8 @@ function TeamPlayersContent({ teamKey }) {
     };
 
     document.addEventListener("pointerdown", handleOutsideClick);
-    return () => document.removeEventListener("pointerdown", handleOutsideClick);
+    return () =>
+      document.removeEventListener("pointerdown", handleOutsideClick);
   }, []);
 
   const players = useMemo(
@@ -244,7 +240,10 @@ function TeamPlayersContent({ teamKey }) {
       </header>
 
       <section className={styles.searchCard} ref={searchContainerRef}>
-        <label className={styles.inputLabel} htmlFor={`${teamKey}-player-search`}>
+        <label
+          className={styles.inputLabel}
+          htmlFor={`${teamKey}-player-search`}
+        >
           Find or add player
         </label>
         <div className={styles.inputWrapper}>
@@ -261,7 +260,9 @@ function TeamPlayersContent({ teamKey }) {
               setIsOpen(true);
             }}
           />
-          {searchLoading && <span className={styles.spinner} aria-label="Searching" />}
+          {searchLoading && (
+            <span className={styles.spinner} aria-label="Searching" />
+          )}
         </div>
 
         {(feedback || playersQuery.isError) && (
@@ -272,7 +273,11 @@ function TeamPlayersContent({ teamKey }) {
         )}
 
         {isOpen && query.trim() && (
-          <div className={styles.dropdown} role="listbox" aria-label="Player suggestions">
+          <div
+            className={styles.dropdown}
+            role="listbox"
+            aria-label="Player suggestions"
+          >
             {results.map((player, index) => {
               const name = getPlayerName(player);
               const disabled = players.includes(name);
@@ -284,7 +289,9 @@ function TeamPlayersContent({ teamKey }) {
                   disabled={disabled}
                   onClick={() => addPlayer(name)}
                 >
-                  <span className={styles.playerIcon} aria-hidden="true">👤</span>
+                  <span className={styles.playerIcon} aria-hidden="true">
+                    👤
+                  </span>
                   <span>
                     <strong>{formatName(name)}</strong>
                     {(disabled || opponentPlayers.has(name)) && (
@@ -308,7 +315,9 @@ function TeamPlayersContent({ teamKey }) {
                   className={styles.dropdownItem}
                   onClick={() => addPlayer(query)}
                 >
-                  <span className={styles.newPlayerIcon} aria-hidden="true">+</span>
+                  <span className={styles.newPlayerIcon} aria-hidden="true">
+                    +
+                  </span>
                   <span>
                     <strong>Add “{formatName(query)}”</strong>
                     <small>
@@ -340,7 +349,9 @@ function TeamPlayersContent({ teamKey }) {
               <span className={styles.playerAvatar} aria-hidden="true">
                 {player.charAt(0).toUpperCase()}
               </span>
-              <strong className={styles.playerName}>{formatName(player)}</strong>
+              <strong className={styles.playerName}>
+                {formatName(player)}
+              </strong>
               {opponentPlayers.has(player) && (
                 <span className={styles.jokerBadge}>Joker</span>
               )}

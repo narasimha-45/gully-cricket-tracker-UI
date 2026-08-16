@@ -1,21 +1,194 @@
-.page { display: grid; gap: 22px; }
-.section { min-width: 0; display: grid; gap: 9px; }
-.sectionHeading { display: flex; align-items: end; justify-content: space-between; gap: 12px; padding: 0 2px; }
-.titleGroup { min-width: 0; }
-.sectionHeading h2 { margin: 2px 0 0; color: var(--color-text-primary); font-size: 18px; line-height: 1.25; letter-spacing: -.015em; }
-.eyebrow { display: block; color: var(--color-indigo-600); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.textAction { min-height: 34px; padding: 0 2px; border: 0; background: transparent; color: var(--color-indigo-700); font-size: 11px; font-weight: 700; cursor: pointer; white-space: nowrap; }
-.panel { overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-white); box-shadow: var(--shadow-xs); }
-.leaderList { display: grid; }
-.leaderRow {
+.page {
+  display: grid;
+  gap: 22px;
+}
+
+.summaryStrip {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 2px;
+  color: var(--color-slate-500);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.summaryStrip strong {
+  color: var(--color-slate-800);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.summaryDivider {
+  width: 1px;
+  height: 10px;
+  background: var(--color-slate-200);
+}
+
+.section {
+  min-width: 0;
+  display: grid;
+  gap: 9px;
+}
+
+.sectionHeading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 2px;
+}
+
+.titleGroup {
+  min-width: 0;
+}
+
+.sectionHeading h2 {
+  margin: 2px 0 0;
+  color: var(--color-text-primary);
+  font-size: 18px;
+  line-height: 1.25;
+  letter-spacing: -.015em;
+}
+
+.eyebrow {
+  display: block;
+  color: var(--color-indigo-600);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.textAction {
+  min-height: 34px;
+  padding: 0 2px;
+  border: 0;
+  background: transparent;
+  color: var(--color-indigo-700);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.panel {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+}
+
+/* Rank 1 gets a spotlighted, larger row on a tinted brand background — the
+   old layout gave every rank the same plain row, which buried the single
+   most useful fact on this page (who's actually leading). */
+.spotlight {
   width: 100%;
   min-width: 0;
-  min-height: 66px;
+  min-height: 78px;
   display: grid;
-  grid-template-columns: 34px minmax(0, 1fr) auto;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 13px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-primary-light);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.spotlight:hover {
+  background: var(--color-indigo-100);
+}
+
+.spotlightAvatar {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--gradient-brand);
+  color: var(--color-white);
+  font-size: 17px;
+  font-weight: 700;
+  box-shadow: 0 4px 10px rgba(67, 56, 202, .28);
+}
+
+.spotlightCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.spotlightRankLabel {
+  color: var(--color-indigo-600);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+}
+
+.spotlightName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-slate-900);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotlightSecondary {
+  overflow: hidden;
+  color: var(--color-slate-600);
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.spotlightValue {
+  min-width: 64px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+  color: var(--color-indigo-800);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.spotlightValue strong {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.01em;
+}
+
+.spotlightValue span {
+  color: var(--color-indigo-600);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.compactList {
+  display: grid;
+}
+
+.compactRow {
+  width: 100%;
+  min-width: 0;
+  min-height: 58px;
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
   align-items: center;
   gap: 11px;
-  padding: 10px 13px;
+  padding: 8px 14px;
   border: 0;
   border-bottom: 1px solid var(--color-border);
   background: transparent;
@@ -23,24 +196,153 @@
   text-align: left;
   cursor: pointer;
 }
-.leaderRow:last-child { border-bottom: 0; }
-.leaderRow:hover { background: var(--color-slate-50); }
-.rank { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 9px; background: var(--color-indigo-50); color: var(--color-indigo-700); font-size: 11px; font-weight: 700; }
-.playerCopy { min-width: 0; display: grid; gap: 3px; }
-.playerName { min-width: 0; overflow: hidden; color: var(--color-slate-900); font-size: 13px; font-weight: 700; line-height: 1.25; text-overflow: ellipsis; white-space: nowrap; }
-.secondaryValue { overflow: hidden; color: var(--color-slate-500); font-size: 10px; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.primaryValue { min-width: 58px; display: flex; align-items: baseline; justify-content: flex-end; gap: 4px; color: var(--color-slate-900); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.primaryValue strong { font-size: 14px; font-weight: 700; }
-.primaryValue span { color: var(--color-slate-500); font-size: 10px; font-weight: 600; }
-.panelMessage { min-height: 96px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; color: var(--color-slate-700); }
-.panelMessage > div { display: grid; gap: 3px; }
-.panelMessage strong { color: var(--color-slate-900); font-size: 12px; }
-.panelMessage span { color: var(--color-slate-500); font-size: 10px; }
-.panelMessage button { min-height: 34px; display: inline-flex; align-items: center; gap: 5px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 8px; background: white; color: var(--color-slate-700); font-size: 10px; font-weight: 700; cursor: pointer; }
+
+.compactRow:last-child {
+  border-bottom: 0;
+}
+
+.compactRow:hover {
+  background: var(--color-slate-50);
+}
+
+.rankBadge {
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-slate-100);
+  color: var(--color-slate-500);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.rankSilver {
+  background: var(--color-slate-200);
+  color: var(--color-slate-700);
+}
+
+.rankBronze {
+  background: var(--color-amber-100);
+  color: var(--color-amber-800);
+}
+
+.compactCopy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.compactName {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-slate-900);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactSecondary {
+  overflow: hidden;
+  color: var(--color-slate-500);
+  font-size: 10px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.compactValue {
+  min-width: 52px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-end;
+  gap: 4px;
+  color: var(--color-slate-900);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.compactValue strong {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.compactValue span {
+  color: var(--color-slate-500);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.panelMessage {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  color: var(--color-slate-700);
+}
+
+.panelMessage>div {
+  display: grid;
+  gap: 3px;
+}
+
+.panelMessage strong {
+  color: var(--color-slate-900);
+  font-size: 12px;
+}
+
+.panelMessage span {
+  color: var(--color-slate-500);
+  font-size: 10px;
+}
+
+.panelMessage button {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: white;
+  color: var(--color-slate-700);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+}
 
 @media (max-width: 360px) {
-  .page { gap: 18px; }
-  .leaderRow { grid-template-columns: 30px minmax(0, 1fr) auto; gap: 9px; padding-inline: 10px; }
-  .rank { width: 28px; height: 28px; }
-  .primaryValue { min-width: 52px; }
+  .page {
+    gap: 18px;
+  }
+
+  .spotlight {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding-inline: 10px;
+  }
+
+  .spotlightAvatar {
+    width: 38px;
+    height: 38px;
+    font-size: 15px;
+  }
+
+  .spotlightValue {
+    min-width: 56px;
+  }
+
+  .compactRow {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+    gap: 9px;
+    padding-inline: 10px;
+  }
+
+  .compactValue {
+    min-width: 48px;
+  }
 }

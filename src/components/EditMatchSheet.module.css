@@ -1,35 +1,280 @@
-.sectionCard { margin-bottom: 10px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-white); }
-.sectionTitleRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
-.sectionTitleRow h3 { margin: 0; color: var(--color-slate-900); font-size: 14px; font-weight: 700; }
-.sectionTitleRow p, .helperNote { margin: 3px 0 0; color: var(--color-slate-500); font-size: 10px; line-height: 1.4; }
-.segmentedControl { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 10px; background: var(--color-slate-100); }
-.segmentedControl button { min-height: 38px; border: 0; border-radius: 8px; background: transparent; color: var(--color-slate-600); font-size: 12px; font-weight: 600; cursor: pointer; }
-.segmentedControl button.active { background: var(--color-white); color: var(--color-indigo-700); box-shadow: var(--shadow-xs); font-weight: 700; }
-.segmentedControl button:disabled { cursor: not-allowed; }
-.oversContainer { display: flex; align-items: center; justify-content: center; gap: 14px; margin: 2px 0 10px; }
-.oversContainer button { width: 36px; height: 36px; border: 0; border-radius: 9px; background: var(--color-indigo-600); color: white; font-size: 20px; font-weight: 700; cursor: pointer; }
-.oversContainer button:disabled { background: var(--color-slate-200); color: var(--color-slate-400); cursor: not-allowed; }
-.oversContainer strong { min-width: 58px; padding: 8px 12px; border-radius: 9px; background: var(--color-indigo-50); color: var(--color-indigo-900); font-size: 17px; text-align: center; }
-.primaryButton { width: 100%; min-height: 42px; border: 0; border-radius: 9px; background: var(--color-indigo-600); color: white; font-size: 12px; font-weight: 700; cursor: pointer; }
-.settingsRow { position: relative; min-height: 58px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid #eef1f5; cursor: pointer; }
-.settingsRow:first-of-type { border-top: 0; }
-.settingCopy, .teamHeader > span:first-child, .playerRow > span { min-width: 0; display: grid; gap: 2px; }
-.settingsRow strong, .playerRow strong { color: var(--color-slate-800); font-size: 12px; font-weight: 600; }
-.settingsRow small, .teamHeader small, .playerRow small { color: var(--color-slate-500); font-size: 10px; line-height: 1.35; }
-.switchControl { position: relative; width: 38px; height: 22px; flex: 0 0 38px; }
-.switchInput { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
-.switchTrack { position: absolute; inset: 0; display: block; border-radius: 999px; background: var(--color-slate-300); transition: background-color 140ms ease; }
-.switchThumb { position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%; background: white; box-shadow: 0 1px 3px rgba(15,23,42,.22); transition: transform 140ms ease; }
-.switchInput:checked + .switchTrack { background: var(--color-indigo-600); }
-.switchInput:checked + .switchTrack .switchThumb { transform: translateX(16px); }
-.switchInput:focus-visible + .switchTrack { outline: 2px solid var(--color-indigo-400, #818cf8); outline-offset: 2px; }
-.teamHeader { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0; border: 0; background: transparent; color: var(--color-slate-700); text-align: left; cursor: pointer; }
-.teamHeader strong { font-size: 13px; font-weight: 700; }
-.teamBody { margin-top: 9px; }
-.playerList { display: grid; }
-.playerRow { display: flex; align-items: center; justify-content: space-between; gap: 9px; padding: 8px 0; border-top: 1px solid #eef1f5; }
-.playerRow button { padding: 6px 9px; border: 0; border-radius: 8px; background: var(--color-red-50); color: var(--color-red-700); font-size: 10px; font-weight: 600; cursor: pointer; }
-.playerRow button:disabled { background: var(--color-slate-100); color: var(--color-slate-500); cursor: not-allowed; }
-.addRow { display: grid; grid-template-columns: 1fr auto; gap: 7px; margin-top: 9px; }
-.addRow input { min-width: 0; min-height: 40px; padding: 0 10px; border: 1px solid var(--color-slate-300); border-radius: 9px; background: white; font-size: 12px; }
-.addRow button { padding: 0 14px; border: 0; border-radius: 9px; background: var(--color-indigo-600); color: white; font-size: 11px; font-weight: 700; cursor: pointer; }
+.sectionCard {
+    margin-bottom: 10px;
+    padding: 12px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-white);
+}
+
+.sectionTitleRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+}
+
+.sectionTitleRow h3 {
+    margin: 0;
+    color: var(--color-slate-900);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.sectionTitleRow p,
+.helperNote {
+    margin: 3px 0 0;
+    color: var(--color-slate-500);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.segmentedControl {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: var(--color-slate-100);
+}
+
+.segmentedControl button {
+    min-height: 38px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-slate-600);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.segmentedControl button.active {
+    background: var(--color-white);
+    color: var(--color-indigo-700);
+    box-shadow: var(--shadow-xs);
+    font-weight: 700;
+}
+
+.segmentedControl button:disabled {
+    cursor: not-allowed;
+}
+
+.oversContainer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin: 2px 0 10px;
+}
+
+.oversContainer button {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--color-indigo-600);
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.oversContainer button:disabled {
+    background: var(--color-slate-200);
+    color: var(--color-slate-400);
+    cursor: not-allowed;
+}
+
+.oversContainer strong {
+    min-width: 58px;
+    padding: 8px 12px;
+    border-radius: 9px;
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-900);
+    font-size: 17px;
+    text-align: center;
+}
+
+.primaryButton {
+    width: 100%;
+    min-height: 42px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--color-indigo-600);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.settingsRow {
+    position: relative;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-top: 1px solid var(--color-hairline);
+    cursor: pointer;
+}
+
+.settingsRow:first-of-type {
+    border-top: 0;
+}
+
+.settingCopy,
+.teamHeader>span:first-child,
+.playerRow>span {
+    min-width: 0;
+    display: grid;
+    gap: 2px;
+}
+
+.settingsRow strong,
+.playerRow strong {
+    color: var(--color-slate-800);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.settingsRow small,
+.teamHeader small,
+.playerRow small {
+    color: var(--color-slate-500);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.switchControl {
+    position: relative;
+    width: 38px;
+    height: 22px;
+    flex: 0 0 38px;
+}
+
+.switchInput {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.switchTrack {
+    position: absolute;
+    inset: 0;
+    display: block;
+    border-radius: 999px;
+    background: var(--color-slate-300);
+    transition: background-color 140ms ease;
+}
+
+.switchThumb {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, .22);
+    transition: transform 140ms ease;
+}
+
+.switchInput:checked+.switchTrack {
+    background: var(--color-indigo-600);
+}
+
+.switchInput:checked+.switchTrack .switchThumb {
+    transform: translateX(16px);
+}
+
+.switchInput:focus-visible+.switchTrack {
+    outline: 2px solid var(--color-indigo-400);
+    outline-offset: 2px;
+}
+
+.teamHeader {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-slate-700);
+    text-align: left;
+    cursor: pointer;
+}
+
+.teamHeader strong {
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.teamBody {
+    margin-top: 9px;
+}
+
+.playerList {
+    display: grid;
+}
+
+.playerRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 9px;
+    padding: 8px 0;
+    border-top: 1px solid var(--color-hairline);
+}
+
+.playerRow button {
+    padding: 6px 9px;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-red-50);
+    color: var(--color-red-700);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.playerRow button:disabled {
+    background: var(--color-slate-100);
+    color: var(--color-slate-500);
+    cursor: not-allowed;
+}
+
+.addRow {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 7px;
+    margin-top: 9px;
+}
+
+.addRow input {
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid var(--color-slate-300);
+    border-radius: 9px;
+    background: white;
+    font-size: 12px;
+}
+
+.addRow button {
+    padding: 0 14px;
+    border: 0;
+    border-radius: 9px;
+    background: var(--color-indigo-600);
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}

@@ -5,7 +5,11 @@ import { useSyncPendingMatches } from "../hooks/useSyncPendingMatches";
 import ErrorBoundary from "./common/ErrorBoundary";
 import styles from "./AppShell.module.css";
 
-export default function AppShell({ title = "Gully Cricket", children, bottomAction }) {
+export default function AppShell({
+  title = "Gully Cricket",
+  children,
+  bottomAction,
+}) {
   const { pendingCount, syncing, retryNow } = useSyncPendingMatches();
   const location = useLocation();
   const online = useNetworkStatus();
@@ -13,9 +17,15 @@ export default function AppShell({ title = "Gully Cricket", children, bottomActi
 
   useEffect(() => {
     const handleLocalSaveError = (event) =>
-      setLocalSaveError(event.detail?.message || "Unable to save this match on this device.");
+      setLocalSaveError(
+        event.detail?.message || "Unable to save this match on this device.",
+      );
     window.addEventListener("gully:local-save-error", handleLocalSaveError);
-    return () => window.removeEventListener("gully:local-save-error", handleLocalSaveError);
+    return () =>
+      window.removeEventListener(
+        "gully:local-save-error",
+        handleLocalSaveError,
+      );
   }, []);
 
   return (
@@ -23,7 +33,9 @@ export default function AppShell({ title = "Gully Cricket", children, bottomActi
       <div className={styles.app}>
         <header className={styles.header}>
           <div className={styles.brand} aria-label={title}>
-            <span className={styles.logoMark} aria-hidden="true">🏏</span>
+            <span className={styles.logoMark} aria-hidden="true">
+              🏏
+            </span>
             <span className={styles.title}>{title}</span>
           </div>
 
@@ -34,9 +46,15 @@ export default function AppShell({ title = "Gully Cricket", children, bottomActi
               onClick={retryNow}
               disabled={syncing || !online}
               aria-live="polite"
-              title={online ? "Retry pending match sync" : "Sync will resume when online"}
+              title={
+                online
+                  ? "Retry pending match sync"
+                  : "Sync will resume when online"
+              }
             >
-              <span className={`${styles.syncDot} ${syncing ? styles.syncing : ""}`} />
+              <span
+                className={`${styles.syncDot} ${syncing ? styles.syncing : ""}`}
+              />
               <span>{syncing ? "Syncing" : pendingCount}</span>
             </button>
           )}
@@ -59,11 +77,15 @@ export default function AppShell({ title = "Gully Cricket", children, bottomActi
           </button>
         )}
 
-        <main className={`${styles.content} ${!online || localSaveError ? styles.contentWithBanner : ""}`}>
+        <main
+          className={`${styles.content} ${!online || localSaveError ? styles.contentWithBanner : ""}`}
+        >
           <ErrorBoundary key={location.pathname}>{children}</ErrorBoundary>
         </main>
 
-        {bottomAction && <footer className={styles.footer}>{bottomAction}</footer>}
+        {bottomAction && (
+          <footer className={styles.footer}>{bottomAction}</footer>
+        )}
       </div>
     </div>
   );

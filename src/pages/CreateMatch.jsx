@@ -18,8 +18,9 @@ const emptyTeam = () => ({
   playersLoaded: true,
 });
 
-const normalizePlayers = (players = []) =>
-  [...new Set(players.map(normalizeName).filter(Boolean))];
+const normalizePlayers = (players = []) => [
+  ...new Set(players.map(normalizeName).filter(Boolean)),
+];
 
 export default function CreateMatch() {
   const navigate = useNavigate();
@@ -74,8 +75,7 @@ export default function CreateMatch() {
       seasonId,
       status: "setup",
       matchType,
-      totalOvers:
-        matchType === MATCH_TYPES.OVERS ? Number(overs) : null,
+      totalOvers: matchType === MATCH_TYPES.OVERS ? Number(overs) : null,
       testConfig:
         matchType === MATCH_TYPES.TEST
           ? { inningsPerTeam: testInningsPerTeam }

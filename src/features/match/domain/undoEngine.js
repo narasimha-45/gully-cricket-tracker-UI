@@ -30,7 +30,10 @@ const restoreFromSnapshot = (match, previous) => {
   innings.thisOverBowlerChanged = Boolean(previous.thisOverBowlerChanged);
   innings.ballByBall = Array.isArray(previous.ballByBall)
     ? deepCopy(previous.ballByBall)
-    : (innings.ballByBall || []).slice(0, Number(previous.ballByBallLength ?? 0));
+    : (innings.ballByBall || []).slice(
+        0,
+        Number(previous.ballByBallLength ?? 0),
+      );
   innings.extras = deepCopy(previous.extras || { wides: 0, noBalls: 0 });
   return previous.extraMode || "NORMAL";
 };

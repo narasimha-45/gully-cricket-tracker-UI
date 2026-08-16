@@ -4,7 +4,10 @@ import { deleteMatch, saveMatch } from "../../../storage/matchDB";
 import { deepCopy } from "../../../utils/helpers";
 import { getMatchIdempotencyKey } from "../../../utils/matchIdentity";
 import { buildMatchSyncPayload } from "../../../utils/matchSyncPayload";
-import { calculateManOfTheMatch, deriveFieldingStats } from "../../../utils/statsCalculator";
+import {
+  calculateManOfTheMatch,
+  deriveFieldingStats,
+} from "../../../utils/statsCalculator";
 import { logger } from "../../../observability/logger";
 import { MATCH_ACTIONS } from "../state/matchActions";
 
@@ -25,7 +28,11 @@ export async function finalizeAndSyncMatch({ match, dispatch }) {
 
   // Durability first. Network is never allowed to own the final score.
   await saveMatch(updated);
-  dispatch({ type: MATCH_ACTIONS.REPLACE_PERSISTED_MATCH, payload: updated, savedAt: Date.now() });
+  dispatch({
+    type: MATCH_ACTIONS.REPLACE_PERSISTED_MATCH,
+    payload: updated,
+    savedAt: Date.now(),
+  });
 
   try {
     await api.matches.createMatch(buildMatchSyncPayload(updated), {
@@ -46,7 +53,11 @@ export async function finalizeAndSyncMatch({ match, dispatch }) {
       lastSyncError: error?.message || "Sync failed",
     };
     await saveMatch(failed);
-    dispatch({ type: MATCH_ACTIONS.REPLACE_PERSISTED_MATCH, payload: failed, savedAt: Date.now() });
+    dispatch({
+      type: MATCH_ACTIONS.REPLACE_PERSISTED_MATCH,
+      payload: failed,
+      savedAt: Date.now(),
+    });
     logger.warn("match.sync.deferred", {
       localMatchId: failed.id,
       seasonId: failed.seasonId,

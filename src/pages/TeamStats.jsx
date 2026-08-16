@@ -15,11 +15,12 @@ export default function TeamStats() {
   });
 
   const standings = useMemo(
-    () => [...(query.data || [])].sort((a, b) => {
-      const wins = number(b.matchesWon) - number(a.matchesWon);
-      if (wins !== 0) return wins;
-      return number(b.winPercentage) - number(a.winPercentage);
-    }),
+    () =>
+      [...(query.data || [])].sort((a, b) => {
+        const wins = number(b.matchesWon) - number(a.matchesWon);
+        if (wins !== 0) return wins;
+        return number(b.winPercentage) - number(a.winPercentage);
+      }),
     [query.data],
   );
 
@@ -35,7 +36,12 @@ export default function TeamStats() {
     >
       <div className={styles.table}>
         <div className={`${styles.grid} ${styles.header}`}>
-          <span>Team</span><span>P</span><span>W</span><span>L</span><span>T</span><span>Win%</span>
+          <span>Team</span>
+          <span>P</span>
+          <span>W</span>
+          <span>L</span>
+          <span>T</span>
+          <span>Win%</span>
         </div>
         {standings.map((team, index) => (
           <button
@@ -46,13 +52,21 @@ export default function TeamStats() {
           >
             <span className={styles.teamCell}>
               <span className={styles.rank}>{index + 1}</span>
-              <span><strong>{formatName(team.teamName)}</strong><small>{number(team.timesWonChasing)} chase wins · {number(team.timesWonBattingFirst)} defend wins</small></span>
+              <span>
+                <strong>{formatName(team.teamName)}</strong>
+                <small>
+                  {number(team.timesWonChasing)} chase wins ·{" "}
+                  {number(team.timesWonBattingFirst)} defend wins
+                </small>
+              </span>
             </span>
             <span>{number(team.matchesPlayed)}</span>
             <strong>{number(team.matchesWon)}</strong>
             <span>{number(team.matchesLost)}</span>
             <span>{number(team.matchesTied)}</span>
-            <span className={styles.winRate}>{number(team.winPercentage).toFixed(1)}</span>
+            <span className={styles.winRate}>
+              {number(team.winPercentage).toFixed(1)}
+            </span>
           </button>
         ))}
       </div>

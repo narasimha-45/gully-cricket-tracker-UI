@@ -114,7 +114,11 @@ export function matchSessionReducer(state, action) {
     }
 
     case MATCH_ACTIONS.START_NEXT_INNINGS:
-      return commit(state, startNextInnings(state.match, action.payload), "NORMAL");
+      return commit(
+        state,
+        startNextInnings(state.match, action.payload),
+        "NORMAL",
+      );
 
     case MATCH_ACTIONS.START_SUPER_OVER:
       return commit(state, startSuperOver(state.match), "NORMAL");

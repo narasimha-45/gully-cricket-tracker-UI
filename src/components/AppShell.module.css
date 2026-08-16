@@ -2,8 +2,9 @@
   min-height: 100vh;
   display: flex;
   justify-content: center;
-  background: #eef1f6;
+  background: var(--color-page-tint);
 }
+
 .app {
   position: relative;
   width: 100%;
@@ -13,6 +14,7 @@
   background: var(--color-background);
   border-inline: 1px solid rgba(15, 23, 42, .04);
 }
+
 .header {
   position: fixed;
   top: 0;
@@ -25,23 +27,39 @@
   justify-content: space-between;
   gap: 12px;
   padding: 0 14px;
-  background: linear-gradient(135deg, #312e81, #4338ca);
+  background: var(--gradient-brand);
   color: white;
   box-shadow: 0 4px 14px rgba(49, 46, 129, .16);
 }
-.brand { min-width: 0; display: flex; align-items: center; gap: 9px; }
+
+.brand {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
 .logoMark {
   width: 32px;
   height: 32px;
   flex: 0 0 32px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(255,255,255,.16);
+  border: 1px solid rgba(255, 255, 255, .16);
   border-radius: 9px;
-  background: rgba(255,255,255,.10);
+  background: rgba(255, 255, 255, .10);
   font-size: 17px;
 }
-.title { overflow: hidden; font-size: 17px; font-weight: 700; letter-spacing: -.2px; text-overflow: ellipsis; white-space: nowrap; }
+
+.title {
+  overflow: hidden;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -.2px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .syncBadge {
   min-width: 40px;
   height: 31px;
@@ -50,19 +68,42 @@
   justify-content: center;
   gap: 5px;
   padding: 0 9px;
-  border: 1px solid rgba(255,255,255,.18);
+  border: 1px solid rgba(255, 255, 255, .18);
   border-radius: 999px;
-  background: rgba(255,255,255,.10);
+  background: rgba(255, 255, 255, .10);
   color: white;
   font-size: 11px;
   font-weight: 700;
   cursor: pointer;
 }
-.syncBadge:disabled { opacity: .58; cursor: default; }
-.syncDot { width: 6px; height: 6px; flex: 0 0 6px; border-radius: 50%; background: var(--color-amber-300); }
-.syncDot.syncing { background: #6ee7b7; animation: syncPulse 1s ease-in-out infinite; }
-.content { min-height: 100vh; padding: 72px 14px 96px; }
-.contentWithBanner { padding-top: 98px; }
+
+.syncBadge:disabled {
+  opacity: .58;
+  cursor: default;
+}
+
+.syncDot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--color-amber-300);
+}
+
+.syncDot.syncing {
+  background: var(--color-emerald-300);
+  animation: syncPulse 1s ease-in-out infinite;
+}
+
+.content {
+  min-height: 100vh;
+  padding: 72px 14px 96px;
+}
+
+.contentWithBanner {
+  padding-top: 98px;
+}
+
 .footer {
   position: fixed;
   bottom: 0;
@@ -70,9 +111,11 @@
   width: 100%;
   max-width: 520px;
   padding: 10px 14px 16px;
-  background: linear-gradient(to top, rgba(247,248,251,.99), rgba(247,248,251,.90), rgba(247,248,251,0));
+  background: linear-gradient(to top, rgba(247, 248, 251, .99), rgba(247, 248, 251, .90), rgba(247, 248, 251, 0));
 }
-.offlineBanner, .saveErrorBanner {
+
+.offlineBanner,
+.saveErrorBanner {
   position: fixed;
   top: 60px;
   z-index: 95;
@@ -85,15 +128,64 @@
   font-size: 11px;
   font-weight: 600;
 }
-.offlineBanner { background: var(--color-amber-100); color: var(--color-amber-900); }
-.saveErrorBanner { background: var(--color-red-100); color: var(--color-red-800); cursor: pointer; }
-@keyframes syncPulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
-@supports (min-height: 100dvh) { .page, .app { min-height: 100dvh; } }
-@supports (padding: env(safe-area-inset-top)) {
-  .header { height: calc(60px + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); }
-  .content { padding-top: calc(72px + env(safe-area-inset-top)); }
-  .contentWithBanner { padding-top: calc(98px + env(safe-area-inset-top)); }
-  .footer { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
-  .offlineBanner, .saveErrorBanner { top: calc(60px + env(safe-area-inset-top)); }
+
+.offlineBanner {
+  background: var(--color-amber-100);
+  color: var(--color-amber-900);
 }
-@media (min-width: 700px) { .app { box-shadow: 0 18px 60px rgba(15, 23, 42, .10); } }
+
+.saveErrorBanner {
+  background: var(--color-red-100);
+  color: var(--color-red-800);
+  cursor: pointer;
+}
+
+@keyframes syncPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .35;
+  }
+}
+
+@supports (min-height: 100dvh) {
+
+  .page,
+  .app {
+    min-height: 100dvh;
+  }
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .header {
+    height: calc(60px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .content {
+    padding-top: calc(72px + env(safe-area-inset-top));
+  }
+
+  .contentWithBanner {
+    padding-top: calc(98px + env(safe-area-inset-top));
+  }
+
+  .footer {
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .offlineBanner,
+  .saveErrorBanner {
+    top: calc(60px + env(safe-area-inset-top));
+  }
+}
+
+@media (min-width: 700px) {
+  .app {
+    box-shadow: 0 18px 60px rgba(15, 23, 42, .10);
+  }
+}

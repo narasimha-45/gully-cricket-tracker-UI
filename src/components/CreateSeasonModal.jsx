@@ -4,7 +4,12 @@ import { ApiError, api } from "../api";
 import { useDialogA11y } from "../hooks/useDialogA11y";
 import styles from "./CreateSeasonModal.module.css";
 
-export default function CreateSeasonModal({ open, onClose, onCreated, existingSeasons = [] }) {
+export default function CreateSeasonModal({
+  open,
+  onClose,
+  onCreated,
+  existingSeasons = [],
+}) {
   const titleId = useId();
   const dialogRef = useDialogA11y(open, onClose);
   const [name, setName] = useState("");
@@ -15,9 +20,12 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
 
   const trimmedName = name.trim();
   const isDuplicate = existingSeasons.some(
-    (season) => season.seasonName?.trim().toLowerCase() === trimmedName.toLowerCase(),
+    (season) =>
+      season.seasonName?.trim().toLowerCase() === trimmedName.toLowerCase(),
   );
-  const validationMessage = isDuplicate ? "A season with this name already exists." : error;
+  const validationMessage = isDuplicate
+    ? "A season with this name already exists."
+    : error;
   const canSubmit = Boolean(trimmedName) && !isDuplicate && !submitting;
 
   const close = () => {
@@ -37,19 +45,37 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
       onClose();
       onCreated();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Couldn’t create the season. Try again.");
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Couldn’t create the season. Try again.",
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
   return createPortal(
-    <div className={styles.overlay} onMouseDown={(event) => event.target === event.currentTarget && close()}>
-      <section ref={dialogRef} className={styles.modal} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+    <div
+      className={styles.overlay}
+      onMouseDown={(event) => event.target === event.currentTarget && close()}
+    >
+      <section
+        ref={dialogRef}
+        className={styles.modal}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        tabIndex={-1}
+      >
         <h3 id={titleId}>Create season</h3>
-        <p className={styles.subtitle}>Give this set of matches a simple name.</p>
+        <p className={styles.subtitle}>
+          Give this set of matches a simple name.
+        </p>
         <form onSubmit={createSeason}>
-          <label className={styles.label} htmlFor={`${titleId}-name`}>Season name</label>
+          <label className={styles.label} htmlFor={`${titleId}-name`}>
+            Season name
+          </label>
           <input
             id={`${titleId}-name`}
             data-dialog-autofocus="true"
@@ -57,14 +83,36 @@ export default function CreateSeasonModal({ open, onClose, onCreated, existingSe
             placeholder="e.g. Summer 2026"
             value={name}
             autoComplete="off"
-            onChange={(event) => { setName(event.target.value); setError(""); }}
+            onChange={(event) => {
+              setName(event.target.value);
+              setError("");
+            }}
             aria-invalid={Boolean(validationMessage)}
-            aria-describedby={validationMessage ? `${titleId}-error` : undefined}
+            aria-describedby={
+              validationMessage ? `${titleId}-error` : undefined
+            }
           />
-          {validationMessage && <p id={`${titleId}-error`} className={styles.error} role="alert">{validationMessage}</p>}
+          {validationMessage && (
+            <p id={`${titleId}-error`} className={styles.error} role="alert">
+              {validationMessage}
+            </p>
+          )}
           <div className={styles.actions}>
-            <button type="button" className={styles.cancel} onClick={close} disabled={submitting}>Cancel</button>
-            <button type="submit" className={styles.create} disabled={!canSubmit}>{submitting ? "Creating…" : "Create"}</button>
+            <button
+              type="button"
+              className={styles.cancel}
+              onClick={close}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              className={styles.create}
+              disabled={!canSubmit}
+            >
+              {submitting ? "Creating…" : "Create"}
+            </button>
           </div>
         </form>
       </section>

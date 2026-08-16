@@ -28,14 +28,29 @@ export default class ErrorBoundary extends Component {
     return (
       <main className={styles.wrap}>
         <section className={styles.card} role="alert">
-          <div className={styles.icon} aria-hidden="true">⚠️</div>
+          <div className={styles.icon} aria-hidden="true">
+            ⚠️
+          </div>
           <h2 className={styles.title}>Something went wrong</h2>
           <p className={styles.subtitle}>
-            {this.props.message || "This screen hit an unexpected error. Live matches are saved locally, so retrying is safe."}
+            {this.props.message ||
+              "This screen hit an unexpected error. Live matches are saved locally, so retrying is safe."}
           </p>
           <div className={styles.actions}>
-            <button type="button" className={styles.secondary} onClick={() => window.history.back()}>Go back</button>
-            <button type="button" className={styles.primary} onClick={this.handleReset}>Try again</button>
+            <button
+              type="button"
+              className={styles.secondary}
+              onClick={() => window.history.back()}
+            >
+              Go back
+            </button>
+            <button
+              type="button"
+              className={styles.primary}
+              onClick={this.handleReset}
+            >
+              Try again
+            </button>
           </div>
         </section>
       </main>

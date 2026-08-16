@@ -45,7 +45,8 @@ export function migrateStoredMatch(value) {
   const now = Date.now();
   const teams = value.teams || {};
   const status = String(value.status || "SETUP").toUpperCase();
-  const matchType = value.matchType === "LIMITED_OVERS" ? MATCH_TYPES.OVERS : value.matchType;
+  const matchType =
+    value.matchType === "LIMITED_OVERS" ? MATCH_TYPES.OVERS : value.matchType;
 
   return {
     ...value,
@@ -56,12 +57,20 @@ export function migrateStoredMatch(value) {
       teamA: {
         ...(teams.teamA || {}),
         name: normalizeName(teams.teamA?.name),
-        players: [...new Set((teams.teamA?.players || []).map(normalizeName).filter(Boolean))],
+        players: [
+          ...new Set(
+            (teams.teamA?.players || []).map(normalizeName).filter(Boolean),
+          ),
+        ],
       },
       teamB: {
         ...(teams.teamB || {}),
         name: normalizeName(teams.teamB?.name),
-        players: [...new Set((teams.teamB?.players || []).map(normalizeName).filter(Boolean))],
+        players: [
+          ...new Set(
+            (teams.teamB?.players || []).map(normalizeName).filter(Boolean),
+          ),
+        ],
       },
     },
     innings: Array.isArray(value.innings)
@@ -71,14 +80,17 @@ export function migrateStoredMatch(value) {
       ? {
           ...value.live,
           inningsIndex: Number(value.live.inningsIndex || 0),
-          outBatsmen: Array.isArray(value.live.outBatsmen) ? value.live.outBatsmen : [],
+          outBatsmen: Array.isArray(value.live.outBatsmen)
+            ? value.live.outBatsmen
+            : [],
           history: Array.isArray(value.live.history) ? value.live.history : [],
           pendingNextInnings: Boolean(value.live.pendingNextInnings),
           pendingSuperOver: Boolean(value.live.pendingSuperOver),
         }
       : value.live,
     ui: value.ui || {},
-    syncStatus: value.syncStatus || (status === "COMPLETED" ? "pending" : "local"),
+    syncStatus:
+      value.syncStatus || (status === "COMPLETED" ? "pending" : "local"),
     createdAt: Number(value.createdAt || now),
     updatedAt: Number(value.updatedAt || value.createdAt || now),
     schemaVersion: CURRENT_MATCH_SCHEMA_VERSION,

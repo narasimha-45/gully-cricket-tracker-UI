@@ -7,7 +7,12 @@
   padding: 24px 16px;
   text-align: center;
 }
-.compact { min-height: 88px; padding: 16px 12px; }
+
+.compact {
+  min-height: 88px;
+  padding: 16px 12px;
+}
+
 .ball {
   position: relative;
   width: 26px;
@@ -15,10 +20,11 @@
   display: block;
   overflow: hidden;
   border-radius: 50%;
-  background: #b91c1c;
+  background: var(--color-red-700);
   box-shadow: inset -4px -4px 7px rgba(69, 10, 10, .18), 0 2px 7px rgba(15, 23, 42, .12);
   animation: cricketBallSpin .9s linear infinite;
 }
+
 .seam,
 .seam::before,
 .seam::after {
@@ -26,6 +32,7 @@
   content: "";
   display: block;
 }
+
 .seam {
   width: 23px;
   height: 32px;
@@ -35,6 +42,7 @@
   border-radius: 50%;
   transform: rotate(18deg);
 }
+
 .seam::before,
 .seam::after {
   width: 3px;
@@ -43,9 +51,41 @@
   background: rgba(255, 255, 255, .75);
   box-shadow: 0 4px 0 rgba(255, 255, 255, .75), 0 8px 0 rgba(255, 255, 255, .75), 0 12px 0 rgba(255, 255, 255, .75), 0 16px 0 rgba(255, 255, 255, .75), 0 20px 0 rgba(255, 255, 255, .75);
 }
-.seam::before { top: 5px; transform: rotate(-24deg); }
-.seam::after { top: 7px; left: 0; transform: rotate(24deg); }
-.title { margin: 0; color: var(--color-text-primary); font-size: 14px; font-weight: 700; }
-.subtitle { max-width: 320px; margin: 0; color: var(--color-text-secondary); font-size: 12px; line-height: 1.45; }
-@keyframes cricketBallSpin { to { transform: rotate(360deg); } }
-@media (prefers-reduced-motion: reduce) { .ball { animation: none; } }
+
+.seam::before {
+  top: 5px;
+  transform: rotate(-24deg);
+}
+
+.seam::after {
+  top: 7px;
+  left: 0;
+  transform: rotate(24deg);
+}
+
+.title {
+  margin: 0;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.subtitle {
+  max-width: 320px;
+  margin: 0;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+@keyframes cricketBallSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ball {
+    animation: none;
+  }
+}

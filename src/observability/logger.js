@@ -55,7 +55,8 @@ const emit = (level, event, context = {}) => {
   }
 
   if (!isDev && level === "debug") return;
-  const method = level === "error" ? "error" : level === "warn" ? "warn" : "log";
+  const method =
+    level === "error" ? "error" : level === "warn" ? "warn" : "log";
   console[method](`[gully] ${event}`, entry.context);
 };
 
@@ -66,8 +67,10 @@ export const logger = {
   error: (event, context) => emit("error", event, context),
 };
 
-export const getDiagnostics = () => diagnosticBuffer.map((entry) => structuredClone(entry));
-export const clearDiagnostics = () => diagnosticBuffer.splice(0, diagnosticBuffer.length);
+export const getDiagnostics = () =>
+  diagnosticBuffer.map((entry) => structuredClone(entry));
+export const clearDiagnostics = () =>
+  diagnosticBuffer.splice(0, diagnosticBuffer.length);
 
 if (isDev && typeof window !== "undefined") {
   Object.defineProperty(window, "__GULLY_DIAGNOSTICS__", {

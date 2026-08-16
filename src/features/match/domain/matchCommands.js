@@ -17,7 +17,8 @@ export const selectPlayer = (match, { role, player, extraMode = "NORMAL" }) => {
   takeSnapshot(updated, "SELECTION", extraMode);
   const innings = updated.innings[updated.live.inningsIndex];
   updated.live[role] = player;
-  if (role === "striker" || role === "nonStriker") ensureBatter(innings, player);
+  if (role === "striker" || role === "nonStriker")
+    ensureBatter(innings, player);
   if (role === "bowler") ensureBowler(innings, player);
   return stamp(updated);
 };
@@ -83,7 +84,10 @@ export const startNextInnings = (match, { followOn = false } = {}) => {
   takeSnapshot(updated, followOn ? "ENFORCE_FOLLOW_ON" : "START_NEXT_INNINGS");
 
   if (followOn && canEnforceFollowOn(updated)) {
-    updated.testConfig = { ...(updated.testConfig || {}), followOnEnforced: true };
+    updated.testConfig = {
+      ...(updated.testConfig || {}),
+      followOnEnforced: true,
+    };
   }
 
   const nextIndex = updated.live.inningsIndex + 1;
@@ -172,7 +176,8 @@ export const addTeamPlayer = (match, { teamKey, player }) => {
   if (!normalized) return match;
   const updated = deepCopy(match);
   const players = updated.teams[teamKey].players || [];
-  if (!players.some((item) => sameName(item, normalized))) players.push(normalized);
+  if (!players.some((item) => sameName(item, normalized)))
+    players.push(normalized);
   updated.teams[teamKey].players = players;
   return stamp(updated);
 };
@@ -180,8 +185,8 @@ export const addTeamPlayer = (match, { teamKey, player }) => {
 export const removeTeamPlayer = (match, { teamKey, player }) => {
   if (!teamKey || !player || !match?.teams?.[teamKey]) return match;
   const updated = deepCopy(match);
-  updated.teams[teamKey].players = (updated.teams[teamKey].players || []).filter(
-    (item) => !sameName(item, player),
-  );
+  updated.teams[teamKey].players = (
+    updated.teams[teamKey].players || []
+  ).filter((item) => !sameName(item, player));
   return stamp(updated);
 };

@@ -1,33 +1,233 @@
-.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
-.filterSummary { min-width: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 5px; }
-.filterChip, .warningChip { min-height: 25px; display: inline-flex; align-items: center; padding: 3px 8px; border-radius: 999px; font-size: 10px; font-weight: 600; }
-.filterChip { border: 1px solid var(--color-indigo-100); background: var(--color-indigo-50); color: var(--color-indigo-700); }
-.allChip { color: var(--color-slate-500); font-size: 11px; font-weight: 600; }
-.warningChip { border: 1px solid var(--color-amber-200); background: var(--color-amber-50); color: var(--color-amber-900); }
-.filterButton { width: 38px; height: 38px; flex: 0 0 38px; display: grid; place-items: center; border: 1px solid var(--color-border); border-radius: 10px; background: white; color: var(--color-slate-700); cursor: pointer; box-shadow: var(--shadow-xs); }
-.filterButton:hover:not(:disabled) { border-color: var(--color-indigo-200); color: var(--color-indigo-700); }
-.filterButton:disabled { opacity: .5; cursor: not-allowed; }
-.sortButton { width: 100%; min-width: 0; min-height: 24px; display: inline-flex; align-items: center; justify-content: center; gap: 2px; padding: 0; border: 0; background: transparent; color: inherit; font-size: inherit; font-weight: inherit; cursor: pointer; }
-.activeSort { color: var(--color-indigo-700); }
-.sortDirection { font-size: 7px; }
-.resultsWrap { position: relative; }
-.errorCard { display: grid; justify-items: start; gap: 7px; padding: 14px; border: 1px solid var(--color-red-200); border-radius: var(--radius-lg); background: var(--color-red-50); color: var(--color-red-800); }
-.errorCard span { font-size: 11px; line-height: 1.45; }
-.errorCard button { min-height: 36px; display: inline-flex; align-items: center; gap: 5px; padding: 0 11px; border: 0; border-radius: 8px; background: var(--color-red-700); color: white; font-size: 11px; font-weight: 700; cursor: pointer; }
+.toolbar {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 10px;
+   margin-bottom: 10px;
+}
+
+.filterSummary {
+   min-width: 0;
+   display: flex;
+   flex-wrap: wrap;
+   align-items: center;
+   gap: 5px;
+}
+
+.filterChip,
+.warningChip {
+   min-height: 25px;
+   display: inline-flex;
+   align-items: center;
+   padding: 3px 8px;
+   border-radius: 999px;
+   font-size: 10px;
+   font-weight: 600;
+}
+
+.filterChip {
+   border: 1px solid var(--color-indigo-100);
+   background: var(--color-indigo-50);
+   color: var(--color-indigo-700);
+}
+
+.allChip {
+   color: var(--color-slate-500);
+   font-size: 11px;
+   font-weight: 600;
+}
+
+.warningChip {
+   border: 1px solid var(--color-amber-200);
+   background: var(--color-amber-50);
+   color: var(--color-amber-900);
+}
+
+.filterButton {
+   width: 38px;
+   height: 38px;
+   flex: 0 0 38px;
+   display: grid;
+   place-items: center;
+   border: 1px solid var(--color-border);
+   border-radius: 10px;
+   background: white;
+   color: var(--color-slate-700);
+   cursor: pointer;
+   box-shadow: var(--shadow-xs);
+}
+
+.filterButton:hover:not(:disabled) {
+   border-color: var(--color-indigo-200);
+   color: var(--color-indigo-700);
+}
+
+.filterButton:disabled {
+   opacity: .5;
+   cursor: not-allowed;
+}
+
+.sortButton {
+   width: 100%;
+   min-width: 0;
+   min-height: 24px;
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   gap: 2px;
+   padding: 0;
+   border: 0;
+   background: transparent;
+   color: inherit;
+   font-size: inherit;
+   font-weight: inherit;
+   cursor: pointer;
+}
+
+.activeSort {
+   color: var(--color-indigo-700);
+}
+
+.sortDirection {
+   font-size: 7px;
+}
+
+.resultsWrap {
+   position: relative;
+}
+
+.errorCard {
+   display: grid;
+   justify-items: start;
+   gap: 7px;
+   padding: 14px;
+   border: 1px solid var(--color-red-200);
+   border-radius: var(--radius-lg);
+   background: var(--color-red-50);
+   color: var(--color-red-800);
+}
+
+.errorCard span {
+   font-size: 11px;
+   line-height: 1.45;
+}
+
+.errorCard button {
+   min-height: 36px;
+   display: inline-flex;
+   align-items: center;
+   gap: 5px;
+   padding: 0 11px;
+   border: 0;
+   border-radius: 8px;
+   background: var(--color-red-700);
+   color: white;
+   font-size: 11px;
+   font-weight: 700;
+   cursor: pointer;
+}
 
 /* Initial loading mirrors the final content. Background refreshes keep existing
    rows visible and therefore need no visible spinner/badge. */
-.skeletonList { display: grid; gap: 7px; }
-.skeletonRow { min-height: 54px; display: grid; grid-template-columns: 28px 1fr 56px; align-items: center; gap: 10px; padding: 9px 10px; border: 1px solid var(--color-border); border-radius: 10px; background: white; }
-.compactSkeleton { gap: 0; }
-.compactSkeleton .skeletonRow { min-height: 62px; border: 0; border-bottom: 1px solid var(--color-border); border-radius: 0; box-shadow: none; }
-.compactSkeleton .skeletonRow:last-of-type { border-bottom: 0; }
-.skeletonRank { width: 26px; height: 26px; border-radius: 8px; background: var(--color-slate-100); }
-.skeletonCopy { display: grid; gap: 6px; }
-.skeletonName, .skeletonMeta, .skeletonStat { display: block; border-radius: 4px; background: var(--color-slate-100); animation: skeletonPulse 1.25s ease-in-out infinite; }
-.skeletonName { width: min(68%, 180px); height: 11px; }
-.skeletonMeta { width: min(44%, 120px); height: 8px; }
-.skeletonStat { width: 48px; height: 14px; justify-self: end; }
-.srOnly { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
-@keyframes skeletonPulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
-@media (prefers-reduced-motion: reduce) { .skeletonName, .skeletonMeta, .skeletonStat { animation: none; } }
+.skeletonList {
+   display: grid;
+   gap: 7px;
+}
+
+.skeletonRow {
+   min-height: 54px;
+   display: grid;
+   grid-template-columns: 28px 1fr 56px;
+   align-items: center;
+   gap: 10px;
+   padding: 9px 10px;
+   border: 1px solid var(--color-border);
+   border-radius: 10px;
+   background: white;
+}
+
+.compactSkeleton {
+   gap: 0;
+}
+
+.compactSkeleton .skeletonRow {
+   min-height: 62px;
+   border: 0;
+   border-bottom: 1px solid var(--color-border);
+   border-radius: 0;
+   box-shadow: none;
+}
+
+.compactSkeleton .skeletonRow:last-of-type {
+   border-bottom: 0;
+}
+
+.skeletonRank {
+   width: 26px;
+   height: 26px;
+   border-radius: 8px;
+   background: var(--color-slate-100);
+}
+
+.skeletonCopy {
+   display: grid;
+   gap: 6px;
+}
+
+.skeletonName,
+.skeletonMeta,
+.skeletonStat {
+   display: block;
+   border-radius: 4px;
+   background: var(--color-slate-100);
+   animation: skeletonPulse 1.25s ease-in-out infinite;
+}
+
+.skeletonName {
+   width: min(68%, 180px);
+   height: 11px;
+}
+
+.skeletonMeta {
+   width: min(44%, 120px);
+   height: 8px;
+}
+
+.skeletonStat {
+   width: 48px;
+   height: 14px;
+   justify-self: end;
+}
+
+.srOnly {
+   position: absolute;
+   width: 1px;
+   height: 1px;
+   padding: 0;
+   margin: -1px;
+   overflow: hidden;
+   clip: rect(0, 0, 0, 0);
+   white-space: nowrap;
+   border: 0;
+}
+
+@keyframes skeletonPulse {
+
+   0%,
+   100% {
+      opacity: .5;
+   }
+
+   50% {
+      opacity: 1;
+   }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+   .skeletonName,
+   .skeletonMeta,
+   .skeletonStat {
+      animation: none;
+   }
+}

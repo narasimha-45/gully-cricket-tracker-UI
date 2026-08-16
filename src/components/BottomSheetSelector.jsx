@@ -62,7 +62,9 @@ export default function BottomSheetSelector({
                     <button
                       type="button"
                       key={player}
-                      data-dialog-autofocus={index === 0 && !disabled ? "true" : undefined}
+                      data-dialog-autofocus={
+                        index === 0 && !disabled ? "true" : undefined
+                      }
                       className={styles.item}
                       disabled={disabled}
                       onClick={() => onSelect?.(player)}

@@ -135,7 +135,8 @@ export const completeCurrentTestInnings = (match, reason = "DECLARED") => {
   current.completed = true;
   current.completionReason = reason;
 
-  if (currentIndex === scheduledCount - 1) return resolveFinalTestInnings(match);
+  if (currentIndex === scheduledCount - 1)
+    return resolveFinalTestInnings(match);
   if (resolvePossibleInningsVictory(match)) return true;
   prepareNextInnings(match);
   return true;
@@ -178,7 +179,9 @@ const evaluateLimitedOversState = (match) => {
     }
   }
 
-  if (!isInningsComplete(current, battingPlayers, totalOvers, match.matchType)) {
+  if (
+    !isInningsComplete(current, battingPlayers, totalOvers, match.matchType)
+  ) {
     return false;
   }
 

@@ -10,7 +10,9 @@
   background: rgba(247, 248, 251, .96);
   backdrop-filter: blur(12px);
 }
-.tab, .activeTab {
+
+.tab,
+.activeTab {
   min-height: 34px;
   display: inline-flex;
   align-items: center;
@@ -24,8 +26,34 @@
   font-weight: 600;
   white-space: nowrap;
 }
-.tab { color: var(--color-slate-600); background: transparent; }
-.tab:hover { background: var(--color-slate-100); }
-.activeTab { border-color: var(--color-indigo-100); background: var(--color-indigo-50); color: var(--color-indigo-700); font-weight: 700; }
-.content { min-height: 300px; --stats-header-top: 158px; }
-@supports (padding: env(safe-area-inset-top)) { .subTabs { top: calc(109px + env(safe-area-inset-top)); } .content { --stats-header-top: calc(158px + env(safe-area-inset-top)); } }
+
+.tab {
+  color: var(--color-slate-600);
+  background: transparent;
+}
+
+.tab:hover {
+  background: var(--color-slate-100);
+}
+
+.activeTab {
+  border-color: var(--color-indigo-100);
+  background: var(--color-indigo-50);
+  color: var(--color-indigo-700);
+  font-weight: 700;
+}
+
+.content {
+  min-height: 300px;
+  --stats-header-top: 158px;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .subTabs {
+    top: calc(109px + env(safe-area-inset-top));
+  }
+
+  .content {
+    --stats-header-top: calc(158px + env(safe-area-inset-top));
+  }
+}

@@ -63,7 +63,18 @@ export default function MatchHero({ match, onAction }) {
               <span className={row.isSuperOver ? styles.superOverTeam : ""}>
                 {row.label}
               </span>
-              <span className={styles.scoreValue}>
+              <span
+                // Keying on the score itself forces a remount whenever the
+                // total/wickets/balls change, which replays the CSS pop
+                // animation below — a lightweight way to give the score a
+                // "just updated" beat without any extra state or effects.
+                key={
+                  row.innings
+                    ? `${row.innings.totalRuns}-${row.innings.wickets}-${row.innings.balls}`
+                    : "yet-to-bat"
+                }
+                className={`${styles.scoreValue} ${row.isCurrent ? styles.scoreValuePulse : ""}`}
+              >
                 {row.innings ? (
                   `${row.innings.totalRuns}-${row.innings.wickets} (${formatOvers(
                     row.innings.balls,

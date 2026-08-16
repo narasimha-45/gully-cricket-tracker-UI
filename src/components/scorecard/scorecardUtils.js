@@ -1,9 +1,9 @@
 export function hasInningsStarted(innings) {
   return Boolean(
     innings &&
-      ((Number(innings.balls) || 0) > 0 ||
-        (Number(innings.totalRuns) || 0) > 0 ||
-        Object.keys(innings.battingStats ?? {}).length > 0),
+    ((Number(innings.balls) || 0) > 0 ||
+      (Number(innings.totalRuns) || 0) > 0 ||
+      Object.keys(innings.battingStats ?? {}).length > 0),
   );
 }
 
@@ -56,6 +56,8 @@ export function formatDismissal(dismissal) {
     case "HIT_WICKET":
       return `hit wicket b ${dismissal.bowler ?? ""}`.trim();
     default:
-      return String(dismissal.type ?? "out").toLowerCase().replaceAll("_", " ");
+      return String(dismissal.type ?? "out")
+        .toLowerCase()
+        .replaceAll("_", " ");
   }
 }

@@ -30,11 +30,16 @@ export default function MiscStats() {
   const players = useMemo(() => {
     const getValue = (player) => {
       switch (state.sortKey) {
-        case "catches": return number(player.totalCatches);
-        case "stumpings": return number(player.totalStumpings);
-        case "runOuts": return number(player.totalRunOuts);
-        case "manOfTheMatch": return number(player.manOfTheMatchAwards);
-        default: return 0;
+        case "catches":
+          return number(player.totalCatches);
+        case "stumpings":
+          return number(player.totalStumpings);
+        case "runOuts":
+          return number(player.totalRunOuts);
+        case "manOfTheMatch":
+          return number(player.manOfTheMatchAwards);
+        default:
+          return 0;
       }
     };
     return [...(query.data || [])].sort((a, b) => {
@@ -43,7 +48,8 @@ export default function MiscStats() {
     });
   }, [query.data, state.sortDir, state.sortKey]);
 
-  const onSort = (column) => dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
+  const onSort = (column) =>
+    dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
     <LeaderboardState
@@ -58,14 +64,51 @@ export default function MiscStats() {
       <div className={styles.table}>
         <div className={`${styles.grid} ${styles.header}`}>
           <span className={styles.playerHeader}>Player</span>
-          <SortButton label="C" column="catches" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by catches" />
-          <SortButton label="ST" column="stumpings" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by stumpings" />
-          <SortButton label="RO" column="runOuts" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by run outs" />
-          <SortButton label="MoM" column="manOfTheMatch" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by Man of the Match awards" />
+          <SortButton
+            label="C"
+            column="catches"
+            activeColumn={state.sortKey}
+            direction={state.sortDir}
+            onSort={onSort}
+            ariaLabel="Sort by catches"
+          />
+          <SortButton
+            label="ST"
+            column="stumpings"
+            activeColumn={state.sortKey}
+            direction={state.sortDir}
+            onSort={onSort}
+            ariaLabel="Sort by stumpings"
+          />
+          <SortButton
+            label="RO"
+            column="runOuts"
+            activeColumn={state.sortKey}
+            direction={state.sortDir}
+            onSort={onSort}
+            ariaLabel="Sort by run outs"
+          />
+          <SortButton
+            label="MoM"
+            column="manOfTheMatch"
+            activeColumn={state.sortKey}
+            direction={state.sortDir}
+            onSort={onSort}
+            ariaLabel="Sort by Man of the Match awards"
+          />
         </div>
         {players.map((player) => (
-          <div key={player.playerId ?? player.playerName} className={`${styles.grid} ${styles.row}`}>
-            <button type="button" className={styles.playerButton} onClick={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}>
+          <div
+            key={player.playerId ?? player.playerName}
+            className={`${styles.grid} ${styles.row}`}
+          >
+            <button
+              type="button"
+              className={styles.playerButton}
+              onClick={() =>
+                navigate(`/player/${encodeURIComponent(player.playerId)}`)
+              }
+            >
               {formatName(player.playerName)}
               <small>{number(player.totalMatchesPlayed)} matches</small>
             </button>

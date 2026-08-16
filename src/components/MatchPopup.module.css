@@ -1,16 +1,139 @@
-.overlay { position: fixed; inset: 0; z-index: 120; display: grid; place-items: center; padding: 16px; background: rgba(15,23,42,.48); backdrop-filter: blur(4px); }
-.card { width: min(100%, 360px); padding: 18px; overflow: hidden; border: 1px solid rgba(255,255,255,.7); border-radius: 18px; background: var(--color-white); box-shadow: 0 20px 56px rgba(15,23,42,.24); text-align: left; outline: none; }
-.accentBar { width: 34px; height: 3px; margin: 0 0 14px; border-radius: 999px; background: var(--color-indigo-600); }
-.title { margin: 0; color: var(--color-slate-900); font-size: 21px; font-weight: 700; line-height: 1.22; letter-spacing: -.025em; }
-.subtitle { margin: 7px 0 0; color: var(--color-slate-600); font-size: 12px; line-height: 1.5; }
-.actions { display: grid; gap: 8px; margin-top: 18px; }
-.primary, .secondary, .tertiary { width: 100%; min-height: 44px; border-radius: 10px; font-size: 12px; font-weight: 700; cursor: pointer; }
-.primary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0; background: var(--color-indigo-600); color: white; box-shadow: 0 6px 16px rgba(79,70,229,.18); }
-.secondary { border: 1px solid var(--color-border); background: var(--color-white); color: var(--color-slate-700); }
-.tertiary { min-height: 36px; border: 0; background: transparent; color: var(--color-slate-500); }
-.primary:disabled, .secondary:disabled, .tertiary:disabled { opacity: .58; cursor: wait; }
-.spinner { position: relative; width: 15px; height: 15px; overflow: hidden; border-radius: 50%; background: #b91c1c; box-shadow: inset -2px -2px 3px rgba(69,10,10,.2); animation: popupSpin .8s linear infinite; }
-.spinner::before { content: ""; position: absolute; left: 2px; top: -2px; width: 11px; height: 19px; border-left: 1.5px solid rgba(255,255,255,.9); border-radius: 50%; transform: rotate(20deg); }
-@keyframes popupSpin { to { transform: rotate(360deg); } }
-@media (max-width: 380px) { .card { padding: 16px; } .title { font-size: 20px; } }
-@media (prefers-reduced-motion: reduce) { .spinner { animation: none; } }
+.overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 120;
+    display: grid;
+    place-items: center;
+    padding: 16px;
+    background: rgba(15, 23, 42, .48);
+    backdrop-filter: blur(4px);
+}
+
+.card {
+    width: min(100%, 360px);
+    padding: 18px;
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, .7);
+    border-radius: 18px;
+    background: var(--color-white);
+    box-shadow: 0 20px 56px rgba(15, 23, 42, .24);
+    text-align: left;
+    outline: none;
+}
+
+.accentBar {
+    width: 34px;
+    height: 3px;
+    margin: 0 0 14px;
+    border-radius: 999px;
+    background: var(--color-indigo-600);
+}
+
+.title {
+    margin: 0;
+    color: var(--color-slate-900);
+    font-size: 21px;
+    font-weight: 700;
+    line-height: 1.22;
+    letter-spacing: -.025em;
+}
+
+.subtitle {
+    margin: 7px 0 0;
+    color: var(--color-slate-600);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.actions {
+    display: grid;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.primary,
+.secondary,
+.tertiary {
+    width: 100%;
+    min-height: 44px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border: 0;
+    background: var(--color-indigo-600);
+    color: white;
+    box-shadow: 0 6px 16px rgba(79, 70, 229, .18);
+}
+
+.secondary {
+    border: 1px solid var(--color-border);
+    background: var(--color-white);
+    color: var(--color-slate-700);
+}
+
+.tertiary {
+    min-height: 36px;
+    border: 0;
+    background: transparent;
+    color: var(--color-slate-500);
+}
+
+.primary:disabled,
+.secondary:disabled,
+.tertiary:disabled {
+    opacity: .58;
+    cursor: wait;
+}
+
+.spinner {
+    position: relative;
+    width: 15px;
+    height: 15px;
+    overflow: hidden;
+    border-radius: 50%;
+    background: var(--color-red-700);
+    box-shadow: inset -2px -2px 3px rgba(69, 10, 10, .2);
+    animation: popupSpin .8s linear infinite;
+}
+
+.spinner::before {
+    content: "";
+    position: absolute;
+    left: 2px;
+    top: -2px;
+    width: 11px;
+    height: 19px;
+    border-left: 1.5px solid rgba(255, 255, 255, .9);
+    border-radius: 50%;
+    transform: rotate(20deg);
+}
+
+@keyframes popupSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 380px) {
+    .card {
+        padding: 16px;
+    }
+
+    .title {
+        font-size: 20px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation: none;
+    }
+}

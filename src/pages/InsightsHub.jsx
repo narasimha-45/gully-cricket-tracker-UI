@@ -18,7 +18,9 @@ export default function InsightsHub() {
   const [filter, setFilter] = useState("all");
   const seasonsQuery = useSeasons();
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, [location.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [location.pathname]);
 
   const seasonOptions = useMemo(
     () =>
@@ -41,9 +43,18 @@ export default function InsightsHub() {
     <div className={styles.page}>
       <header className={styles.topBar}>
         <div className={styles.headerRow}>
-          <button type="button" className={styles.backBtn} onClick={() => navigate("/")} aria-label="Back to home">←</button>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => navigate("/")}
+            aria-label="Back to home"
+          >
+            ←
+          </button>
           <div className={styles.headingWrap}>
-            <div className={styles.headingIcon} aria-hidden="true">📊</div>
+            <div className={styles.headingIcon} aria-hidden="true">
+              📊
+            </div>
             <div>
               <p className={styles.headingMini}>Global analytics</p>
               <h1 className={styles.headingTitle}>Insights Hub</h1>
@@ -53,21 +64,40 @@ export default function InsightsHub() {
 
         <label className={styles.filterWrapper}>
           <span className={styles.srOnly}>Season</span>
-          <select className={styles.filterSelect} value={effectiveFilter} onChange={(event) => setFilter(event.target.value)} disabled={seasonsQuery.isLoading}>
+          <select
+            className={styles.filterSelect}
+            value={effectiveFilter}
+            onChange={(event) => setFilter(event.target.value)}
+            disabled={seasonsQuery.isLoading}
+          >
             <option value="all">All seasons · Overall</option>
-            {seasonOptions.map((season) => <option key={season.id} value={season.id}>{season.name}</option>)}
+            {seasonOptions.map((season) => (
+              <option key={season.id} value={season.id}>
+                {season.name}
+              </option>
+            ))}
           </select>
         </label>
       </header>
 
       <nav className={styles.tabs} aria-label="Insights sections">
         {TABS.map(([path, label]) => (
-          <NavLink key={path} to={path} className={({ isActive }) => isActive ? styles.activeTab : styles.tab}>{label}</NavLink>
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            {label}
+          </NavLink>
         ))}
       </nav>
 
       <main className={styles.content}>
-        {seasonsQuery.isLoading ? <LoadingState label="Loading seasons…" /> : (
+        {seasonsQuery.isLoading ? (
+          <LoadingState label="Loading seasons…" />
+        ) : (
           <Outlet context={{ globalFilter: effectiveFilter }} />
         )}
       </main>

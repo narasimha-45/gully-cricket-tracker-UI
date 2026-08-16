@@ -7,7 +7,9 @@ import { queryKeys } from "./queryKeys";
  */
 export async function invalidateAfterMatchSync(seasonId) {
   await Promise.all([
-    queryClient.invalidateQueries({ queryKey: queryKeys.seasonMatches(seasonId) }),
+    queryClient.invalidateQueries({
+      queryKey: queryKeys.seasonMatches(seasonId),
+    }),
     queryClient.invalidateQueries({ queryKey: queryKeys.leaderboardRoot }),
     queryClient.invalidateQueries({ queryKey: queryKeys.playerProfileRoot }),
     queryClient.invalidateQueries({ queryKey: queryKeys.teamProfileRoot }),

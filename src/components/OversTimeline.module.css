@@ -251,7 +251,7 @@
 }
 
 .extraText {
-    color: #b45309;
+    color: var(--color-amber-700);
     font-weight: 600;
 }
 
@@ -279,7 +279,7 @@
 }
 
 .four {
-    background: #3b82f6;
+    background: var(--color-blue-500);
     color: white;
 }
 
@@ -300,7 +300,7 @@
 
 .noBall {
     background: var(--color-orange-500);
-    color: #7c2d12;
+    color: var(--color-orange-900);
 }
 
 .emptyState {

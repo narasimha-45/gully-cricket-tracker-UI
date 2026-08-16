@@ -61,7 +61,14 @@ export default function AppRoutes() {
             }
           />
 
-          <Route path="/insights" element={<Shell><InsightsHub /></Shell>}>
+          <Route
+            path="/insights"
+            element={
+              <Shell>
+                <InsightsHub />
+              </Shell>
+            }
+          >
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<AnalyticsOverview />} />
             <Route path="batting" element={<BattingStats isOverall />} />
@@ -69,11 +76,28 @@ export default function AppRoutes() {
             <Route path="teams" element={<TeamStats />} />
             <Route path="misc" element={<MiscStats isOverall />} />
             {/* Backward-compatible redirect while matchup APIs are not part of the stable backend. */}
-            <Route path="matchups" element={<Navigate to="../overview" replace />} />
+            <Route
+              path="matchups"
+              element={<Navigate to="../overview" replace />}
+            />
           </Route>
 
-          <Route path="/player/:id" element={<Shell><PlayerProfile /></Shell>} />
-          <Route path="/team/:id" element={<Shell><TeamProfile /></Shell>} />
+          <Route
+            path="/player/:id"
+            element={
+              <Shell>
+                <PlayerProfile />
+              </Shell>
+            }
+          />
+          <Route
+            path="/team/:id"
+            element={
+              <Shell>
+                <TeamProfile />
+              </Shell>
+            }
+          />
 
           <Route path="/season/:seasonId" element={<SeasonShell />}>
             <Route index element={<Navigate to="matches" replace />} />
@@ -86,17 +110,62 @@ export default function AppRoutes() {
                 <Route path="bowling" element={<BowlingStats />} />
                 <Route path="teams" element={<TeamStats />} />
                 <Route path="misc" element={<MiscStats />} />
-                <Route path="matchups" element={<Navigate to="../overview" replace />} />
+                <Route
+                  path="matchups"
+                  element={<Navigate to="../overview" replace />}
+                />
               </Route>
             </Route>
           </Route>
 
-          <Route path="/season/:seasonId/create-match" element={<Shell><CreateMatch /></Shell>} />
-          <Route path="/season/:seasonId/match/:matchId" element={<Shell><MatchSummary /></Shell>} />
-          <Route path="/season/:seasonId/match/:matchId/team-a" element={<Shell><TeamPlayers teamKey="teamA" /></Shell>} />
-          <Route path="/season/:seasonId/match/:matchId/team-b" element={<Shell><TeamPlayers teamKey="teamB" /></Shell>} />
-          <Route path="/season/:seasonId/match/:matchId/toss" element={<Shell><TossPage /></Shell>} />
-          <Route path="/season/:seasonId/match/:matchId/live" element={<Shell><LiveMatch /></Shell>} />
+          <Route
+            path="/season/:seasonId/create-match"
+            element={
+              <Shell>
+                <CreateMatch />
+              </Shell>
+            }
+          />
+          <Route
+            path="/season/:seasonId/match/:matchId"
+            element={
+              <Shell>
+                <MatchSummary />
+              </Shell>
+            }
+          />
+          <Route
+            path="/season/:seasonId/match/:matchId/team-a"
+            element={
+              <Shell>
+                <TeamPlayers teamKey="teamA" />
+              </Shell>
+            }
+          />
+          <Route
+            path="/season/:seasonId/match/:matchId/team-b"
+            element={
+              <Shell>
+                <TeamPlayers teamKey="teamB" />
+              </Shell>
+            }
+          />
+          <Route
+            path="/season/:seasonId/match/:matchId/toss"
+            element={
+              <Shell>
+                <TossPage />
+              </Shell>
+            }
+          />
+          <Route
+            path="/season/:seasonId/match/:matchId/live"
+            element={
+              <Shell>
+                <LiveMatch />
+              </Shell>
+            }
+          />
 
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -8,9 +8,17 @@ export function useLocalSeasonMatches(seasonId) {
   const reload = useCallback(async () => {
     if (!seasonId) return;
     try {
-      setState((current) => ({ ...current, loading: current.data.length === 0, error: null }));
+      setState((current) => ({
+        ...current,
+        loading: current.data.length === 0,
+        error: null,
+      }));
       const matches = await getMatchesBySeason(seasonId);
-      setState({ data: Array.isArray(matches) ? matches : [], loading: false, error: null });
+      setState({
+        data: Array.isArray(matches) ? matches : [],
+        loading: false,
+        error: null,
+      });
     } catch (error) {
       logger.error("matches.local.load.failed", { seasonId, error });
       setState((current) => ({ ...current, loading: false, error }));
@@ -21,7 +29,8 @@ export function useLocalSeasonMatches(seasonId) {
     reload();
     const refresh = (event) => {
       const changedSeasonId = event.detail?.seasonId;
-      if (!changedSeasonId || String(changedSeasonId) === String(seasonId)) reload();
+      if (!changedSeasonId || String(changedSeasonId) === String(seasonId))
+        reload();
     };
     window.addEventListener("gully:matches-changed", refresh);
     return () => window.removeEventListener("gully:matches-changed", refresh);

@@ -43,13 +43,7 @@ export function derivePartnerships(innings) {
   };
 
   for (const ball of innings.ballByBall) {
-    const {
-      striker,
-      nonStriker,
-      runs = 0,
-      type,
-      isWicket,
-    } = ball;
+    const { striker, nonStriker, runs = 0, type, isWicket } = ball;
 
     // Retirement only pauses current partnership
     if (type === "RETIRE") {
@@ -67,7 +61,7 @@ export function derivePartnerships(innings) {
 
     if (!striker || !nonStriker) continue;
 
-    const key     = pairKey(striker, nonStriker);
+    const key = pairKey(striker, nonStriker);
     const current = getOrCreate(striker, nonStriker);
 
     // Switch active partnership

@@ -14,8 +14,8 @@ export default function InningsCard({ innings, teams, label, tone }) {
   if (!hasInningsStarted(innings)) return null;
 
   const battingPlayers = sameName(innings.battingTeam, teams.teamA.name)
-    ? teams.teamA.players ?? []
-    : teams.teamB.players ?? [];
+    ? (teams.teamA.players ?? [])
+    : (teams.teamB.players ?? []);
   const battingStats = innings.battingStats ?? {};
   const bowlingStats = innings.bowlingStats ?? {};
   const battedPlayers = Object.keys(battingStats);
@@ -123,7 +123,9 @@ function BattingRow({ player, stat, inningsCompleted }) {
               : "batting"}
         </span>
       </div>
-      <span className={styles.runs} role="cell">{runs}</span>
+      <span className={styles.runs} role="cell">
+        {runs}
+      </span>
       <span role="cell">{balls}</span>
       <span role="cell">{stat?.fours ?? 0}</span>
       <span role="cell">{stat?.sixes ?? 0}</span>
@@ -139,11 +141,15 @@ function BowlingRow({ bowler, stat }) {
 
   return (
     <div className={styles.tableRow} role="row">
-      <span className={styles.playerName} role="cell">{formatName(bowler)}</span>
+      <span className={styles.playerName} role="cell">
+        {formatName(bowler)}
+      </span>
       <span role="cell">{formatOvers(balls)}</span>
       <span role="cell">{stat?.maidens ?? 0}</span>
       <span role="cell">{runs}</span>
-      <span className={styles.runs} role="cell">{stat?.wickets ?? 0}</span>
+      <span className={styles.runs} role="cell">
+        {stat?.wickets ?? 0}
+      </span>
       <span role="cell">{economy}</span>
     </div>
   );
@@ -167,10 +173,12 @@ function InningsSummary({ innings, overs, runRate, didNotBat }) {
   return (
     <div className={styles.summary}>
       <SummaryRow label="Extras">
-        {extrasTotal}{details.length > 0 ? ` (${details.join(", ")})` : ""}
+        {extrasTotal}
+        {details.length > 0 ? ` (${details.join(", ")})` : ""}
       </SummaryRow>
       <SummaryRow label="Total" strong>
-        {innings.totalRuns ?? 0}-{innings.wickets ?? 0} ({overs} overs, RR {runRate})
+        {innings.totalRuns ?? 0}-{innings.wickets ?? 0} ({overs} overs, RR{" "}
+        {runRate})
       </SummaryRow>
       {didNotBat.length > 0 && (
         <SummaryRow label="Yet to bat">

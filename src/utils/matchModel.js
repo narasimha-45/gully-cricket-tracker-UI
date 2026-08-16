@@ -8,8 +8,7 @@ export const TEST_INNINGS_OPTIONS = Object.freeze({
   DOUBLE: 2,
 });
 
-export const normalizeName = (value = "") =>
-  String(value).trim().toLowerCase();
+export const normalizeName = (value = "") => String(value).trim().toLowerCase();
 
 export const sameName = (left, right) =>
   normalizeName(left) === normalizeName(right);
@@ -91,14 +90,13 @@ export const getScheduledTeamsForInnings = (match, inningsIndex) => {
 
   const followOnEnforced = Boolean(
     isTestMatch(match) &&
-      getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
-      match?.testConfig?.followOnEnforced,
+    getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
+    match?.testConfig?.followOnEnforced,
   );
 
   if (followOnEnforced && inningsIndex >= 2) {
-    const battingTeam = inningsIndex === 2
-      ? secondBattingTeam
-      : firstBattingTeam;
+    const battingTeam =
+      inningsIndex === 2 ? secondBattingTeam : firstBattingTeam;
 
     return {
       battingTeam,
@@ -106,9 +104,8 @@ export const getScheduledTeamsForInnings = (match, inningsIndex) => {
     };
   }
 
-  const battingTeam = inningsIndex % 2 === 0
-    ? firstBattingTeam
-    : secondBattingTeam;
+  const battingTeam =
+    inningsIndex % 2 === 0 ? firstBattingTeam : secondBattingTeam;
 
   return {
     battingTeam,
@@ -126,23 +123,28 @@ export const getFollowOnLead = (match) => {
     return 0;
   }
 
-  return Number(match.innings[0].totalRuns || 0) -
-    Number(match.innings[1].totalRuns || 0);
+  return (
+    Number(match.innings[0].totalRuns || 0) -
+    Number(match.innings[1].totalRuns || 0)
+  );
 };
 
 export const canEnforceFollowOn = (match) =>
   Boolean(
     isTestMatch(match) &&
-      getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
-      match?.status === "LIVE" &&
-      match?.live?.inningsIndex === 1 &&
-      match?.live?.pendingNextInnings &&
-      !match?.testConfig?.followOnEnforced &&
-      getFollowOnLead(match) > 0,
+    getTestInningsPerTeam(match) === TEST_INNINGS_OPTIONS.DOUBLE &&
+    match?.status === "LIVE" &&
+    match?.live?.inningsIndex === 1 &&
+    match?.live?.pendingNextInnings &&
+    !match?.testConfig?.followOnEnforced &&
+    getFollowOnLead(match) > 0,
   );
 
 export const getTeamInningsOrdinal = (match, inningsIndex) => {
-  const targetTeam = getScheduledTeamsForInnings(match, inningsIndex).battingTeam;
+  const targetTeam = getScheduledTeamsForInnings(
+    match,
+    inningsIndex,
+  ).battingTeam;
   let ordinal = 0;
 
   for (let index = 0; index <= inningsIndex; index += 1) {
@@ -165,7 +167,10 @@ export const getAggregateRuns = (
       : total;
   }, 0);
 
-export const getFinalInningsTarget = (match, inningsIndex = match?.live?.inningsIndex) => {
+export const getFinalInningsTarget = (
+  match,
+  inningsIndex = match?.live?.inningsIndex,
+) => {
   if (!isTestMatch(match)) return null;
   if (inningsIndex !== getScheduledInningsCount(match) - 1) return null;
 
@@ -182,7 +187,10 @@ export const getFinalInningsTarget = (match, inningsIndex = match?.live?.innings
   return Math.max(1, oppositionBefore - battingBefore + 1);
 };
 
-export const getTestLeadStatus = (match, inningsIndex = match?.live?.inningsIndex) => {
+export const getTestLeadStatus = (
+  match,
+  inningsIndex = match?.live?.inningsIndex,
+) => {
   if (!isTestMatch(match)) return null;
 
   const current = match?.innings?.[inningsIndex];

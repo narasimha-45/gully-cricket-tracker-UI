@@ -1,5 +1,8 @@
 import { useCallback, useEffect, useState } from "react";
-import { getPendingSyncMatches, syncPendingMatches } from "../utils/syncPendingMatches";
+import {
+  getPendingSyncMatches,
+  syncPendingMatches,
+} from "../utils/syncPendingMatches";
 
 /**
  * Drives the background sync queue and exposes just enough state for a

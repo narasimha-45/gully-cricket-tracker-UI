@@ -14,13 +14,23 @@ export default function SeasonStats() {
   const { seasonId } = useParams();
   const location = useLocation();
 
-  useEffect(() => { window.scrollTo({ top: 0, behavior: "auto" }); }, [location.pathname]);
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [location.pathname]);
 
   return (
     <div>
       <nav className={styles.subTabs} aria-label="Season statistics">
         {TABS.map(([path, label]) => (
-          <NavLink key={path} to={path} className={({ isActive }) => isActive ? styles.activeTab : styles.tab}>{label}</NavLink>
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            {label}
+          </NavLink>
         ))}
       </nav>
       <div className={styles.content}>

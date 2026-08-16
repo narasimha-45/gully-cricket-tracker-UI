@@ -5,7 +5,11 @@ export const queryKeys = Object.freeze({
   leaderboardRoot: ["leaderboard"],
   leaderboard: (type, filters) => ["leaderboard", type, filters],
   playerProfileRoot: ["playerProfile"],
-  playerProfile: (playerId, seasonId) => ["playerProfile", playerId, seasonId || "all"],
+  playerProfile: (playerId, seasonId) => [
+    "playerProfile",
+    playerId,
+    seasonId || "all",
+  ],
   teamProfileRoot: ["teamProfile"],
   teamProfile: (teamId, seasonId) => ["teamProfile", teamId, seasonId || "all"],
   teamsRoot: ["teams"],
@@ -13,5 +17,9 @@ export const queryKeys = Object.freeze({
   globalSearch: (query) => ["globalSearch", query],
   teamSearch: (query) => ["teamSearch", query],
   playerSearch: (query) => ["playerSearch", query],
-  teamSeasonPlayers: (teamId, seasonId) => ["teamSeasonPlayers", teamId, seasonId],
+  teamSeasonPlayers: (teamId, seasonId) => [
+    "teamSeasonPlayers",
+    teamId,
+    seasonId,
+  ],
 });

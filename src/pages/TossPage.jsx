@@ -28,7 +28,11 @@ function tossUiReducer(state, action) {
     case "save/start":
       return { ...state, saving: true, error: "" };
     case "save/error":
-      return { ...state, saving: false, error: action.error || "Unable to save toss" };
+      return {
+        ...state,
+        saving: false,
+        error: action.error || "Unable to save toss",
+      };
     default:
       return state;
   }
@@ -47,7 +51,12 @@ function TossPageContent() {
   const { seasonId, matchId } = useParams();
   const navigate = useNavigate();
   const timersRef = useRef([]);
-  const { phase, match, error: sessionError, persistReplacement } = useMatchSession();
+  const {
+    phase,
+    match,
+    error: sessionError,
+    persistReplacement,
+  } = useMatchSession();
   const [ui, uiDispatch] = useReducer(tossUiReducer, initialUi);
 
   useEffect(
@@ -55,7 +64,8 @@ function TossPageContent() {
     [],
   );
 
-  if (phase === "loading") return <p className={styles.stateMessage}>Loading toss…</p>;
+  if (phase === "loading")
+    return <p className={styles.stateMessage}>Loading toss…</p>;
   if (phase === "error" || !match) {
     return (
       <p className={styles.stateMessage} role="alert">
@@ -74,7 +84,10 @@ function TossPageContent() {
     const timer = setTimeout(() => {
       uiDispatch({
         type: "flip/result",
-        value: crypto.getRandomValues(new Uint8Array(1))[0] % 2 === 0 ? "heads" : "tails",
+        value:
+          crypto.getRandomValues(new Uint8Array(1))[0] % 2 === 0
+            ? "heads"
+            : "tails",
       });
     }, 700);
     timersRef.current.push(timer);
@@ -147,7 +160,9 @@ function TossPageContent() {
             <p>Optional helper for deciding the toss.</p>
           </div>
           {ui.flipResult && (
-            <span className={styles.resultBadge}>{formatName(ui.flipResult)}</span>
+            <span className={styles.resultBadge}>
+              {formatName(ui.flipResult)}
+            </span>
           )}
         </div>
 
@@ -159,7 +174,9 @@ function TossPageContent() {
           aria-label="Flip coin"
         >
           <span aria-hidden="true">🪙</span>
-          <strong>{ui.isFlipping ? "Flipping" : ui.flipResult || "Flip"}</strong>
+          <strong>
+            {ui.isFlipping ? "Flipping" : ui.flipResult || "Flip"}
+          </strong>
         </button>
       </section>
 
@@ -194,7 +211,9 @@ function TossPageContent() {
         </div>
       </section>
 
-      <section className={`${styles.card} ${!ui.winnerKey ? styles.muted : ""}`}>
+      <section
+        className={`${styles.card} ${!ui.winnerKey ? styles.muted : ""}`}
+      >
         <div className={styles.cardHeader}>
           <div>
             <h2>Toss decision</h2>
@@ -225,7 +244,11 @@ function TossPageContent() {
         </div>
       </section>
 
-      {ui.error && <p className={styles.stateMessage} role="alert">{ui.error}</p>}
+      {ui.error && (
+        <p className={styles.stateMessage} role="alert">
+          {ui.error}
+        </p>
+      )}
 
       <button
         type="button"

@@ -1,19 +1,88 @@
 .card {
-  display: grid; grid-template-columns: minmax(0,1fr) auto; align-items: center; gap: 10px;
-  margin: 8px 0; padding: 10px 11px; border: 1px solid var(--color-amber-200); border-radius: var(--radius-md);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin: 8px 0;
+  padding: 10px 11px;
+  border: 1px solid var(--color-amber-200);
+  border-radius: var(--radius-md);
   background: var(--color-amber-50);
 }
-.copy { display: grid; gap: 2px; min-width: 0; }
-.badge { width: fit-content; margin-bottom: 1px; color: var(--color-amber-900); font-size: 9px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
-.copy strong { color: var(--color-slate-900); font-size: 12px; font-weight: 700; }
-.copy p { margin: 0; color: var(--color-slate-600); font-size: 10px; line-height: 1.4; }
-.meta { color: var(--color-slate-500); font-size: 9px; font-weight: 600; }
-.actions { display: flex; gap: 6px; flex-shrink: 0; }
-.actions button { min-height: 34px; padding: 0 9px; border-radius: 8px; font-size: 10px; font-weight: 600; cursor: pointer; }
-.declareButton { border: 1px solid var(--color-amber-300); background: var(--color-white); color: var(--color-amber-900); }
-.drawButton { border: 1px solid var(--color-slate-300); background: var(--color-white); color: var(--color-slate-700); }
+
+.copy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.badge {
+  width: fit-content;
+  margin-bottom: 1px;
+  color: var(--color-amber-900);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.copy strong {
+  color: var(--color-slate-900);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.copy p {
+  margin: 0;
+  color: var(--color-slate-600);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.meta {
+  color: var(--color-slate-500);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.actions button {
+  min-height: 34px;
+  padding: 0 9px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.declareButton {
+  border: 1px solid var(--color-amber-300);
+  background: var(--color-white);
+  color: var(--color-amber-900);
+}
+
+.drawButton {
+  border: 1px solid var(--color-slate-300);
+  background: var(--color-white);
+  color: var(--color-slate-700);
+}
+
 @media (max-width: 390px) {
-  .card { grid-template-columns: 1fr; }
-  .actions { width: 100%; }
-  .actions button { flex: 1; min-height: 38px; }
+  .card {
+    grid-template-columns: 1fr;
+  }
+
+  .actions {
+    width: 100%;
+  }
+
+  .actions button {
+    flex: 1;
+    min-height: 38px;
+  }
 }

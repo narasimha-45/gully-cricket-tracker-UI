@@ -59,7 +59,8 @@ export default function BattingStats({ isOverall = false }) {
     (teamsQuery.data || []).forEach((team) => {
       const id = team.teamId ?? team.id;
       const name = team.teamName ?? team.name;
-      if (id && name && !unique.has(id)) unique.set(id, { value: id, label: formatName(name) });
+      if (id && name && !unique.has(id))
+        unique.set(id, { value: id, label: formatName(name) });
     });
     return [...unique.values()].sort((a, b) => a.label.localeCompare(b.label));
   }, [teamsQuery.data]);
@@ -95,8 +96,16 @@ export default function BattingStats({ isOverall = false }) {
           })),
         ],
       },
-      { key: "opponentTeamId", label: "Opponent", options: [{ value: "All", label: "All" }, ...teams] },
-      { key: "teamId", label: "Team", options: [{ value: "All", label: "All" }, ...teams] },
+      {
+        key: "opponentTeamId",
+        label: "Opponent",
+        options: [{ value: "All", label: "All" }, ...teams],
+      },
+      {
+        key: "teamId",
+        label: "Team",
+        options: [{ value: "All", label: "All" }, ...teams],
+      },
     ],
     [teams],
   );
@@ -105,7 +114,9 @@ export default function BattingStats({ isOverall = false }) {
     return Object.entries(state.filters).flatMap(([key, value]) => {
       if (value === "All") return [];
       const definition = filterDefinitions.find((item) => item.key === key);
-      const option = definition?.options.find((item) => (typeof item === "string" ? item : item.value) === value);
+      const option = definition?.options.find(
+        (item) => (typeof item === "string" ? item : item.value) === value,
+      );
       return [typeof option === "string" ? option : option?.label || value];
     });
   }, [filterDefinitions, state.filters]);
@@ -113,13 +124,20 @@ export default function BattingStats({ isOverall = false }) {
   const players = useMemo(() => {
     const getSortValue = (player) => {
       switch (state.sortKey) {
-        case "innings": return number(player.inningsPlayed);
-        case "runs": return number(player.totalRuns);
-        case "balls": return number(player.totalBallsFaced);
-        case "average": return number(player.average);
-        case "strikeRate": return number(player.strikeRate);
-        case "highest": return number(player.highestScore);
-        default: return 0;
+        case "innings":
+          return number(player.inningsPlayed);
+        case "runs":
+          return number(player.totalRuns);
+        case "balls":
+          return number(player.totalBallsFaced);
+        case "average":
+          return number(player.average);
+        case "strikeRate":
+          return number(player.strikeRate);
+        case "highest":
+          return number(player.highestScore);
+        default:
+          return 0;
       }
     };
     return [...(statsQuery.data || [])].sort((a, b) => {
@@ -128,14 +146,17 @@ export default function BattingStats({ isOverall = false }) {
     });
   }, [statsQuery.data, state.sortDir, state.sortKey]);
 
-  const onSort = (column) => dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
+  const onSort = (column) =>
+    dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
     <div className={styles.page}>
       <LeaderboardToolbar
         activeLabels={activeLabels}
         warning={teamsQuery.isError ? "Team filters unavailable" : ""}
-        onOpenFilters={() => dispatch({ type: LEADERBOARD_ACTIONS.OPEN_FILTERS })}
+        onOpenFilters={() =>
+          dispatch({ type: LEADERBOARD_ACTIONS.OPEN_FILTERS })
+        }
         filtersDisabled={teamsQuery.isLoading}
       />
 
@@ -151,25 +172,86 @@ export default function BattingStats({ isOverall = false }) {
         <div className={styles.table}>
           <div className={`${styles.header} ${styles.battingGrid}`}>
             <span className={styles.playerHeader}>Player</span>
-            <SortButton label="I" column="innings" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by innings" />
-            <SortButton label="R" column="runs" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by runs" />
-            <SortButton label="B" column="balls" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by balls faced" />
-            <SortButton label="Avg" column="average" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} />
-            <SortButton label="SR" column="strikeRate" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} />
-            <SortButton label="HS" column="highest" activeColumn={state.sortKey} direction={state.sortDir} onSort={onSort} ariaLabel="Sort by highest score" />
+            <SortButton
+              label="I"
+              column="innings"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by innings"
+            />
+            <SortButton
+              label="R"
+              column="runs"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by runs"
+            />
+            <SortButton
+              label="B"
+              column="balls"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by balls faced"
+            />
+            <SortButton
+              label="Avg"
+              column="average"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+            />
+            <SortButton
+              label="SR"
+              column="strikeRate"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+            />
+            <SortButton
+              label="HS"
+              column="highest"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by highest score"
+            />
           </div>
 
           {players.map((player) => (
-            <div key={player.playerId ?? player.playerName} className={`${styles.row} ${styles.battingGrid}`}>
-              <button type="button" className={styles.playerButton} onClick={() => navigate(`/player/${encodeURIComponent(player.playerId)}`)}>
+            <div
+              key={player.playerId ?? player.playerName}
+              className={`${styles.row} ${styles.battingGrid}`}
+            >
+              <button
+                type="button"
+                className={styles.playerButton}
+                onClick={() =>
+                  navigate(`/player/${encodeURIComponent(player.playerId)}`)
+                }
+              >
                 {formatName(player.playerName)}
-                <span className={styles.secondary}>{number(player.totalMatchesPlayed)} matches</span>
+                <span className={styles.secondary}>
+                  {number(player.totalMatchesPlayed)} matches
+                </span>
               </button>
-              <span className={styles.stat}>{number(player.inningsPlayed)}</span>
-              <span className={`${styles.stat} ${styles.primaryStat}`}>{number(player.totalRuns)}</span>
-              <span className={styles.stat}>{number(player.totalBallsFaced)}</span>
-              <span className={styles.stat}>{number(player.average).toFixed(1)}</span>
-              <span className={styles.stat}>{number(player.strikeRate).toFixed(1)}</span>
+              <span className={styles.stat}>
+                {number(player.inningsPlayed)}
+              </span>
+              <span className={`${styles.stat} ${styles.primaryStat}`}>
+                {number(player.totalRuns)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.totalBallsFaced)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.average).toFixed(1)}
+              </span>
+              <span className={styles.stat}>
+                {number(player.strikeRate).toFixed(1)}
+              </span>
               <span className={styles.stat}>{number(player.highestScore)}</span>
             </div>
           ))}
@@ -181,7 +263,12 @@ export default function BattingStats({ isOverall = false }) {
         onClose={() => dispatch({ type: LEADERBOARD_ACTIONS.CLOSE_FILTERS })}
         filters={filterDefinitions}
         selectedFilters={state.filters}
-        onChange={(filters) => dispatch({ type: LEADERBOARD_ACTIONS.APPLY_FILTERS, payload: filters })}
+        onChange={(filters) =>
+          dispatch({
+            type: LEADERBOARD_ACTIONS.APPLY_FILTERS,
+            payload: filters,
+          })
+        }
         title="Batting filters"
       />
     </div>

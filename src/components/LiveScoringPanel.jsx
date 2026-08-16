@@ -186,10 +186,16 @@ export default function LiveScoringPanel() {
           )}
           {(innings.thisOver || []).map((ball, index) => {
             const presentation = getBallPresentation(ball, match);
+            const isLatest = index === (innings.thisOver || []).length - 1;
             return (
               <span
-                key={`${innings.balls}-${index}`}
-                className={`${styles.ballChip} ${styles[presentation.kind]}`}
+                // "This over" is cleared at the end of every over, so the
+                // index alone is a stable key for its lifetime — unlike the
+                // previous `${innings.balls}-${index}` key, which changed on
+                // every delivery and force-remounted every chip already on
+                // screen, not just the new one.
+                key={index}
+                className={`${styles.ballChip} ${styles[presentation.kind]} ${isLatest ? styles.ballChipEnter : ""}`}
               >
                 {presentation.label}
               </span>

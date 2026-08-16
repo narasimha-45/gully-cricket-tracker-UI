@@ -8,16 +8,108 @@
   background: rgba(247, 248, 251, .96);
   backdrop-filter: blur(12px);
 }
-.subHeader { display: flex; align-items: center; gap: 9px; min-height: 38px; margin-bottom: 4px; }
-.back { width: 34px; height: 34px; display: grid; place-items: center; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-white); color: var(--color-slate-700); font-size: 17px; cursor: pointer; }
-.seasonTitleWrap { min-width: 0; display: grid; gap: 0; }
-.eyebrow { color: var(--color-slate-500); font-size: 8px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-.seasonName { overflow: hidden; color: var(--color-slate-900); font-size: 15px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.tabs { display: grid; grid-template-columns: 1fr 1fr; }
-.tab, .activeTab { min-height: 38px; display: grid; place-items: center; border-bottom: 2px solid transparent; color: var(--color-slate-500); font-size: 12px; font-weight: 600; text-decoration: none; }
-.activeTab { border-bottom-color: var(--color-indigo-600); color: var(--color-indigo-700); font-weight: 700; }
-.content { padding-top: 8px; }
-.queryError { display: grid; justify-items: center; gap: 8px; padding: 18px; border: 1px solid var(--color-red-200); border-radius: var(--radius-lg); background: var(--color-red-50); color: var(--color-red-800); text-align: center; font-size: 12px; }
-.queryError button { min-height: 34px; padding: 0 12px; border: 0; border-radius: 8px; background: var(--color-red-700); color: white; font-weight: 700; cursor: pointer; }
-.accessibleLoading { padding-top: 8px; }
-@supports (padding: env(safe-area-inset-top)) { .stickyHeader { top: calc(60px + env(safe-area-inset-top)); } }
+
+.subHeader {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 38px;
+  margin-bottom: 4px;
+}
+
+.back {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--color-border);
+  border-radius: 9px;
+  background: var(--color-white);
+  color: var(--color-slate-700);
+  font-size: 17px;
+  cursor: pointer;
+}
+
+.seasonTitleWrap {
+  min-width: 0;
+  display: grid;
+  gap: 0;
+}
+
+.eyebrow {
+  color: var(--color-slate-500);
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.seasonName {
+  overflow: hidden;
+  color: var(--color-slate-900);
+  font-size: 15px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.tab,
+.activeTab {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border-bottom: 2px solid transparent;
+  color: var(--color-slate-500);
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.activeTab {
+  border-bottom-color: var(--color-indigo-600);
+  color: var(--color-indigo-700);
+  font-weight: 700;
+}
+
+.content {
+  padding-top: 8px;
+}
+
+.queryError {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 18px;
+  border: 1px solid var(--color-red-200);
+  border-radius: var(--radius-lg);
+  background: var(--color-red-50);
+  color: var(--color-red-800);
+  text-align: center;
+  font-size: 12px;
+}
+
+.queryError button {
+  min-height: 34px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--color-red-700);
+  color: white;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.accessibleLoading {
+  padding-top: 8px;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .stickyHeader {
+    top: calc(60px + env(safe-area-inset-top));
+  }
+}

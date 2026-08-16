@@ -11,15 +11,25 @@ import {
 } from "./matchPrimitives";
 import { evaluateMatchState } from "./matchResolution";
 
+/** @typedef {import("./matchTypes").Match} Match */
+
 const deliveryTypeFor = (extraMode) =>
   extraMode === "WIDE" ? "WIDE" : extraMode === "NO_BALL" ? "NO_BALL" : "RUN";
 
 const automaticExtraFor = (match, type) =>
-  ((type === "WIDE" && match.rules?.wide?.extraRun) ||
-    (type === "NO_BALL" && match.rules?.noBall?.extraRun))
+  (type === "WIDE" && match.rules?.wide?.extraRun) ||
+  (type === "NO_BALL" && match.rules?.noBall?.extraRun)
     ? 1
     : 0;
 
+/**
+ * Records one legal or extra delivery scored as runs (not a wicket).
+ * Returns the same `match` reference, unmutated, if scoring isn't possible
+ * yet (innings complete, or striker/non-striker/bowler not all selected).
+ * @param {Match} match
+ * @param {{runs: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"}} payload
+ * @returns {Match}
+ */
 export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
   if (match.status === "COMPLETED") return match;
   if (!match.live?.striker || !match.live?.nonStriker || !match.live?.bowler) {
@@ -94,6 +104,15 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
   return stamp(updated);
 };
 
+/**
+ * Records a wicket, optionally with completed runs (e.g. a run-out on the
+ * second run). `wicketType` should be one of BOWLER_WICKETS for it to
+ * count against the bowler's figures; non-bowler dismissals (run out,
+ * retired out, etc.) still fall the wicket but don't credit the bowler.
+ * @param {Match} match
+ * @param {{wicketType: string, outBatsman: string, helper?: string|null, runs?: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"}} payload
+ * @returns {Match}
+ */
 export const takeWicket = (
   match,
   { wicketType, outBatsman, helper = null, runs = 0, extraMode = "NORMAL" },
@@ -167,7 +186,11 @@ export const takeWicket = (
     innings.bowlingStats[live.bowler].wickets += 1;
   }
 
-  const dismissal = { type: wicketType, bowler: live.bowler, fielder: helper || null };
+  const dismissal = {
+    type: wicketType,
+    bowler: live.bowler,
+    fielder: helper || null,
+  };
   innings.battingStats[outBatsman].dismissal = dismissal;
   innings.dismissals[outBatsman] = dismissal;
 

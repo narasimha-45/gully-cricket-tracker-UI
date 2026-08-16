@@ -13,7 +13,9 @@ export default function Scorecard({ match }) {
   const { innings: allInnings = [], teams, live } = match ?? {};
 
   if (!teams?.teamA || !teams?.teamB) {
-    return <EmptyScorecard message="Scorecard is unavailable for this match." />;
+    return (
+      <EmptyScorecard message="Scorecard is unavailable for this match." />
+    );
   }
 
   const visibleInnings =
@@ -22,7 +24,9 @@ export default function Scorecard({ match }) {
       : allInnings;
 
   if (!visibleInnings.some(hasInningsStarted)) {
-    return <EmptyScorecard message="Scorecard will appear after the first ball." />;
+    return (
+      <EmptyScorecard message="Scorecard will appear after the first ball." />
+    );
   }
 
   const testMatch = isTestMatch(match);

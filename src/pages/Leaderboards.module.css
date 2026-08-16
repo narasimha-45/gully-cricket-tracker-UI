@@ -1,4 +1,9 @@
-.page { display: flex; flex-direction: column; gap: 8px; }
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
 .table {
   display: grid;
   width: 100%;
@@ -7,8 +12,19 @@
   background: var(--color-white);
   box-shadow: var(--shadow-xs);
 }
-.header, .row { display: grid; align-items: center; gap: 2px; }
-.battingGrid, .bowlingGrid { grid-template-columns: minmax(94px, 2.2fr) repeat(6, minmax(30px, .72fr)); }
+
+.header,
+.row {
+  display: grid;
+  align-items: center;
+  gap: 2px;
+}
+
+.battingGrid,
+.bowlingGrid {
+  grid-template-columns: minmax(94px, 2.2fr) repeat(6, minmax(30px, .72fr));
+}
+
 .header {
   position: sticky;
   top: var(--stats-header-top, 158px);
@@ -24,7 +40,12 @@
   font-size: 9px;
   font-weight: 700;
 }
-.playerHeader { text-align: left; padding-left: 3px; }
+
+.playerHeader {
+  text-align: left;
+  padding-left: 3px;
+}
+
 .row {
   min-height: 58px;
   padding: 8px;
@@ -34,8 +55,16 @@
   font-size: 10px;
   font-variant-numeric: tabular-nums;
 }
-.row:last-child { border-bottom: 0; border-radius: 0 0 12px 12px; }
-.row:hover { background: var(--color-slate-50); }
+
+.row:last-child {
+  border-bottom: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+.row:hover {
+  background: var(--color-slate-50);
+}
+
 .playerButton {
   min-width: 0;
   overflow: hidden;
@@ -50,13 +79,43 @@
   white-space: nowrap;
   cursor: pointer;
 }
-.stat { text-align: center; color: var(--color-slate-700); font-weight: 600; }
-.primaryStat { color: var(--color-slate-900); font-weight: 700; }
-.secondary { display: block; margin-top: 2px; color: var(--color-slate-500); font-size: 9px; font-weight: 500; }
+
+.stat {
+  text-align: center;
+  color: var(--color-slate-700);
+  font-weight: 600;
+}
+
+.primaryStat {
+  color: var(--color-slate-900);
+  font-weight: 700;
+}
+
+.secondary {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-slate-500);
+  font-size: 9px;
+  font-weight: 500;
+}
 
 @media (max-width: 360px) {
-  .battingGrid, .bowlingGrid { grid-template-columns: minmax(82px, 2fr) repeat(6, minmax(27px, .7fr)); }
-  .header, .row { padding-inline: 5px; }
-  .row { font-size: 9px; }
-  .playerButton { font-size: 10px; }
+
+  .battingGrid,
+  .bowlingGrid {
+    grid-template-columns: minmax(82px, 2fr) repeat(6, minmax(27px, .7fr));
+  }
+
+  .header,
+  .row {
+    padding-inline: 5px;
+  }
+
+  .row {
+    font-size: 9px;
+  }
+
+  .playerButton {
+    font-size: 10px;
+  }
 }

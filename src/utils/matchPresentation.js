@@ -23,9 +23,14 @@ export function formatMatchResult(result) {
     return `${formatName(result.winner)} won by an innings and ${result.margin} ${unit}`;
   }
   const isWickets = result.type === "WICKETS";
-  const unit = Number(result.margin) === 1
-    ? isWickets ? "wicket" : "run"
-    : isWickets ? "wickets" : "runs";
+  const unit =
+    Number(result.margin) === 1
+      ? isWickets
+        ? "wicket"
+        : "run"
+      : isWickets
+        ? "wickets"
+        : "runs";
   return `${formatName(result.winner)} won by ${result.margin} ${unit}`;
 }
 
@@ -33,18 +38,21 @@ export function buildMatchHeroRows(match) {
   const currentIndex = match.live.inningsIndex;
 
   if (isTestMatch(match)) {
-    return Array.from({ length: getScheduledInningsCount(match) }, (_, index) => {
-      const existing = match.innings[index] || null;
-      const teams = existing || getScheduledTeamsForInnings(match, index);
-      const ordinal = getTeamInningsOrdinal(match, index);
-      return {
-        key: `test-${index}`,
-        label: `${formatName(teams.battingTeam)} · ${ordinalLabel(ordinal)}`,
-        innings: existing,
-        isCurrent: index === currentIndex && match.status !== "COMPLETED",
-        isFuture: index > currentIndex,
-      };
-    });
+    return Array.from(
+      { length: getScheduledInningsCount(match) },
+      (_, index) => {
+        const existing = match.innings[index] || null;
+        const teams = existing || getScheduledTeamsForInnings(match, index);
+        const ordinal = getTeamInningsOrdinal(match, index);
+        return {
+          key: `test-${index}`,
+          label: `${formatName(teams.battingTeam)} · ${ordinalLabel(ordinal)}`,
+          innings: existing,
+          isCurrent: index === currentIndex && match.status !== "COMPLETED",
+          isFuture: index > currentIndex,
+        };
+      },
+    );
   }
 
   const rows = [];

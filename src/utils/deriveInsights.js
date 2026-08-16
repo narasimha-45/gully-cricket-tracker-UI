@@ -20,7 +20,9 @@ export function deriveInsights(match) {
   const configuredOvers = Number(match.totalOvers);
   const longestInningsOvers = Math.max(
     1,
-    ...allInnings.map((innings) => Math.max(1, Math.ceil((innings.balls || 0) / 6))),
+    ...allInnings.map((innings) =>
+      Math.max(1, Math.ceil((innings.balls || 0) / 6)),
+    ),
   );
   const totalOvers =
     Number.isFinite(configuredOvers) && configuredOvers > 0
@@ -236,7 +238,9 @@ export function deriveInsights(match) {
       ];
 
       for (const o of overNums) {
-        const overBalls = balls.filter((b) => b.over === o && b.type !== "RETIRE");
+        const overBalls = balls.filter(
+          (b) => b.over === o && b.type !== "RETIRE",
+        );
 
         const runs = overBalls.reduce((s, b) => s + b.runs, 0);
 
@@ -250,7 +254,7 @@ export function deriveInsights(match) {
           cumulative: cumRuns,
           runs,
           wickets: cumWickets, // cumulative wickets
-          wicketsThisOver
+          wicketsThisOver,
         });
       }
 
