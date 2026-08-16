@@ -87,8 +87,8 @@ export function derivePartnerships(innings) {
     // Runs
     current.runs += runs;
 
-    const isNoBall = type === "NO_BALL";
-    const isWide = type === "WIDE";
+    const isNoBall = type === "NO_BALL" || ball.extra === "NO_BALL";
+    const isWide = type === "WIDE" || ball.extra === "WIDE";
     const isLegal = !isWide && !isNoBall;
     const battingRuns = Number.isFinite(ball.battingRuns)
       ? ball.battingRuns

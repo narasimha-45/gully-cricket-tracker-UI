@@ -8,5 +8,5 @@ export const teamsApi = {
   getTeamSeasonPlayers: (teamId, seasonId) =>
     apiClient.get(`/teams/season-player`, { teamId, seasonId }),
 
-  getTeams: (query) => apiClient.get('/teams/get-teams',{ seasonId})
+  getTeams: (seasonId) => apiClient.get("/teams/get-teams", { seasonId }),
 };

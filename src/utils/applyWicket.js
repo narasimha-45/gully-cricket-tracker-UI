@@ -76,8 +76,11 @@ export const applyWicket = ({
     live.outBatsmen.push(outBatsman);
   }
 
+  const deliveryType = isWide ? "WIDE" : isNoBall ? "NO_BALL" : "WICKET";
+
   innings.thisOver.push({
-    type: "WICKET",
+    type: deliveryType,
+    isWicket: true,
     wicketType,
     outBatsman,
     helper,
@@ -95,7 +98,7 @@ export const applyWicket = ({
     bowler: live.bowler,
     runs: totalRuns,
     battingRuns: Number(runs || 0),
-    type: "WICKET",
+    type: deliveryType,
     extra: extraMode,
     wicket: {
       type: wicketType,
@@ -156,6 +159,6 @@ export const applyWicket = ({
   }
 
   updated.updatedAt = Date.now();
-  saveMatch(updated);
+  saveMatch(updated).catch(() => undefined);
   setMatch(updated);
 };

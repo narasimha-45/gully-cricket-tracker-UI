@@ -14,7 +14,7 @@ import {
 
 const persist = (updated, setMatch) => {
   updated.updatedAt = Date.now();
-  saveMatch(updated);
+  saveMatch(updated).catch(() => undefined);
   setMatch(updated);
 };
 
@@ -84,7 +84,7 @@ export const updateLive = (updates, match, setMatch) => {
     updatedAt: Date.now(),
   };
 
-  saveMatch(updated);
+  saveMatch(updated).catch(() => undefined);
   setMatch(updated);
 };
 

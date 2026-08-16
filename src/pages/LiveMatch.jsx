@@ -183,6 +183,7 @@ export default function LiveMatch() {
               setMatch,
               setAckSubmitting,
               ackSubmitting,
+              () => navigate(`/season/${match.seasonId}/matches`, { replace: true }),
             )
           }
           secondaryText="Undo last action"

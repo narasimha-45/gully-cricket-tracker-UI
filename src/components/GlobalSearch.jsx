@@ -29,16 +29,16 @@ export default function GlobalSearch() {
       return;
     }
 
+    let active = true;
     const fetchResults = async () => {
       try {
         setLoading(true);
         const json = await api.search.globalSearch(query.trim());
-        setResults(json || { players: [], teams: [], seasons: [] });
+        if (active) setResults(json || { players: [], teams: [], seasons: [] });
       } catch (err) {
-        console.error("Search failed:", err);
-        setResults({ players: [], teams: [], seasons: [] });
+        if (active) setResults({ players: [], teams: [], seasons: [] });
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
@@ -46,7 +46,10 @@ export default function GlobalSearch() {
       fetchResults();
     }, 300);
 
-    return () => clearTimeout(debounce);
+    return () => {
+      active = false;
+      clearTimeout(debounce);
+    };
   }, [query]);
 
   const handleSelect = (type, id) => {
@@ -99,7 +102,8 @@ export default function GlobalSearch() {
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Players</div>
                   {results.players.map((p) => (
-                    <div
+                    <button
+                      type="button"
                       key={p.playerId}
                       className={styles.resultItem}
                       onClick={() => handleSelect("player", p.playerId)}
@@ -112,7 +116,7 @@ export default function GlobalSearch() {
                       <div>
                         <div className={styles.resultName}>{p.playerName}</div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -122,7 +126,8 @@ export default function GlobalSearch() {
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Teams</div>
                   {results.teams.map((t) => (
-                    <div
+                    <button
+                      type="button"
                       key={t.teamId}
                       className={styles.resultItem}
                       onClick={() => handleSelect("team", t.teamId)}
@@ -135,7 +140,7 @@ export default function GlobalSearch() {
                       <div>
                         <div className={styles.resultName}>{t.teamName}</div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -145,7 +150,8 @@ export default function GlobalSearch() {
                 <div className={styles.category}>
                   <div className={styles.categoryTitle}>Seasons</div>
                   {results.seasons.map((s) => (
-                    <div
+                    <button
+                      type="button"
                       key={s.seasonId}
                       className={styles.resultItem}
                       onClick={() => handleSelect("season", s.seasonId)}
@@ -158,7 +164,7 @@ export default function GlobalSearch() {
                       <div>
                         <div className={styles.resultName}>{s.seasonName}</div>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}

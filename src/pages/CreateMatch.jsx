@@ -7,6 +7,7 @@ import {
   TEST_INNINGS_OPTIONS,
   normalizeName,
 } from "../utils/matchModel";
+import { createLocalMatchId } from "../utils/matchIdentity";
 import styles from "./CreateMatch.module.css";
 
 const emptyTeam = () => ({
@@ -67,7 +68,7 @@ export default function CreateMatch() {
       ...(team.id ? { id: team.id } : {}),
     });
 
-    const matchId = `match_${Date.now()}`;
+    const matchId = createLocalMatchId();
     const match = {
       id: matchId,
       seasonId,
@@ -89,6 +90,8 @@ export default function CreateMatch() {
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      schemaVersion: 2,
+      syncStatus: "local",
     };
 
     await saveMatch(match);

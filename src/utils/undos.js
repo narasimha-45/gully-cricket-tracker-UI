@@ -34,7 +34,13 @@ const restoreFromSnapshot = (updated, previous, setExtraMode) => {
   innings.dismissals = deepCopy(previous.dismissals || {});
   innings.thisOver = deepCopy(previous.thisOver || []);
   innings.thisOverBowlerChanged = Boolean(previous.thisOverBowlerChanged);
-  innings.ballByBall = deepCopy(previous.ballByBall || []);
+  if (Array.isArray(previous.ballByBall)) {
+    // Backward compatibility for matches saved by older frontend versions.
+    innings.ballByBall = deepCopy(previous.ballByBall);
+  } else {
+    const eventCount = Number(previous.ballByBallLength ?? 0);
+    innings.ballByBall = (innings.ballByBall || []).slice(0, eventCount);
+  }
   innings.extras = deepCopy(
     previous.extras || { wides: 0, noBalls: 0 },
   );
@@ -53,7 +59,7 @@ const reopenMatch = (updated) => {
 
 const persist = (updated, setMatch) => {
   updated.updatedAt = Date.now();
-  saveMatch(updated);
+  saveMatch(updated).catch(() => undefined);
   setMatch(updated);
 };
 

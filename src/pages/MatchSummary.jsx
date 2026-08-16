@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { api } from "../api";
 import InsightsTab from "../components/InsightsTab";
 import MatchHero from "../components/MatchHero";
 import MatchSummaryTab from "../components/MatchSummaryTab";
@@ -8,6 +7,8 @@ import OversTimeline from "../components/OversTimeline";
 import Scorecard from "../components/Scorecard";
 import { saveMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
+import { createLocalMatchId } from "../utils/matchIdentity";
+import { useServerMatch } from "../hooks/queries";
 import styles from "./MatchSummary.module.css";
 
 const tabs = ["summary", "scorecard", "overs", "insights"];
@@ -39,42 +40,25 @@ const normalizeCompletedMatch = (response) => {
 export default function MatchSummary() {
   const { matchId } = useParams();
   const navigate = useNavigate();
-  const [response, setResponse] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   const [tab, setTab] = useState("summary");
 
-  useEffect(() => {
-    let active = true;
-
-    api.matches
-      .getMatch(matchId)
-      .then((data) => {
-        if (active) {
-          setResponse(data);
-          window.scrollTo(0, 0);
-        }
-      })
-      .catch((requestError) => {
-        if (active) {
-          setError(requestError?.message || "Unable to load this scorecard.");
-        }
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-
-    return () => {
-      active = false;
-    };
-  }, [matchId]);
+  const {
+    data: response,
+    isLoading: loading,
+    isError,
+    error,
+  } = useServerMatch(matchId);
 
   const match = useMemo(() => normalizeCompletedMatch(response), [response]);
+
+  useEffect(() => {
+    if (response) window.scrollTo(0, 0);
+  }, [response]);
 
   const playAgain = async () => {
     if (!match) return;
 
-    const newMatchId = `match_${Date.now()}`;
+    const newMatchId = createLocalMatchId();
     const newMatch = {
       id: newMatchId,
       seasonId: match.seasonId,
@@ -99,6 +83,8 @@ export default function MatchSummary() {
       status: "setup",
       createdAt: Date.now(),
       updatedAt: Date.now(),
+      schemaVersion: 2,
+      syncStatus: "local",
     };
 
     await saveMatch(newMatch);
@@ -120,12 +106,12 @@ export default function MatchSummary() {
     );
   }
 
-  if (!match || error) {
+  if (!match || isError) {
     return (
       <div className={styles.errorState}>
         <span>❌</span>
         <strong>Match not found</strong>
-        <p>{error || "Unable to load this scorecard."}</p>
+        <p>{error?.message || "Unable to load this scorecard."}</p>
         <button type="button" onClick={() => navigate(-1)}>
           Go back
         </button>
@@ -141,7 +127,11 @@ export default function MatchSummary() {
 
   return (
     <main className={styles.page}>
-      <button type="button" className={styles.backButton} onClick={() => navigate(-1)}>
+      <button
+        type="button"
+        className={styles.backButton}
+        onClick={() => navigate(-1)}
+      >
         ← Back
       </button>
 

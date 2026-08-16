@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import BottomSheetSelector from "./BottomSheetSelector";
 import TestMatchControls from "./TestMatchControls";
 import WicketSheet from "./WicketSheet";
@@ -32,6 +32,14 @@ export default function LiveScoringPanel({
 }) {
   const [sheet, setSheet] = useState(null);
   const [wicketUI, setWicketUI] = useState(initialWicketUi);
+  const latestMatchRef = useRef(match);
+  latestMatchRef.current = match;
+
+  const applyLocalAction = (action) => {
+    const next = action(latestMatchRef.current);
+    if (next) latestMatchRef.current = next;
+    return next;
+  };
 
   const { innings, live } = useMemo(() => {
     const current = match.innings[match.live.inningsIndex];
@@ -84,12 +92,16 @@ export default function LiveScoringPanel({
   const partnership = getCurrentPartnership(innings);
 
   const choosePlayer = (role, player) => {
-    selectLivePlayer({ role, player, match, setMatch, extraMode });
+    applyLocalAction((currentMatch) =>
+      selectLivePlayer({ role, player, match: currentMatch, setMatch, extraMode }),
+    );
     setSheet(null);
   };
 
   const chooseReplacementBowler = (player) => {
-    changeBowler({ player, match, setMatch, extraMode });
+    applyLocalAction((currentMatch) =>
+      changeBowler({ player, match: currentMatch, setMatch, extraMode }),
+    );
     setSheet(null);
   };
 
@@ -228,13 +240,15 @@ export default function LiveScoringPanel({
             className={styles.keyButton}
             disabled={!canScore}
             onClick={() =>
-              applyRun({
-                runs: run,
-                match,
-                setMatch,
-                extraMode,
-                setExtraMode,
-              })
+              applyLocalAction((currentMatch) =>
+                applyRun({
+                  runs: run,
+                  match: currentMatch,
+                  setMatch,
+                  extraMode,
+                  setExtraMode,
+                }),
+              )
             }
           >
             {run}
@@ -285,7 +299,11 @@ export default function LiveScoringPanel({
           type="button"
           className={`${styles.keyButton} ${styles.specialButton}`}
           disabled={!live.striker || !live.nonStriker}
-          onClick={() => switchStrike({ match, setMatch, extraMode })}
+          onClick={() =>
+            applyLocalAction((currentMatch) =>
+              switchStrike({ match: currentMatch, setMatch, extraMode }),
+            )
+          }
         >
           ⇄
         </button>
@@ -293,7 +311,11 @@ export default function LiveScoringPanel({
           type="button"
           className={`${styles.keyButton} ${styles.specialButton}`}
           disabled={!live.striker}
-          onClick={() => retireBatsman(live.striker, match, setMatch)}
+          onClick={() =>
+            applyLocalAction((currentMatch) =>
+              retireBatsman(currentMatch.live?.striker, currentMatch, setMatch),
+            )
+          }
         >
           Ret
         </button>

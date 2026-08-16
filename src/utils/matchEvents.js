@@ -28,8 +28,9 @@ const emptyBowlingStats = () => ({
 
 const persist = (updated, setMatch) => {
   updated.updatedAt = Date.now();
-  saveMatch(updated);
+  saveMatch(updated).catch(() => undefined);
   setMatch(updated);
+  return updated;
 };
 
 const ensureBatter = (innings, player) => {
@@ -64,7 +65,7 @@ export const selectLivePlayer = ({
   }
   if (role === "bowler") ensureBowler(innings, player);
 
-  persist(updated, setMatch);
+  return persist(updated, setMatch);
 };
 
 export const changeBowler = ({
@@ -93,7 +94,7 @@ export const changeBowler = ({
 
   updated.live.bowler = player;
   ensureBowler(innings, player);
-  persist(updated, setMatch);
+  return persist(updated, setMatch);
 };
 
 // Backward-compatible export. New code should use selectLivePlayer.
@@ -112,7 +113,7 @@ export const switchStrike = ({ match, setMatch, extraMode = "NORMAL" }) => {
     updated.live.nonStriker,
     updated.live.striker,
   ];
-  persist(updated, setMatch);
+  return persist(updated, setMatch);
 };
 
 export const retireBatsman = (name, match, setMatch) => {
@@ -139,7 +140,7 @@ export const retireBatsman = (name, match, setMatch) => {
   if (live.striker === name) live.striker = null;
   if (live.nonStriker === name) live.nonStriker = null;
 
-  persist(updated, setMatch);
+  return persist(updated, setMatch);
 };
 
 export const handleOverEnd = (updated, live, innings) => {
@@ -174,13 +175,12 @@ export const applyRun = ({
   if (match.status === "COMPLETED") return;
 
   if (extraMode === "NORMAL") {
-    recordBall({ type: "RUN", runs, match, setMatch, extraMode });
-    return;
+    return recordBall({ type: "RUN", runs, match, setMatch, extraMode });
   }
 
   if (extraMode === "WIDE") {
     const automaticExtra = match.rules?.wide?.extraRun ? 1 : 0;
-    recordBall({
+    const next = recordBall({
       type: "WIDE",
       runs: runs + automaticExtra,
       match,
@@ -188,12 +188,12 @@ export const applyRun = ({
       extraMode,
     });
     setExtraMode("NORMAL");
-    return;
+    return next;
   }
 
   if (extraMode === "NO_BALL") {
     const automaticExtra = match.rules?.noBall?.extraRun ? 1 : 0;
-    recordBall({
+    const next = recordBall({
       type: "NO_BALL",
       runs: runs + automaticExtra,
       match,
@@ -201,7 +201,9 @@ export const applyRun = ({
       extraMode,
     });
     setExtraMode("NORMAL");
+    return next;
   }
+  return null;
 };
 
 export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
@@ -272,8 +274,7 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
 
   const matchResolved = evaluateMatchState(updated, setMatch);
   if (matchResolved || updated.status === "COMPLETED") {
-    persist(updated, setMatch);
-    return;
+    return persist(updated, setMatch);
   }
 
   if (isLegal && innings.balls > 0 && innings.balls % 6 === 0) {
@@ -288,7 +289,7 @@ export const recordBall = ({ type, runs = 0, match, setMatch, extraMode }) => {
     [live.striker, live.nonStriker] = [live.nonStriker, live.striker];
   }
 
-  persist(updated, setMatch);
+  return persist(updated, setMatch);
 };
 
 export const startNextInnings = ({ match, setMatch, followOn = false }) => {

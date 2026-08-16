@@ -111,3 +111,120 @@
   font-weight: 800;
   letter-spacing: -0.3px;
 }
+
+/* SYNC INDICATOR */
+
+.syncBadge {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: none;
+
+  background: rgba(255, 255, 255, 0.16);
+  color: white;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+
+  cursor: pointer;
+}
+
+.syncBadge:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.syncDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-amber-400, #fbbf24);
+  flex-shrink: 0;
+}
+
+.syncDot.syncing {
+  background: var(--color-emerald-400, #34d399);
+  animation: syncPulse 1s ease-in-out infinite;
+}
+
+@keyframes syncPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.35;
+  }
+}
+/* Mobile browser/PWA safe areas */
+@supports (padding: env(safe-area-inset-top)) {
+  .page,
+  .app {
+    min-height: 100dvh;
+  }
+
+  .header {
+    height: calc(68px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .content {
+    padding-top: calc(86px + env(safe-area-inset-top));
+  }
+
+  .footer {
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  }
+}
+
+.offlineBanner,
+.saveErrorBanner {
+  position: fixed;
+  top: 68px;
+  width: 100%;
+  max-width: 430px;
+  z-index: 95;
+  padding: 7px 12px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.offlineBanner {
+  background: var(--color-amber-100);
+  color: var(--color-amber-900);
+}
+
+.saveErrorBanner {
+  border: 0;
+  background: var(--color-red-100);
+  color: var(--color-red-800);
+  cursor: pointer;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .offlineBanner,
+  .saveErrorBanner {
+    top: calc(68px + env(safe-area-inset-top));
+  }
+}
+
+.contentWithBanner {
+  padding-top: 114px;
+}
+
+@supports (padding: env(safe-area-inset-top)) {
+  .contentWithBanner {
+    padding-top: calc(114px + env(safe-area-inset-top));
+  }
+}

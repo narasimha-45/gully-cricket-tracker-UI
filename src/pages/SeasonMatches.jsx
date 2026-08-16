@@ -45,6 +45,9 @@ export default function SeasonMatches() {
 
   useEffect(() => {
     loadLocalMatches();
+    const refresh = () => loadLocalMatches();
+    window.addEventListener("gully:matches-changed", refresh);
+    return () => window.removeEventListener("gully:matches-changed", refresh);
   }, [seasonId]);
 
   /* ---------------------------------------
@@ -98,9 +101,16 @@ export default function SeasonMatches() {
       return;
     }
 
+    // A completed match can still be local when the device is offline or a
+    // sync attempt failed. Keep it reviewable until backend confirmation.
+    if (source === "LOCAL" && match.status === "COMPLETED") {
+      navigate(`/season/${seasonId}/match/${match.id}/live`);
+      return;
+    }
+
     // SETUP MATCH
 
-    if (match.status === "setup") {
+    if (match.status === "setup" || match.status === "SETUP") {
       if (match.toss) {
         navigate(`/season/${seasonId}/match/${match.id}/live`);
       } else {
@@ -122,8 +132,12 @@ export default function SeasonMatches() {
   --------------------------------------- */
 
   const liveMatches = localMatches.filter(
-    (m) => m.status === "setup" || m.status === "LIVE",
+    (m) => m.status === "setup" || m.status === "SETUP" || m.status === "LIVE",
   );
+
+  const pendingCompletedMatches = localMatches
+    .filter((m) => m.status === "COMPLETED" && m.syncStatus !== "synced")
+    .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
 
   const completedMatches = (
     Array.isArray(serverMatches) ? serverMatches : []
@@ -320,13 +334,54 @@ export default function SeasonMatches() {
             </select>
           </div>
 
+          {pendingCompletedMatches.length > 0 && (
+            <div style={{ ...list, marginBottom: 16 }}>
+              {pendingCompletedMatches.map((match) => {
+                const latestInnings = match.innings || [];
+                const first = latestInnings[0];
+                const second = latestInnings[1];
+                return (
+                  <div
+                    key={`pending-${match.id}`}
+                    style={{ ...completedCard, borderColor: "var(--color-amber-300)" }}
+                    onClick={() => handleMatchClick(match, "LOCAL")}
+                  >
+                    <div style={{ ...cardHeader, marginBottom: 8 }}>
+                      <strong>
+                        {formatName(match.teams?.teamA?.name)} vs{" "}
+                        {formatName(match.teams?.teamB?.name)}
+                      </strong>
+                      <span style={pendingSyncBadge}>
+                        {match.syncStatus === "failed"
+                          ? "Sync failed · retry"
+                          : match.syncStatus === "pending"
+                            ? "Pending sync"
+                            : "Needs review"}
+                      </span>
+                    </div>
+                    <div style={statusText}>
+                      {first ? `${formatName(first.battingTeam)} ${getScoreLine(first)}` : ""}
+                      {second ? ` · ${formatName(second.battingTeam)} ${getScoreLine(second)}` : ""}
+                    </div>
+                    {match.syncStatus === "failed" && (
+                      <div style={syncErrorText}>Tap the sync badge in the header to retry.</div>
+                    )}
+                    {match.syncStatus !== "failed" && match.syncStatus !== "pending" && (
+                      <div style={syncErrorText}>Open this match and tap Finish match when the score is confirmed.</div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
           {serverLoading ? (
             <div style={emptyState}>
               <div style={spinner}></div>
 
               <p style={muted}>Loading completed matches...</p>
             </div>
-          ) : filteredCompletedMatches.length === 0 ? (
+          ) : filteredCompletedMatches.length === 0 && pendingCompletedMatches.length === 0 ? (
             <div style={emptyState}>
               <p style={emptyTitle}>No matches found</p>
 
@@ -592,6 +647,22 @@ const statusText = {
   fontSize: 12,
   color: "var(--color-gray-500)",
   marginTop: 4,
+};
+
+const pendingSyncBadge = {
+  padding: "4px 8px",
+  borderRadius: 999,
+  background: "var(--color-amber-100)",
+  color: "var(--color-amber-900)",
+  fontSize: 10,
+  fontWeight: 700,
+  whiteSpace: "nowrap",
+};
+
+const syncErrorText = {
+  marginTop: 8,
+  fontSize: 11,
+  color: "var(--color-amber-900)",
 };
 
 const muted = {

@@ -1,37 +1,14 @@
-import { useEffect, useState } from "react";
 import CreateSeasonModal from "../components/CreateSeasonModal";
 import GlobalSearch from "../components/GlobalSearch";
+import LoadingState from "../components/common/LoadingState";
 import styles from "./Home.module.css";
 import { useNavigate } from "react-router-dom";
 import { formatName } from "../utils/helpers";
-import { api } from "../api";
-
+import { useSeasons } from "../hooks/queries";
 
 export default function Home({ open, onClose }) {
-  const [seasons, setSeasons] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-
+  const { data: seasons = [], isLoading, refetch } = useSeasons();
   const navigate = useNavigate();
-
-  const loadSeasons = async () => {
-    try {
-      setLoading(true);
-
-      const result = await api.seasons.getAllSeasons();
-
-      setSeasons(result || []);
-    } catch (err) {
-      console.error(err);
-      setSeasons([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadSeasons();
-  }, []);
 
   return (
     <>
@@ -98,16 +75,10 @@ export default function Home({ open, onClose }) {
           </div>
 
           {/* LOADING */}
-          {loading && (
-            <div className={styles.skeletonWrapper}>
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className={styles.skeletonCard}></div>
-              ))}
-            </div>
-          )}
+          {isLoading && <LoadingState label="Loading seasons…" />}
 
           {/* EMPTY */}
-          {!loading && seasons.length === 0 && (
+          {!isLoading && seasons.length === 0 && (
             <div className={styles.empty}>
               <h3>No seasons yet</h3>
 
@@ -116,7 +87,7 @@ export default function Home({ open, onClose }) {
           )}
 
           {/* LIST */}
-          {!loading && seasons.length > 0 && (
+          {!isLoading && seasons.length > 0 && (
             <div className={styles.list}>
               {seasons.map((season) => (
                 <div
@@ -135,7 +106,9 @@ export default function Home({ open, onClose }) {
                   }}
                 >
                   <div className={styles.cardTop}>
-                    <span className={styles.name}>{formatName(season.seasonName)}</span>
+                    <span className={styles.name}>
+                      {formatName(season.seasonName)}
+                    </span>
                   </div>
 
                   <div className={styles.meta}>
@@ -151,7 +124,7 @@ export default function Home({ open, onClose }) {
       <CreateSeasonModal
         open={open}
         onClose={onClose}
-        onCreated={loadSeasons}
+        onCreated={refetch}
         existingSeasons={seasons}
       />
     </>

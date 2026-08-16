@@ -1,10 +1,15 @@
 import { apiClient } from "./client";
 
-
 export const matchesApi = {
-  // GET /matches/{id}
   getMatch: (id) => apiClient.get(`/matches/${encodeURIComponent(id)}`),
 
-  // POST /matches/create
-  createMatch: (matchData) => apiClient.post(`/matches/create`, matchData),
+  // One completed local match = one stable idempotency key. If the server
+  // commits but the response is lost, retries return the existing match.
+  createMatch: (matchData, { idempotencyKey, signal } = {}) =>
+    apiClient.post(`/matches`, matchData, {
+      signal,
+      headers: idempotencyKey
+        ? { "Idempotency-Key": idempotencyKey }
+        : undefined,
+    }),
 };

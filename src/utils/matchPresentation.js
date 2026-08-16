@@ -157,7 +157,19 @@ export function buildMatchStatusLine(match) {
 }
 
 export function getBallPresentation(ball, match) {
-  if (ball.type === "WICKET") {
+  if (ball.isWicket || ball.type === "WICKET") {
+    if (ball.type === "WIDE" || ball.extra === "WIDE") {
+      const wides = Number(ball.runs || 0);
+      return { label: wides > 1 ? `${wides}Wd+W` : "Wd+W", kind: "wicket" };
+    }
+    if (ball.type === "NO_BALL" || ball.extra === "NO_BALL") {
+      const automatic = match.rules?.noBall?.extraRun ? 1 : 0;
+      const batterRuns = Math.max(0, Number(ball.runs || 0) - automatic);
+      return {
+        label: batterRuns > 0 ? `Nb+${batterRuns}+W` : "Nb+W",
+        kind: "wicket",
+      };
+    }
     return {
       label: ball.runs > 0 ? `W+${ball.runs}` : "W",
       kind: "wicket",

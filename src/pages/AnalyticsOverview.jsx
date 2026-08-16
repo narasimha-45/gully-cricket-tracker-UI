@@ -1,48 +1,24 @@
-import { useEffect, useState } from "react";
 import { useOutletContext, useNavigate } from "react-router-dom";
-import { api } from "../api";
+import LoadingState from "../components/common/LoadingState";
+import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
 
 export default function AnalyticsOverview() {
   const { globalFilter } = useOutletContext();
   const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const seasonId =
+    globalFilter && globalFilter !== "all" ? globalFilter : undefined;
 
-  useEffect(() => {
-    fetchSummary();
-  }, [globalFilter]);
+  const { data: batters = [], isLoading: battersLoading } =
+    useBattingLeaderboard({ seasonId });
+  const { data: bowlers = [], isLoading: bowlersLoading } =
+    useBowlingLeaderboard({ seasonId });
 
-  const fetchSummary = async () => {
-    try {
-      setLoading(true);
-      const seasonId =
-        globalFilter && globalFilter !== "all" ? globalFilter : undefined;
+  const topBatters = batters.slice(0, 3);
+  const topBowlers = bowlers.slice(0, 3);
 
-      const [batJson, bowlJson] = await Promise.all([
-        api.stats.getBattingLeaderboard({ seasonId }),
-        api.stats.getBowlingLeaderboard({ seasonId }),
-      ]);
-
-      setData({
-        topBatters: (batJson.data || []).slice(0, 3),
-        topBowlers: (bowlJson.data || []).slice(0, 3),
-      });
-    } catch (err) {
-      console.error("Failed to fetch overview", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading)
-    return (
-      <div style={center}>
-        <div style={spinner}></div>
-        <p style={{ marginTop: 12, color: "var(--color-slate-500)" }}>
-          Generating analytics summary...
-        </p>
-      </div>
-    );
+  if (battersLoading || bowlersLoading) {
+    return <LoadingState label="Generating analytics summary…" />;
+  }
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -53,7 +29,7 @@ export default function AnalyticsOverview() {
           <h2 style={sectionTitle}>Leading Run Scorers</h2>
         </div>
         <div style={podiumRow}>
-          {data?.topBatters.map((p, i) => (
+          {topBatters.map((p, i) => (
             <div
               key={p.name}
               style={{
@@ -85,7 +61,7 @@ export default function AnalyticsOverview() {
           <h2 style={sectionTitle}>Top Wicket Takers</h2>
         </div>
         <div style={podiumRow}>
-          {data?.topBowlers.map((p, i) => (
+          {topBowlers.map((p, i) => (
             <div
               key={p.name}
               style={{
@@ -116,21 +92,6 @@ export default function AnalyticsOverview() {
     </div>
   );
 }
-
-const center = {
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  padding: "60px 0",
-};
-const spinner = {
-  width: 32,
-  height: 32,
-  border: "3px solid var(--color-slate-200)",
-  borderTop: "3px solid var(--color-indigo-600)",
-  borderRadius: "50%",
-  animation: "spin 0.8s linear infinite",
-};
 
 const sectionHeader = {
   display: "flex",

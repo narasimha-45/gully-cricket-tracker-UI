@@ -125,3 +125,11 @@
   color: var(--color-slate-500);
   font-size: 14px;
 }
+
+button.resultItem {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  color: inherit;
+}

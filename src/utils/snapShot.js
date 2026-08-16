@@ -32,7 +32,10 @@ export const takeSnapshot = (match, type, extraMode = "NORMAL") => {
       dismissals: deepCopy(innings.dismissals || {}),
       thisOver: deepCopy(innings.thisOver || []),
       thisOverBowlerChanged: Boolean(innings.thisOverBowlerChanged),
-      ballByBall: deepCopy(innings.ballByBall || []),
+      // Store only the length for new snapshots. The current innings already
+      // contains the events, so undo can truncate instead of copying the full
+      // ball history into every one of the 30 snapshots.
+      ballByBallLength: (innings.ballByBall || []).length,
       extras: deepCopy(innings.extras || { wides: 0, noBalls: 0 }),
 
       extraMode,
