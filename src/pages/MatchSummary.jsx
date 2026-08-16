@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import InsightsTab from "../components/InsightsTab";
+import InsightsTab from "../components/InsightsTab.jsx";
 import MatchHero from "../components/MatchHero";
 import LoadingState from "../components/common/LoadingState";
 import MatchSummaryTab from "../components/MatchSummaryTab";

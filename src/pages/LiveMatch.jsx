@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import EditMatchSheet from "../components/EditMatchSheet";
-import InsightsTab from "../components/InsightsTab";
+import InsightsTab from "../components/InsightsTab.jsx";
 import LiveScoringPanel from "../components/LiveScoringPanel";
 import MatchHero from "../components/MatchHero";
 import MatchPopup from "../components/MatchPopup";
