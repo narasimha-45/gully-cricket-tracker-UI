@@ -1,506 +1,432 @@
-import { useEffect, useState } from "react";
-
+import { useMemo, useReducer, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-
-import { useQuery } from "@tanstack/react-query";
-
-import {
-  getMatchesBySeason,
-  deleteMatch as deleteLocalMatchDB,
-} from "../storage/matchDB";
+import ConfirmSheet from "../components/common/ConfirmSheet";
+import EmptyState from "../components/common/EmptyState";
+import LoadingState from "../components/common/LoadingState";
+import { useLocalSeasonMatches } from "../features/matches/hooks/useLocalSeasonMatches";
+import { useSeasonMatches } from "../hooks/queries";
+import { deleteMatch as deleteLocalMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
+import { sameName } from "../utils/matchModel";
+import styles from "./SeasonMatches.module.css";
+
+const initialFilters = { sortOrder: "NEWEST", team: "ALL", result: "ALL" };
+
+function filterReducer(state, action) {
+  switch (action.type) {
+    case "TEAM":
+      return { ...state, team: action.value, result: "ALL" };
+    case "RESULT":
+      return { ...state, result: action.value };
+    case "SORT":
+      return { ...state, sortOrder: action.value };
+    default:
+      return state;
+  }
+}
+
+const ballsToOvers = (balls = 0) =>
+  `${Math.floor(Number(balls || 0) / 6)}.${Number(balls || 0) % 6}`;
+const formatDateTime = (value) =>
+  value
+    ? new Intl.DateTimeFormat("en-IN", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      }).format(new Date(value))
+    : "";
+
+const scoreLine = (innings) =>
+  innings
+    ? `${innings.totalRuns}-${innings.wickets} (${ballsToOvers(innings.balls)})`
+    : "—";
+
+const isServerDraw = (match) =>
+  !match?.winner && /draw|tied/i.test(match?.wonBy || "");
 
 export default function SeasonMatches() {
   const { seasonId } = useParams();
-
   const navigate = useNavigate();
-
-  const API = import.meta.env.VITE_API_BASE_URL;
-
-  /* ---------------------------------------
-     TAB STATE
-  --------------------------------------- */
-
   const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") === "COMPLETED" ? "COMPLETED" : "LIVE";
+  const [filters, dispatch] = useReducer(filterReducer, initialFilters);
+  const [pendingDelete, setPendingDelete] = useState(null);
 
-  const tab = searchParams.get("tab") || "LIVE";
-
-  /* ---------------------------------------
-     LOCAL MATCHES
-  --------------------------------------- */
-
-  const [localMatches, setLocalMatches] = useState([]);
-
-  const [localLoading, setLocalLoading] = useState(true);
-
-  const loadLocalMatches = async () => {
-    setLocalLoading(true);
-
-    const local = await getMatchesBySeason(seasonId);
-
-    setLocalMatches(local || []);
-
-    setLocalLoading(false);
-  };
-
-  useEffect(() => {
-    loadLocalMatches();
-  }, [seasonId]);
-
-  /* ---------------------------------------
-     SERVER MATCHES
-  --------------------------------------- */
-
-  const { data: serverMatches = [], isLoading: serverLoading } = useQuery({
-    queryKey: ["seasonMatches", seasonId],
-
-    queryFn: async () => {
-      const res = await fetch(`${API}/api/matches/season/${seasonId}`);
-
-      const json = await res.json();
-
-      return json.data || [];
-    },
-
-    staleTime: 1000 * 60 * 5,
-
-    refetchOnWindowFocus: false,
-  });
-
-  /* ---------------------------------------
-     ACTIONS
-  --------------------------------------- */
-
-  const deleteLocalMatch = async (e, matchId) => {
-    e.stopPropagation();
-
-    if (!window.confirm("Delete this match?")) return;
-
-    await deleteLocalMatchDB(matchId);
-
-    loadLocalMatches();
-  };
-
-  const handleMatchClick = (match, source) => {
-    // COMPLETED MATCH
-
-    if (source === "SERVER") {
-      navigate(`/season/${seasonId}/match/${match.id}`);
-
-      return;
-    }
-
-    // SETUP MATCH
-
-    if (match.status === "setup") {
-      if (match.toss) {
-        navigate(`/season/${seasonId}/match/${match.id}/live`);
-      } else {
-        navigate(`/season/${seasonId}/match/${match.id}/toss`);
-      }
-
-      return;
-    }
-
-    // LIVE MATCH
-
-    if (match.status === "LIVE") {
-      navigate(`/season/${seasonId}/match/${match.id}/live`);
-    }
-  };
-
-  /* ---------------------------------------
-     FILTERS
-  --------------------------------------- */
-
-  const liveMatches = localMatches.filter(
-    (m) => m.status === "setup" || m.status === "LIVE",
+  const localQuery = useLocalSeasonMatches(seasonId);
+  const serverQuery = useSeasonMatches(seasonId);
+  const localMatches = useMemo(() => localQuery.data || [], [localQuery.data]);
+  const serverMatches = useMemo(
+    () => serverQuery.data || [],
+    [serverQuery.data],
   );
 
-  const completedMatches = serverMatches.filter(
-    (m) => m.status === "COMPLETED",
+  const liveMatches = useMemo(
+    () =>
+      localMatches
+        .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))
+        .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0)),
+    [localMatches],
   );
 
-  /* ---------------------------------------
-     HELPERS
-  --------------------------------------- */
+  const pendingMatches = useMemo(
+    () =>
+      localMatches
+        .filter(
+          (match) =>
+            match.status === "COMPLETED" && match.syncStatus !== "synced",
+        )
+        .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0)),
+    [localMatches],
+  );
 
-  const formatDateTime = (dateStr) => {
-    if (!dateStr) return "";
+  const completedMatches = useMemo(
+    () => serverMatches.filter((match) => match.matchStatus === "COMPLETED"),
+    [serverMatches],
+  );
+  const teamOptions = useMemo(
+    () =>
+      [
+        ...new Set(
+          completedMatches
+            .flatMap((match) => [match.teamA, match.teamB])
+            .filter(Boolean),
+        ),
+      ].sort(),
+    [completedMatches],
+  );
 
-    const d = new Date(dateStr);
+  const visibleCompleted = useMemo(
+    () =>
+      completedMatches
+        .filter(
+          (match) =>
+            filters.team === "ALL" ||
+            match.teamA === filters.team ||
+            match.teamB === filters.team,
+        )
+        .filter((match) => {
+          if (filters.team === "ALL" || filters.result === "ALL") return true;
+          if (filters.result === "DRAW") return isServerDraw(match);
+          const won = sameName(match.winner, filters.team);
+          return filters.result === "WON" ? won : !won && !isServerDraw(match);
+        })
+        .sort((a, b) => {
+          const aTime = new Date(a.completedAt || a.createdAt || 0).getTime();
+          const bTime = new Date(b.completedAt || b.createdAt || 0).getTime();
+          return filters.sortOrder === "NEWEST" ? bTime - aTime : aTime - bTime;
+        }),
+    [completedMatches, filters],
+  );
 
-    return d.toLocaleString("en-IN", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
+  const openLocalMatch = (match) => {
+    if (["SETUP", "setup"].includes(match.status)) {
+      navigate(
+        match.toss
+          ? `/season/${seasonId}/match/${match.id}/live`
+          : `/season/${seasonId}/match/${match.id}/toss`,
+      );
+      return;
+    }
+    navigate(`/season/${seasonId}/match/${match.id}/live`);
   };
 
-  const ballsToOvers = (balls = 0) => {
-    const overs = Math.floor(balls / 6);
-
-    const ballsPart = balls % 6;
-
-    return `${overs}.${ballsPart}`;
+  const requestRemoveLocal = (event, match) => {
+    event.stopPropagation();
+    setPendingDelete(match);
   };
 
-  const getScoreLine = (inning) => {
-    if (!inning) return "";
-
-    return `${inning.totalRuns}-${inning.wickets} (${ballsToOvers(
-      inning.balls,
-    )})`;
+  const confirmRemoveLocal = async () => {
+    if (!pendingDelete) return;
+    await deleteLocalMatch(pendingDelete.id);
+    localQuery.reload();
   };
-
-  const isWinner = (teamName, match) => match.result?.winner === teamName;
-
-  /* ---------------------------------------
-     UI
-  --------------------------------------- */
 
   return (
-    <div>
-      {/* TABS */}
-
-      <div style={tabs}>
-        <button
-          style={tab === "LIVE" ? activeTab : tabBtn}
-          onClick={() =>
-            setSearchParams({
-              tab: "LIVE",
-            })
-          }
-        >
-          Live
-        </button>
-
-        <button
-          style={tab === "COMPLETED" ? activeTab : tabBtn}
-          onClick={() =>
-            setSearchParams({
-              tab: "COMPLETED",
-            })
-          }
-        >
-          Completed
-        </button>
+    <div className={styles.page}>
+      <div className={styles.tabs} role="tablist" aria-label="Matches">
+        {[
+          ["LIVE", "Live", liveMatches.length],
+          [
+            "COMPLETED",
+            "Completed",
+            completedMatches.length + pendingMatches.length,
+          ],
+        ].map(([value, label, count]) => (
+          <button
+            key={value}
+            type="button"
+            role="tab"
+            aria-selected={tab === value}
+            className={`${styles.tab} ${tab === value ? styles.activeTab : ""}`}
+            onClick={() => setSearchParams({ tab: value })}
+          >
+            {label}
+            <span className={styles.count}>{count}</span>
+          </button>
+        ))}
       </div>
 
-      {/* LIVE TAB */}
-
       {tab === "LIVE" && (
-        <>
-          {localLoading ? (
-            <div style={emptyState}>
-              <div style={spinner}></div>
-
-              <p style={muted}>Loading live matches...</p>
-            </div>
+        <section aria-label="Live and setup matches">
+          {localQuery.loading ? (
+            <LoadingState label="Loading matches on this device…" />
+          ) : localQuery.error ? (
+            <ErrorBlock
+              message="Could not read saved matches from this device."
+              onRetry={localQuery.reload}
+            />
           ) : liveMatches.length === 0 ? (
-            <div style={emptyState}>
-              <p style={emptyTitle}>No live matches</p>
-
-              <p style={muted}>Create a match to start scoring</p>
-            </div>
+            <EmptyState
+              title="No live matches"
+              subtitle="Create a match and start scoring — it will remain available even when you go offline."
+            />
           ) : (
-            <div style={list}>
+            <div className={styles.list}>
               {liveMatches.map((match) => (
-                <div
-                  key={match.id}
-                  style={card}
-                  onClick={() => handleMatchClick(match, "LOCAL")}
-                >
-                  <div style={cardHeader}>
-                    <strong>
-                      {formatName(match.teams.teamA.name)} vs {formatName(match.teams.teamB.name)}
-                    </strong>
-
-                    <button
-                      style={deleteBtn}
-                      onClick={(e) => deleteLocalMatch(e, match.id)}
+                <article key={match.id} className={styles.liveCard}>
+                  <button
+                    type="button"
+                    className={styles.liveCardOpen}
+                    onClick={() => openLocalMatch(match)}
+                    aria-label={`Open ${formatName(match.teams?.teamA?.name)} versus ${formatName(match.teams?.teamB?.name)}`}
+                  >
+                    <span className={styles.cardMain}>
+                      <strong>
+                        {formatName(match.teams?.teamA?.name)}{" "}
+                        <span className={styles.vs}>vs</span>{" "}
+                        {formatName(match.teams?.teamB?.name)}
+                      </strong>
+                      <span className={styles.meta}>
+                        {match.status === "LIVE"
+                          ? "Live scoring"
+                          : match.toss
+                            ? "Ready to score"
+                            : "Match setup"}
+                      </span>
+                    </span>
+                    <span
+                      className={`${styles.statusPill} ${match.status === "LIVE" ? styles.livePill : ""}`}
                     >
-                      🗑
-                    </button>
-                  </div>
-
-                  <div style={statusText}>
-                    {match.status === "setup" ? "Setup" : "Live"}
-                  </div>
-                </div>
+                      {match.status === "LIVE" ? "LIVE" : "SETUP"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.deleteAction}
+                    aria-label={`Delete ${formatName(match.teams?.teamA?.name)} versus ${formatName(match.teams?.teamB?.name)} from this device`}
+                    onClick={(event) => requestRemoveLocal(event, match)}
+                  >
+                    ×
+                  </button>
+                </article>
               ))}
             </div>
           )}
-        </>
+        </section>
       )}
-
-      {/* COMPLETED TAB */}
 
       {tab === "COMPLETED" && (
-        <>
-          {serverLoading ? (
-            <div style={emptyState}>
-              <div style={spinner}></div>
+        <section aria-label="Completed matches">
+          <div className={styles.filters}>
+            <label>
+              <span>Team</span>
+              <select
+                value={filters.team}
+                onChange={(event) =>
+                  dispatch({ type: "TEAM", value: event.target.value })
+                }
+              >
+                <option value="ALL">All teams</option>
+                {teamOptions.map((team) => (
+                  <option key={team} value={team}>
+                    {formatName(team)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Result</span>
+              <select
+                value={filters.result}
+                disabled={filters.team === "ALL"}
+                onChange={(event) =>
+                  dispatch({ type: "RESULT", value: event.target.value })
+                }
+              >
+                <option value="ALL">All</option>
+                <option value="WON">Won</option>
+                <option value="LOST">Lost</option>
+                <option value="DRAW">Draw / Tie</option>
+              </select>
+            </label>
+            <label>
+              <span>Order</span>
+              <select
+                value={filters.sortOrder}
+                onChange={(event) =>
+                  dispatch({ type: "SORT", value: event.target.value })
+                }
+              >
+                <option value="NEWEST">Newest</option>
+                <option value="OLDEST">Oldest</option>
+              </select>
+            </label>
+          </div>
 
-              <p style={muted}>Loading completed matches...</p>
-            </div>
-          ) : completedMatches.length === 0 ? (
-            <div style={emptyState}>
-              <p style={emptyTitle}>No completed matches</p>
-
-              <p style={muted}>Finished matches will appear here</p>
-            </div>
-          ) : (
-            <div style={list}>
-              {completedMatches.map((match) => {
-                const innings1 = match.innings?.[0];
-
-                const innings2 = match.innings?.[1];
-
-                return (
-                  <div
-                    key={match._id}
-                    style={completedCard}
-                    onClick={() => handleMatchClick(match, "SERVER")}
-                  >
-                    {/* DATE */}
-
-                    <div style={dateText}>
-                      {formatDateTime(match.startTime || match.createdAt)}
-                    </div>
-
-                    {/* TEAM 1 */}
-
-                    <div style={matchRow}>
-                      <div
-                        style={{
-                          ...teamLeft,
-
-                          fontWeight: isWinner(innings1?.battingTeam, match)
-                            ? 700
-                            : 500,
-
-                          color: isWinner(innings1?.battingTeam, match)
-                            ? "#111827"
-                            : "#6b7280",
-                        }}
-                      >
-                        {formatName(innings1?.battingTeam)}
-                      </div>
-
-                      <div
-                        style={{
-                          ...scoreText,
-
-                          fontWeight: isWinner(innings1?.battingTeam, match)
-                            ? 700
-                            : 500,
-
-                          color: isWinner(innings1?.battingTeam, match)
-                            ? "#111827"
-                            : "#6b7280",
-                        }}
-                      >
-                        {innings1 ? getScoreLine(innings1) : "-"}
-                      </div>
-                    </div>
-
-                    {/* TEAM 2 */}
-
-                    <div style={matchRow}>
-                      <div
-                        style={{
-                          ...teamLeft,
-
-                          fontWeight: isWinner(innings2?.battingTeam, match)
-                            ? 700
-                            : 500,
-
-                          color: isWinner(innings2?.battingTeam, match)
-                            ? "#111827"
-                            : "#6b7280",
-                        }}
-                      >
-                        {formatName(innings2?.battingTeam)}
-                      </div>
-
-                      <div
-                        style={{
-                          ...scoreText,
-
-                          fontWeight: isWinner(innings2?.battingTeam, match)
-                            ? 700
-                            : 500,
-
-                          color: isWinner(innings2?.battingTeam, match)
-                            ? "#111827"
-                            : "#6b7280",
-                        }}
-                      >
-                        {innings2 ? getScoreLine(innings2) : "-"}
-                      </div>
-                    </div>
-
-                    {/* RESULT */}
-
-                    <div style={resultLine}>
-                      {match.result?.type === "TIE"
-                        ? "Match Tied"
-                        : `${formatName(match.result?.winner)} won by ${match.result?.margin} ${
-                            match.result?.type === "RUNS" ? "runs" : "wkts"
-                          }`}
-                    </div>
-                  </div>
-                );
-              })}
+          {pendingMatches.length > 0 && (
+            <div className={styles.pendingSection}>
+              <div className={styles.sectionLabel}>Saved on this device</div>
+              <div className={styles.list}>
+                {pendingMatches.map((match) => (
+                  <PendingMatchCard
+                    key={match.id}
+                    match={match}
+                    onOpen={() => openLocalMatch(match)}
+                  />
+                ))}
+              </div>
             </div>
           )}
-        </>
+
+          {serverQuery.isLoading ? (
+            <LoadingState label="Loading completed matches…" />
+          ) : serverQuery.isError ? (
+            <ErrorBlock
+              message="Completed matches could not be loaded from the server."
+              onRetry={serverQuery.refetch}
+            />
+          ) : visibleCompleted.length === 0 && pendingMatches.length === 0 ? (
+            <EmptyState
+              title="No completed matches"
+              subtitle={
+                filters.team === "ALL"
+                  ? "Finished matches will appear here."
+                  : "Try a different filter."
+              }
+            />
+          ) : (
+            <div className={styles.list}>
+              {visibleCompleted.map((match) => (
+                <button
+                  type="button"
+                  key={match.id}
+                  className={styles.completedCard}
+                  onClick={() =>
+                    navigate(`/season/${seasonId}/match/${match.id}`)
+                  }
+                >
+                  <span className={styles.date}>
+                    {formatDateTime(match.completedAt || match.createdAt)}
+                  </span>
+                  <ScoreRow
+                    name={match.teamA}
+                    score={match.teamAScore}
+                    wickets={match.teamAWickets}
+                    balls={match.teamABallsFaced}
+                    winner={sameName(match.winner, match.teamA)}
+                  />
+                  <ScoreRow
+                    name={match.teamB}
+                    score={match.teamBScore}
+                    wickets={match.teamBWickets}
+                    balls={match.teamBBallsFaced}
+                    winner={sameName(match.winner, match.teamB)}
+                  />
+                  <span className={styles.result}>
+                    {match.wonBy ||
+                      (isServerDraw(match)
+                        ? "Match tied/drawn"
+                        : "Match complete")}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+        </section>
       )}
+
+      <ConfirmSheet
+        open={Boolean(pendingDelete)}
+        title="Delete this match?"
+        description={
+          pendingDelete
+            ? `${formatName(pendingDelete.teams?.teamA?.name)} vs ${formatName(pendingDelete.teams?.teamB?.name)} will be removed from this device. This can't be undone.`
+            : ""
+        }
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        tone="danger"
+        onConfirm={confirmRemoveLocal}
+        onClose={() => setPendingDelete(null)}
+      />
     </div>
   );
 }
 
-/* ---------------------------------------
-   STYLES
---------------------------------------- */
+function ScoreRow({ name, score, wickets, balls, winner }) {
+  return (
+    <span className={`${styles.scoreRow} ${winner ? styles.winner : ""}`}>
+      <span>{formatName(name)}</span>
+      <strong>
+        {score == null
+          ? "—"
+          : `${score}-${wickets ?? 0} (${ballsToOvers(balls)})`}
+      </strong>
+    </span>
+  );
+}
 
-const completedCard = {
-  background: "#fff",
-  borderRadius: 18,
-  padding: 16,
-  border: "1px solid #eef2ff",
-  boxShadow: "0 2px 10px rgba(15,23,42,0.05)",
-  transition: "0.18s ease",
-  cursor: "pointer",
-};
+function PendingMatchCard({ match, onOpen }) {
+  const first = match.innings?.[0];
+  const second = match.innings?.[1];
+  const failed = match.syncStatus === "failed";
+  return (
+    <button
+      type="button"
+      className={`${styles.completedCard} ${styles.pendingCard}`}
+      onClick={onOpen}
+    >
+      <span className={styles.pendingTop}>
+        <strong>
+          {formatName(match.teams?.teamA?.name)}{" "}
+          <span className={styles.vs}>vs</span>{" "}
+          {formatName(match.teams?.teamB?.name)}
+        </strong>
+        <span
+          className={`${styles.statusPill} ${failed ? styles.failedPill : styles.pendingPill}`}
+        >
+          {failed ? "SYNC FAILED" : "PENDING"}
+        </span>
+      </span>
+      {first && (
+        <span className={styles.localScore}>
+          {formatName(first.battingTeam)} · {scoreLine(first)}
+        </span>
+      )}
+      {second && (
+        <span className={styles.localScore}>
+          {formatName(second.battingTeam)} · {scoreLine(second)}
+        </span>
+      )}
+      <span className={styles.pendingHint}>
+        {failed
+          ? "Saved locally. Use the header sync button when online."
+          : "Saved locally and waiting for backend confirmation."}
+      </span>
+    </button>
+  );
+}
 
-const matchRow = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  marginTop: 10,
-};
-
-const scoreText = {
-  fontSize: 15,
-  fontWeight: 600,
-  letterSpacing: -0.2,
-};
-
-const resultLine = {
-  marginTop: 14,
-  paddingTop: 12,
-  borderTop: "1px solid #f3f4f6",
-  fontSize: 13,
-  fontWeight: 600,
-  color: "#4338ca",
-};
-
-const emptyState = {
-  padding: "40px 20px",
-  textAlign: "center",
-};
-
-const emptyTitle = {
-  fontSize: 18,
-  fontWeight: 600,
-  marginBottom: 6,
-};
-
-const spinner = {
-  width: 28,
-  height: 28,
-  border: "3px solid #e5e7eb",
-  borderTop: "3px solid #4f46e5",
-  borderRadius: "50%",
-  margin: "0 auto 14px",
-};
-
-const teamLeft = {
-  display: "flex",
-  alignItems: "center",
-  gap: 8,
-  fontSize: 14,
-};
-
-const dateText = {
-  fontSize: 12,
-  color: "#6b7280",
-  marginBottom: 6,
-};
-
-const tabs = {
-  position: "sticky",
-
-  top: 159,
-
-  zIndex: 80,
-
-  display: "flex",
-
-  gap: 8,
-
-  margin: "0 -18px 16px -18px",
-
-  padding: "0 18px 10px 18px",
-
-  background: "rgba(248,250,252,0.92)",
-
-  backdropFilter: "blur(12px)",
-};
-
-const tabBtn = {
-  flex: 1,
-  padding: 10,
-  borderRadius: 10,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  cursor: "pointer",
-};
-
-const activeTab = {
-  ...tabBtn,
-  background: "#4f46e5",
-  color: "#fff",
-};
-
-const list = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 12,
-};
-
-const card = {
-  padding: 14,
-  borderRadius: 12,
-  border: "1px solid #e5e7eb",
-  background: "#fff",
-  cursor: "pointer",
-};
-
-const cardHeader = {
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-};
-
-const deleteBtn = {
-  background: "none",
-  border: "none",
-  cursor: "pointer",
-  fontSize: 16,
-};
-
-const statusText = {
-  fontSize: 12,
-  color: "#6b7280",
-  marginTop: 4,
-};
-
-const muted = {
-  color: "#6b7280",
-};
+function ErrorBlock({ message, onRetry }) {
+  return (
+    <div className={styles.errorBlock} role="alert">
+      <strong>{message}</strong>
+      <button type="button" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}

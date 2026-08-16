@@ -1,0 +1,229 @@
+.backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding: 8px 6px max(6px, env(safe-area-inset-bottom));
+    background: rgba(15, 23, 42, .40);
+    backdrop-filter: blur(2px);
+    animation: filterBackdropIn 140ms ease-out;
+}
+
+.sheet {
+    width: min(100%, 430px);
+    max-height: min(82dvh, 620px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: 18px;
+    background: white;
+    box-shadow: var(--shadow-lg);
+    animation: filterSheetIn 180ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.handle {
+    width: 34px;
+    height: 4px;
+    flex: 0 0 auto;
+    margin: 6px auto 1px;
+    border-radius: 999px;
+    background: var(--color-slate-300);
+}
+
+.header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    flex: 0 0 auto;
+    padding: 9px 14px 10px;
+    border-bottom: 1px solid var(--color-hairline);
+}
+
+.heading {
+    min-width: 0;
+}
+
+.titleRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.title {
+    margin: 0;
+    color: var(--color-slate-900);
+    font-size: 16px;
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: -.015em;
+}
+
+.activeCount {
+    min-height: 20px;
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 6px;
+    border-radius: 999px;
+    color: var(--color-indigo-700);
+    background: var(--color-indigo-50);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.subtitle {
+    margin: 2px 0 0;
+    color: var(--color-slate-500);
+    font-size: 10px;
+    line-height: 1.35;
+}
+
+.closeButton {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 auto;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: var(--color-slate-100);
+    color: var(--color-slate-600);
+    cursor: pointer;
+}
+
+.filtersGrid {
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    padding: 11px 14px 14px;
+    scrollbar-width: thin;
+}
+
+.field {
+    min-width: 0;
+}
+
+.label {
+    display: block;
+    margin: 0 0 4px 1px;
+    color: var(--color-slate-600);
+    font-size: 10px;
+    line-height: 1.2;
+    font-weight: 600;
+}
+
+.selectWrap {
+    position: relative;
+}
+
+.select {
+    width: 100%;
+    min-width: 0;
+    height: 40px;
+    appearance: none;
+    -webkit-appearance: none;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    outline: none;
+    background: var(--color-slate-50);
+    color: var(--color-slate-800);
+    padding: 0 32px 0 9px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.select:focus {
+    background: white;
+    border-color: var(--color-indigo-400);
+    box-shadow: var(--shadow-focus-ring);
+}
+
+.selectIcon {
+    position: absolute;
+    top: 50%;
+    right: 9px;
+    z-index: 1;
+    color: var(--color-indigo-600);
+    pointer-events: none;
+    transform: translateY(-50%);
+}
+
+.footer {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 92px minmax(0, 1fr);
+    gap: 7px;
+    padding: 9px 14px 12px;
+    border-top: 1px solid var(--color-hairline);
+    background: white;
+}
+
+.clearButton,
+.applyButton {
+    height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9px;
+    font: inherit;
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.clearButton {
+    border: 1px solid var(--color-border);
+    background: white;
+    color: var(--color-slate-600);
+}
+
+.clearButton:disabled {
+    opacity: .4;
+    cursor: default;
+}
+
+.applyButton {
+    border: 0;
+    color: white;
+    background: var(--color-indigo-600);
+}
+
+@media (max-width: 350px) {
+    .filtersGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .footer {
+        grid-template-columns: 84px minmax(0, 1fr);
+    }
+}
+
+@keyframes filterBackdropIn {
+    from {
+        opacity: 0;
+    }
+}
+
+@keyframes filterSheetIn {
+    from {
+        opacity: 0;
+        transform: translateY(18px);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+    .backdrop,
+    .sheet {
+        animation: none;
+    }
+}

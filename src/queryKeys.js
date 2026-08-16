@@ -1,0 +1,25 @@
+export const queryKeys = Object.freeze({
+  seasons: ["seasons"],
+  seasonMatches: (seasonId) => ["seasonMatches", seasonId],
+  match: (matchId) => ["match", matchId],
+  leaderboardRoot: ["leaderboard"],
+  leaderboard: (type, filters) => ["leaderboard", type, filters],
+  playerProfileRoot: ["playerProfile"],
+  playerProfile: (playerId, seasonId) => [
+    "playerProfile",
+    playerId,
+    seasonId || "all",
+  ],
+  teamProfileRoot: ["teamProfile"],
+  teamProfile: (teamId, seasonId) => ["teamProfile", teamId, seasonId || "all"],
+  teamsRoot: ["teams"],
+  teams: (seasonId) => ["teams", seasonId || "ALL"],
+  globalSearch: (query) => ["globalSearch", query],
+  teamSearch: (query) => ["teamSearch", query],
+  playerSearch: (query) => ["playerSearch", query],
+  teamSeasonPlayers: (teamId, seasonId) => [
+    "teamSeasonPlayers",
+    teamId,
+    seasonId,
+  ],
+});

@@ -1,0 +1,135 @@
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  align-items: end;
+  background: rgba(15, 23, 42, .42);
+  backdrop-filter: blur(3px);
+  animation: fadeIn 140ms ease-out;
+}
+
+.sheet {
+  width: min(100%, 420px);
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 18px calc(16px + env(safe-area-inset-bottom));
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 18px 18px 0 0;
+  background: var(--color-white);
+  box-shadow: 0 -18px 48px rgba(15, 23, 42, .18);
+  outline: none;
+  animation: slideUp 180ms cubic-bezier(.2, .8, .2, 1);
+}
+
+.handle {
+  width: 36px;
+  height: 4px;
+  margin: 1px auto 10px;
+  border-radius: var(--radius-full);
+  background: var(--color-slate-200);
+}
+
+.title {
+  margin: 0 0 4px;
+  color: var(--color-slate-900);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.01em;
+}
+
+.description {
+  margin: 0 0 14px;
+  color: var(--color-slate-600);
+  font-size: 12px;
+  line-height: var(--leading-relaxed);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.cancelButton,
+.dangerButton,
+.confirmButton {
+  min-height: var(--control-height);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 80ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+
+.cancelButton:active,
+.dangerButton:active,
+.confirmButton:active {
+  transform: scale(.98);
+}
+
+.cancelButton {
+  border: 1px solid var(--color-border);
+  background: var(--color-white);
+  color: var(--color-slate-700);
+}
+
+.cancelButton:hover {
+  background: var(--color-slate-50);
+}
+
+.dangerButton {
+  border: 1px solid var(--color-red-700);
+  background: var(--color-red-600);
+  color: var(--color-white);
+}
+
+.dangerButton:hover {
+  background: var(--color-red-700);
+}
+
+.confirmButton {
+  border: 1px solid var(--color-primary);
+  background: var(--color-primary);
+  color: var(--color-white);
+}
+
+.confirmButton:hover {
+  background: var(--color-primary-hover);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(20px);
+    opacity: .8;
+  }
+}
+
+@media (min-width: 600px) {
+  .backdrop {
+    align-items: center;
+    padding: 18px;
+  }
+
+  .sheet {
+    border-radius: 18px;
+    padding-bottom: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+
+  .backdrop,
+  .sheet {
+    animation: none;
+  }
+}

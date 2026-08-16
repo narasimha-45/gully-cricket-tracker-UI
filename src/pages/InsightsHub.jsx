@@ -1,128 +1,106 @@
-import { useEffect, useState } from "react";
-import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useMemo, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import LoadingState from "../components/common/LoadingState";
+import { useSeasons } from "../hooks/queries";
 import styles from "./InsightsHub.module.css";
+
+const TABS = [
+  ["overview", "Overview"],
+  ["batting", "Batting"],
+  ["bowling", "Bowling"],
+  ["teams", "Teams"],
+  ["misc", "Fielding"],
+];
 
 export default function InsightsHub() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [filter, setFilter] = useState("all"); // "all" or specific seasonId
-  const [seasons, setSeasons] = useState([]);
-
-  const API = import.meta.env.VITE_API_BASE_URL;
+  const [filter, setFilter] = useState("all");
+  const seasonsQuery = useSeasons();
 
   useEffect(() => {
-    window.scrollTo(0, 0);
-    fetchSeasons();
+    window.scrollTo({ top: 0, behavior: "auto" });
   }, [location.pathname]);
 
-  const fetchSeasons = async () => {
-    try {
-      const res = await fetch(`${API}/api/seasons`);
-      const json = await res.json();
-      if (json.success) {
-        setSeasons(json.data);
-      }
-    } catch (err) {
-      console.error("Failed to fetch seasons", err);
-    }
-  };
+  const seasonOptions = useMemo(
+    () =>
+      (seasonsQuery.data || [])
+        .map((season) => ({
+          id: season.id || season._id,
+          name: season.seasonName || season.name || "Season",
+        }))
+        .filter((season) => season.id),
+    [seasonsQuery.data],
+  );
 
-  // Pass down the filter to context or outlet if necessary
+  const effectiveFilter =
+    filter === "all" ||
+    seasonOptions.some((season) => String(season.id) === String(filter))
+      ? filter
+      : "all";
+
   return (
     <div className={styles.page}>
-      {/* HEADER WITH FILTER */}
-      <div className={styles.topBar}>
+      <header className={styles.topBar}>
         <div className={styles.headerRow}>
-          <button className={styles.backBtn} onClick={() => navigate("/")}>
+          <button
+            type="button"
+            className={styles.backBtn}
+            onClick={() => navigate("/")}
+            aria-label="Back to home"
+          >
             ←
           </button>
-
           <div className={styles.headingWrap}>
-            <div className={styles.headingIcon}>📊</div>
+            <div className={styles.headingIcon} aria-hidden="true">
+              📊
+            </div>
             <div>
-              <p className={styles.headingMini}>Global Analytics</p>
+              <p className={styles.headingMini}>Global analytics</p>
               <h1 className={styles.headingTitle}>Insights Hub</h1>
             </div>
           </div>
         </div>
 
-        {/* UNIVERSAL FILTER */}
-        <div className={styles.filterWrapper}>
-          <select 
+        <label className={styles.filterWrapper}>
+          <span className={styles.srOnly}>Season</span>
+          <select
             className={styles.filterSelect}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
+            value={effectiveFilter}
+            onChange={(event) => setFilter(event.target.value)}
+            disabled={seasonsQuery.isLoading}
           >
-            <option value="all">All Seasons (Overall)</option>
-            {seasons.map(s => (
-              <option key={s._id} value={s._id}>{s.seasonName}</option>
+            <option value="all">All seasons · Overall</option>
+            {seasonOptions.map((season) => (
+              <option key={season.id} value={season.id}>
+                {season.name}
+              </option>
             ))}
           </select>
-        </div>
-      </div>
+        </label>
+      </header>
 
-      {/* TABS */}
-      <div className={styles.tabs}>
-        <NavLink
-          to="overview"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Overview
-        </NavLink>
+      <nav className={styles.tabs} aria-label="Insights sections">
+        {TABS.map(([path, label]) => (
+          <NavLink
+            key={path}
+            to={path}
+            className={({ isActive }) =>
+              isActive ? styles.activeTab : styles.tab
+            }
+          >
+            {label}
+          </NavLink>
+        ))}
+      </nav>
 
-        <NavLink
-          to="batting"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Batting
-        </NavLink>
-
-        <NavLink
-          to="bowling"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Bowling
-        </NavLink>
-
-        <NavLink
-          to="teams"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Teams
-        </NavLink>
-
-        <NavLink
-          to="misc"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Misc
-        </NavLink>
-        
-        <NavLink
-          to="matchups"
-          className={({ isActive }) =>
-            isActive ? styles.activeTab : styles.tab
-          }
-        >
-          Matchups
-        </NavLink>
-      </div>
-
-      {/* CONTENT */}
-      <div className={styles.content}>
-        {/* Pass filter down via context to child routes so they know which season to fetch */}
-        <Outlet context={{ globalFilter: filter }} />
-      </div>
+      <main className={styles.content}>
+        {seasonsQuery.isLoading ? (
+          <LoadingState label="Loading seasons…" />
+        ) : (
+          <Outlet context={{ globalFilter: effectiveFilter }} />
+        )}
+      </main>
     </div>
   );
 }

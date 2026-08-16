@@ -1,134 +1,238 @@
-import { useEffect, useState } from "react";
-import { useOutletContext, useNavigate } from "react-router-dom";
+import { useMemo } from "react";
+import { RefreshCw } from "lucide-react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
+import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
+import { formatName } from "../utils/helpers";
+import styles from "./AnalyticsOverview.module.css";
 
-export default function AnalyticsOverview() {
-  const { globalFilter } = useOutletContext();
-  const navigate = useNavigate();
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
+const decimal = (value) => number(value).toFixed(2);
+const initial = (name) => (name || "?").trim().charAt(0).toUpperCase();
 
-  const API = import.meta.env.VITE_API_BASE_URL;
+// Rank 2/3 get a distinct silver/bronze badge instead of the flat "same
+// circle for every row" treatment the old list used — rank 1 is spotlighted
+// separately below and doesn't use this.
+const RANK_TIER_CLASS = { 2: "rankSilver", 3: "rankBronze" };
 
-  useEffect(() => {
-    fetchSummary();
-  }, [globalFilter]);
-
-  const fetchSummary = async () => {
-    try {
-      setLoading(true);
-      const suffix = globalFilter && globalFilter !== "all" ? `/${globalFilter}` : "";
-      
-      const [batRes, bowlRes] = await Promise.all([
-        fetch(`${API}/api/stats/leaderboard/batting${suffix}`),
-        fetch(`${API}/api/stats/leaderboard/bowling${suffix}`)
-      ]);
-
-      const [batJson, bowlJson] = await Promise.all([batRes.json(), bowlRes.json()]);
-
-      setData({
-        topBatters: (batJson.data || []).slice(0, 3),
-        topBowlers: (bowlJson.data || []).slice(0, 3)
-      });
-    } catch (err) {
-      console.error("Failed to fetch overview", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  if (loading) return (
-    <div style={center}>
-      <div style={spinner}></div>
-      <p style={{ marginTop: 12, color: "#64748b" }}>Generating analytics summary...</p>
-    </div>
-  );
-
+function SpotlightRow({ player, unit, primaryValue, secondaryValue, onOpen }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
-      {/* TOP BATTERS */}
-      <div>
-        <div style={sectionHeader}>
-          <span style={{ fontSize: 18 }}>🏏</span>
-          <h2 style={sectionTitle}>Leading Run Scorers</h2>
-        </div>
-        <div style={podiumRow}>
-          {data?.topBatters.map((p, i) => (
-            <div 
-              key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "#94a3b8" : "#b45309" }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
-            >
-              <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.runs} runs</div>
-              <div style={subStat}>{p.innings} inn · {p.derived?.strikeRate} SR</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* TOP BOWLERS */}
-      <div>
-        <div style={sectionHeader}>
-          <span style={{ fontSize: 18 }}>🥎</span>
-          <h2 style={sectionTitle}>Top Wicket Takers</h2>
-        </div>
-        <div style={podiumRow}>
-          {data?.topBowlers.map((p, i) => (
-            <div 
-              key={p.name} 
-              style={{ ...podiumCard, borderTopColor: i === 0 ? "#fbbf24" : i === 1 ? "#94a3b8" : "#b45309" }}
-              onClick={() => navigate(`/player/${encodeURIComponent(p.name)}`)}
-            >
-              <div style={rankBadge}>{i + 1}</div>
-              <div style={playerName}>{p.name}</div>
-              <div style={statLabel}>{p.wickets} wkts</div>
-              <div style={subStat}>{p.derived?.economy} econ · {p.derived?.bowlingAverage} avg</div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <button style={fullLeaderboardBtn} onClick={() => navigate("../batting")}>
-        View Detailed Leaderboards
-      </button>
-    </div>
+    <button
+      type="button"
+      className={styles.spotlight}
+      onClick={() => onOpen(player)}
+    >
+      <span className={styles.spotlightAvatar} aria-hidden="true">
+        {initial(player.playerName)}
+      </span>
+      <span className={styles.spotlightCopy}>
+        <span className={styles.spotlightRankLabel}>Leading {unit}</span>
+        <strong className={styles.spotlightName}>
+          {formatName(player.playerName)}
+        </strong>
+        <span className={styles.spotlightSecondary}>
+          {secondaryValue(player)}
+        </span>
+      </span>
+      <span className={styles.spotlightValue}>{primaryValue(player)}</span>
+    </button>
   );
 }
 
-const center = { display: "flex", flexDirection: "column", alignItems: "center", padding: "60px 0" };
-const spinner = { width: 32, height: 32, border: "3px solid #e2e8f0", borderTop: "3px solid #4f46e5", borderRadius: "50%", animation: "spin 0.8s linear infinite" };
+function CompactRow({ player, rank, primaryValue, secondaryValue, onOpen }) {
+  return (
+    <button
+      type="button"
+      className={styles.compactRow}
+      onClick={() => onOpen(player)}
+    >
+      <span
+        className={`${styles.rankBadge} ${styles[RANK_TIER_CLASS[rank]] || ""}`}
+        aria-label={`Rank ${rank}`}
+      >
+        {rank}
+      </span>
+      <span className={styles.compactCopy}>
+        <strong className={styles.compactName}>
+          {formatName(player.playerName)}
+        </strong>
+        <span className={styles.compactSecondary}>
+          {secondaryValue(player)}
+        </span>
+      </span>
+      <span className={styles.compactValue}>{primaryValue(player)}</span>
+    </button>
+  );
+}
 
-const sectionHeader = { display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingLeft: 4 };
-const sectionTitle = { fontSize: 16, fontWeight: 700, color: "#1e293b", margin: 0 };
+function PerformancePanel({
+  eyebrow,
+  title,
+  unit,
+  items,
+  loading,
+  fetching,
+  error,
+  onRetry,
+  onViewAll,
+  primaryValue,
+  secondaryValue,
+  onOpenPlayer,
+}) {
+  const empty = !loading && items.length === 0;
+  const [leader, ...rest] = items;
 
-const podiumRow = { display: "flex", gap: 10 };
-const podiumCard = { 
-  flex: 1, 
-  background: "white", 
-  borderRadius: 16, 
-  padding: "16px 12px", 
-  border: "1px solid #e2e8f0", 
-  borderTopWidth: 4, 
-  textAlign: "center",
-  boxShadow: "0 4px 6px -1px rgba(0,0,0,0.05)",
-  cursor: "pointer",
-  transition: "transform 0.2s"
-};
+  return (
+    <section className={styles.section} aria-busy={Boolean(fetching)}>
+      <div className={styles.sectionHeading}>
+        <div className={styles.titleGroup}>
+          <span className={styles.eyebrow}>{eyebrow}</span>
+          <h2>{title}</h2>
+        </div>
+        <button type="button" className={styles.textAction} onClick={onViewAll}>
+          View all
+        </button>
+      </div>
 
-const rankBadge = { fontSize: 10, fontWeight: 800, background: "#f1f5f9", color: "#64748b", width: 20, height: 20, borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 10px" };
-const playerName = { fontSize: 14, fontWeight: 700, color: "#0f172a", marginBottom: 4, textTransform: "capitalize", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" };
-const statLabel = { fontSize: 16, fontWeight: 800, color: "#4f46e5", marginBottom: 4 };
-const subStat = { fontSize: 10, color: "#94a3b8", fontWeight: 500 };
+      <div className={styles.panel}>
+        {loading ? (
+          <StatsSkeleton rows={3} compact />
+        ) : error && empty ? (
+          <div className={styles.panelMessage} role="alert">
+            <div>
+              <strong>Couldn’t load {eyebrow.toLowerCase()} stats</strong>
+              <span>Try again without leaving this page.</span>
+            </div>
+            <button type="button" onClick={onRetry}>
+              <RefreshCw size={15} /> Retry
+            </button>
+          </div>
+        ) : empty ? (
+          <div className={styles.panelMessage}>
+            <div>
+              <strong>No {eyebrow.toLowerCase()} stats yet</strong>
+              <span>Complete a match to start the leaderboard.</span>
+            </div>
+          </div>
+        ) : (
+          <>
+            <SpotlightRow
+              player={leader}
+              unit={unit}
+              primaryValue={primaryValue}
+              secondaryValue={secondaryValue}
+              onOpen={onOpenPlayer}
+            />
+            {rest.length > 0 && (
+              <div className={styles.compactList}>
+                {rest.map((player, index) => (
+                  <CompactRow
+                    key={player.playerId || player.playerName}
+                    player={player}
+                    rank={index + 2}
+                    primaryValue={primaryValue}
+                    secondaryValue={secondaryValue}
+                    onOpen={onOpenPlayer}
+                  />
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
 
-const fullLeaderboardBtn = {
-  background: "white",
-  border: "1px solid #e2e8f0",
-  padding: "14px",
-  borderRadius: 14,
-  fontSize: 14,
-  fontWeight: 600,
-  color: "#475569",
-  cursor: "pointer",
-  marginTop: 10
-};
+export default function AnalyticsOverview() {
+  const { globalFilter = "all" } = useOutletContext() || {};
+  const navigate = useNavigate();
+  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+
+  const battingQuery = useBattingLeaderboard({ seasonId });
+  const bowlingQuery = useBowlingLeaderboard({ seasonId });
+
+  const topBatters = useMemo(
+    () =>
+      [...(battingQuery.data || [])]
+        .sort((a, b) => number(b.totalRuns) - number(a.totalRuns))
+        .slice(0, 3),
+    [battingQuery.data],
+  );
+
+  const topBowlers = useMemo(
+    () =>
+      [...(bowlingQuery.data || [])]
+        .sort((a, b) => number(b.totalWickets) - number(a.totalWickets))
+        .slice(0, 3),
+    [bowlingQuery.data],
+  );
+
+  const trackedBatters = battingQuery.data?.length || 0;
+  const trackedBowlers = bowlingQuery.data?.length || 0;
+
+  const openPlayer = (player) => {
+    if (!player.playerId) return;
+    navigate(`/player/${encodeURIComponent(player.playerId)}`);
+  };
+
+  return (
+    <div className={styles.page}>
+      {(trackedBatters > 0 || trackedBowlers > 0) && (
+        <div className={styles.summaryStrip} aria-label="Tracked player counts">
+          <span>
+            <strong>{trackedBatters}</strong> run scorers
+          </span>
+          <span className={styles.summaryDivider} aria-hidden="true" />
+          <span>
+            <strong>{trackedBowlers}</strong> wicket takers
+          </span>
+        </div>
+      )}
+
+      <PerformancePanel
+        eyebrow="Batting"
+        title="Leading run scorers"
+        unit="run scorer"
+        items={topBatters}
+        loading={battingQuery.isLoading}
+        fetching={battingQuery.isFetching && !battingQuery.isLoading}
+        error={battingQuery.error}
+        onRetry={battingQuery.refetch}
+        onViewAll={() => navigate("../batting")}
+        primaryValue={(player) => (
+          <>
+            <strong>{number(player.totalRuns)}</strong>
+            <span>runs</span>
+          </>
+        )}
+        secondaryValue={(player) =>
+          `${number(player.inningsPlayed)} innings · ${decimal(player.strikeRate)} SR`
+        }
+        onOpenPlayer={openPlayer}
+      />
+
+      <PerformancePanel
+        eyebrow="Bowling"
+        title="Top wicket takers"
+        unit="wicket taker"
+        items={topBowlers}
+        loading={bowlingQuery.isLoading}
+        fetching={bowlingQuery.isFetching && !bowlingQuery.isLoading}
+        error={bowlingQuery.error}
+        onRetry={bowlingQuery.refetch}
+        onViewAll={() => navigate("../bowling")}
+        primaryValue={(player) => (
+          <>
+            <strong>{number(player.totalWickets)}</strong>
+            <span>wickets</span>
+          </>
+        )}
+        secondaryValue={(player) =>
+          `${decimal(player.economyRate)} economy · ${number(player.totalWickets) === 0 || player.average == null ? "—" : decimal(player.average)} avg`
+        }
+        onOpenPlayer={openPlayer}
+      />
+    </div>
+  );
+}

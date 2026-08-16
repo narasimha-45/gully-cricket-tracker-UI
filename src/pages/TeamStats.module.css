@@ -1,0 +1,116 @@
+.table {
+    display: grid;
+    gap: 6px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: minmax(118px, 2.5fr) repeat(4, minmax(30px, .65fr)) minmax(40px, .8fr);
+    align-items: center;
+    gap: 2px;
+}
+
+.header {
+    min-height: 34px;
+    padding: 6px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    background: var(--color-slate-100);
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.header span:not(:first-child) {
+    text-align: center;
+}
+
+.row {
+    width: 100%;
+    min-height: 52px;
+    padding: 7px 8px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: white;
+    box-shadow: var(--shadow-xs);
+    color: var(--color-slate-700);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.row:hover {
+    border-color: var(--color-indigo-200);
+}
+
+.row>span:not(:first-child),
+.row>strong {
+    text-align: center;
+}
+
+.teamCell {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+    text-align: left;
+}
+
+.teamCell>span:last-child {
+    min-width: 0;
+}
+
+.teamCell strong {
+    display: block;
+    overflow: hidden;
+    color: var(--color-slate-900);
+    font-size: 11px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.teamCell small {
+    display: block;
+    overflow: hidden;
+    margin-top: 1px;
+    color: var(--color-slate-400);
+    font-size: 8px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.rank {
+    display: grid;
+    place-items: center;
+    width: 23px;
+    height: 23px;
+    flex: 0 0 23px;
+    border-radius: 7px;
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-700);
+    font-size: 9px;
+    font-weight: 700;
+}
+
+.winRate {
+    color: var(--color-emerald-700);
+    font-weight: 700;
+}
+
+@media (max-width: 360px) {
+    .grid {
+        grid-template-columns: minmax(105px, 2.4fr) repeat(4, 27px) 36px;
+    }
+
+    .header,
+    .row {
+        padding-inline: 5px;
+    }
+
+    .teamCell small {
+        display: none;
+    }
+}

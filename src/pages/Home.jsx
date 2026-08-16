@@ -1,166 +1,140 @@
-import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import CreateSeasonModal from "../components/CreateSeasonModal";
 import GlobalSearch from "../components/GlobalSearch";
-import styles from "./Home.module.css";
-import { useNavigate } from "react-router-dom";
+import EmptyState from "../components/common/EmptyState";
+import LoadingState from "../components/common/LoadingState";
+import { useSeasons } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
-
+import styles from "./Home.module.css";
 
 export default function Home({ open, onClose }) {
-  const [seasons, setSeasons] = useState([]);
-
-  const [loading, setLoading] = useState(true);
-
   const navigate = useNavigate();
-
-  const API = import.meta.env.VITE_API_BASE_URL;
-
-  const loadSeasons = async () => {
-    try {
-      setLoading(true);
-
-      const res = await fetch(`${API}/api/seasons`);
-
-      if (!res.ok) {
-        throw new Error("Failed to fetch seasons");
-      }
-
-      const result = await res.json();
-
-      console.log("Fetched seasons:", result);
-
-      setSeasons(result.data || []);
-    } catch (err) {
-      console.error(err);
-      setSeasons([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadSeasons();
-  }, []);
+  const seasonsQuery = useSeasons();
+  const seasons = seasonsQuery.data || [];
 
   return (
     <>
-      <div className={styles.page}>
-        {/* HERO */}
-        <div className={styles.heroCard}>
-          <div className={styles.heroTop}>
-            <div>
-              <p className={styles.heroTag}>🏏 Gully Cricket</p>
-
-              <h1 className={styles.heroTitle}>Cricket Scoring Reimagined</h1>
-            </div>
-          </div>
-
+      <main className={styles.page}>
+        <section className={styles.heroCard} aria-labelledby="home-title">
+          <p className={styles.heroTag}>🏏 Gully Cricket</p>
+          <h1 id="home-title" className={styles.heroTitle}>
+            Score fast. Remember every match.
+          </h1>
           <p className={styles.heroSubtitle}>
-            Create seasons, track matches, and dominate the leaderboards.
+            Local-first cricket scoring that keeps working even when the ground
+            has poor signal.
           </p>
-        </div>
+        </section>
 
-        {/* GLOBAL SEARCH */}
         <GlobalSearch />
 
-        {/* DASHBOARD CARDS */}
-        <div className={styles.dashboardGrid}>
-          {/* SEASONS */}
-          <div
+        <section className={styles.dashboardGrid} aria-label="Quick actions">
+          <button
+            type="button"
             className={styles.dashboardCard}
-            onClick={() => {
+            onClick={() =>
               document.getElementById("seasons-section")?.scrollIntoView({
                 behavior: "smooth",
-              });
-            }}
+                block: "start",
+              })
+            }
           >
-            <div className={styles.cardIcon}>🏆</div>
+            <span className={styles.cardIcon} aria-hidden="true">
+              🏆
+            </span>
+            <span>
+              <strong>Seasons</strong>
+              <small>Create, resume, and review matches</small>
+            </span>
+          </button>
 
-            <div>
-              <h3>Seasons</h3>
-
-              <p>Manage tournaments and matches</p>
-            </div>
-          </div>
-
-          {/* INSIGHTS HUB */}
-          <div
-            className={styles.leaderboardCard}
+          <button
+            type="button"
+            className={`${styles.dashboardCard} ${styles.leaderboardCard}`}
             onClick={() => navigate("/insights")}
           >
-            <div className={styles.cardIcon}>📊</div>
+            <span className={styles.cardIcon} aria-hidden="true">
+              📊
+            </span>
+            <span>
+              <strong>Stats</strong>
+              <small>Batting, bowling, teams, and fielding</small>
+            </span>
+          </button>
+        </section>
 
-            <div>
-              <h3>Global Stats & Matchups</h3>
-
-              <p>Overall rankings & analytics</p>
-            </div>
-          </div>
-        </div>
-
-        {/* SEASONS */}
-        <div id="seasons-section" className={styles.section}>
+        <section
+          id="seasons-section"
+          className={styles.section}
+          aria-labelledby="seasons-title"
+        >
           <div className={styles.sectionHeader}>
-            <h2>Your Seasons</h2>
-
-            <span>{seasons.length}</span>
+            <div>
+              <span className={styles.sectionEyebrow}>Your cricket</span>
+              <h2 id="seasons-title">Seasons</h2>
+            </div>
+            <span className={styles.seasonCount}>{seasons.length}</span>
           </div>
 
-          {/* LOADING */}
-          {loading && (
-            <div className={styles.skeletonWrapper}>
-              {[...Array(3)].map((_, i) => (
-                <div key={i} className={styles.skeletonCard}></div>
-              ))}
+          {seasonsQuery.isLoading && <LoadingState label="Loading seasons…" />}
+
+          {seasonsQuery.isError && (
+            <div className={styles.errorState} role="alert">
+              <strong>Could not load seasons</strong>
+              <span>
+                {seasonsQuery.error?.message ||
+                  "Check your connection and try again."}
+              </span>
+              <button type="button" onClick={() => seasonsQuery.refetch()}>
+                Try again
+              </button>
             </div>
           )}
 
-          {/* EMPTY */}
-          {!loading && seasons.length === 0 && (
-            <div className={styles.empty}>
-              <h3>No seasons yet</h3>
+          {!seasonsQuery.isLoading &&
+            !seasonsQuery.isError &&
+            seasons.length === 0 && (
+              <EmptyState
+                title="No seasons yet"
+                subtitle="Create your first season, add two teams, and start scoring."
+              />
+            )}
 
-              <p>Create your first season and start scoring matches.</p>
-            </div>
-          )}
-
-          {/* LIST */}
-          {!loading && seasons.length > 0 && (
-            <div className={styles.list}>
-              {seasons.map((season) => (
-                <div
-                  key={season._id}
-                  className={styles.card}
-                  onClick={() => {
-                    const stored = JSON.parse(
-                      sessionStorage.getItem("seasons") || "{}",
-                    );
-
-                    stored[season._id] = season.seasonName;
-
-                    sessionStorage.setItem("seasons", JSON.stringify(stored));
-
-                    navigate(`/season/${season._id}`);
-                  }}
-                >
-                  <div className={styles.cardTop}>
-                    <span className={styles.name}>{formatName(season.seasonName)}</span>
-                  </div>
-
-                  <div className={styles.meta}>
-                    {season.matchesCount || 0} matches
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+          {!seasonsQuery.isLoading &&
+            !seasonsQuery.isError &&
+            seasons.length > 0 && (
+              <div className={styles.list}>
+                {seasons.map((season) => (
+                  <button
+                    type="button"
+                    key={season.id}
+                    className={styles.card}
+                    onClick={() => navigate(`/season/${season.id}`)}
+                    aria-label={`Open ${formatName(season.seasonName)} season`}
+                  >
+                    <span className={styles.cardTop}>
+                      <strong className={styles.name}>
+                        {formatName(season.seasonName)}
+                      </strong>
+                      <span className={styles.cardArrow} aria-hidden="true">
+                        →
+                      </span>
+                    </span>
+                    <span className={styles.meta}>
+                      {season.matchesPlayed || 0}{" "}
+                      {(season.matchesPlayed || 0) === 1 ? "match" : "matches"}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+        </section>
+      </main>
 
       <CreateSeasonModal
         open={open}
         onClose={onClose}
-        onCreated={loadSeasons}
+        onCreated={seasonsQuery.refetch}
         existingSeasons={seasons}
       />
     </>
