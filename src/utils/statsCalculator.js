@@ -1,5 +1,8 @@
 import { sameName } from "./matchModel";
 
+/* ============================================================
+   FIELDING (unchanged — this part was fine)
+   ============================================================ */
 export function deriveFieldingStats(match) {
   const fielding = {};
 
@@ -18,7 +21,57 @@ export function deriveFieldingStats(match) {
   return fielding;
 }
 
-export function calculatePlayerScore(player, match, fieldingStats) {
+/* ============================================================
+   MATCH CONTEXT — computed once per match, from the match's own
+   numbers. This is what makes scoring format-agnostic: a 5-over
+   thrash and a 50-over grind each get judged against their own
+   run rate, not against a T20 assumption baked into the code.
+   ============================================================ */
+export function computeMatchContext(match) {
+  let totalRuns = 0;
+  let totalBalls = 0;
+  let totalBowlingRuns = 0;
+  let totalBowlingBalls = 0;
+  let totalWicketsFallen = 0;
+  let highestInningsTotal = 0;
+
+  for (const inn of match.innings) {
+    let inningsRuns = 0;
+
+    for (const bat of Object.values(inn.battingStats || {})) {
+      totalRuns += bat.runs || 0;
+      totalBalls += bat.balls || 0;
+      inningsRuns += bat.runs || 0;
+    }
+    highestInningsTotal = Math.max(highestInningsTotal, inningsRuns);
+
+    for (const bowl of Object.values(inn.bowlingStats || {})) {
+      totalBowlingRuns += bowl.runs || 0;
+      totalBowlingBalls += bowl.balls || 0;
+    }
+
+    totalWicketsFallen += Object.keys(inn.dismissals || {}).length;
+  }
+
+  return {
+    // runs per 100 balls, derived from this match — not assumed
+    avgStrikeRate: totalBalls > 0 ? (totalRuns / totalBalls) * 100 : 100,
+    // runs per over, derived from this match
+    avgEconomy:
+      totalBowlingBalls > 0 ? totalBowlingRuns / (totalBowlingBalls / 6) : 6,
+    highestInningsTotal: highestInningsTotal || 1,
+    totalWicketsFallen: totalWicketsFallen || 1,
+  };
+}
+
+/* ============================================================
+   PLAYER SCORE — same shape as before (runs, boundaries, wickets,
+   fielding all still count directly), but every "was this good?"
+   judgement is now relative to the match context instead of a
+   fixed number.
+   ============================================================ */
+export function calculatePlayerScore(player, match, fieldingStats, context) {
+  const ctx = context || computeMatchContext(match);
   let points = 0;
 
   for (const inn of match.innings) {
@@ -29,15 +82,27 @@ export function calculatePlayerScore(player, match, fieldingStats) {
       points += (bat.fours || 0) * 1;
       points += (bat.sixes || 0) * 2;
 
-      if (bat.balls > 0) {
+      // Strike-rate bonus relative to this match's own scoring rate.
+      // Ignore tiny samples (a 2-ball six shouldn't look like a great SR).
+      if (bat.balls >= 5) {
         const sr = (bat.runs / bat.balls) * 100;
-        if (sr >= 150) points += 8;
-        else if (sr >= 120) points += 4;
+        const srRatio = sr / ctx.avgStrikeRate;
+        if (srRatio >= 1.5) points += 8;
+        else if (srRatio >= 1.2) points += 4;
       }
 
-      if (bat.runs >= 50) points += 8;
-      if (bat.runs >= 100) points += 15;
-      if (!bat.dismissal && bat.runs >= 20) points += 5;
+      // Milestones scaled to how big the biggest innings in THIS match
+      // actually was. A 40 in a 60-all-out gully match is a "century"
+      // in context; a fixed ">=50" bonus would miss that entirely.
+      if (bat.runs > 0) {
+        const share = bat.runs / ctx.highestInningsTotal;
+        if (share >= 0.5) points += 8;
+        if (share >= 0.8) points += 15;
+      }
+
+      if (!bat.dismissal && bat.runs / ctx.highestInningsTotal >= 0.2) {
+        points += 5; // meaningful not-out contribution, scaled to context
+      }
     }
 
     // ---------- Bowling ----------
@@ -46,15 +111,23 @@ export function calculatePlayerScore(player, match, fieldingStats) {
       points += (bowl.wickets || 0) * 20;
       points += (bowl.maidens || 0) * 8;
 
-      if (bowl.balls > 0) {
+      // Economy bonus relative to this match's own average economy.
+      if (bowl.balls >= 6) {
         const overs = bowl.balls / 6;
         const eco = bowl.runs / overs;
-        if (eco <= 6) points += 8;
-        else if (eco <= 8) points += 4;
+        const ecoRatio = eco / ctx.avgEconomy;
+        if (ecoRatio <= 0.7) points += 8;
+        else if (ecoRatio <= 0.9) points += 4;
       }
 
-      if (bowl.wickets >= 4) points += 8;
-      if (bowl.wickets >= 5) points += 12;
+      // Wicket-haul bonus scaled to how many wickets actually fell
+      // in the match — "5-for" is meaningless if only 6 wickets fell
+      // all match because sides had 6 players.
+      if (bowl.wickets > 0) {
+        const wicketShare = bowl.wickets / ctx.totalWicketsFallen;
+        if (wicketShare >= 0.35) points += 8;
+        if (wicketShare >= 0.5) points += 12;
+      }
     }
   }
 
@@ -69,6 +142,9 @@ export function calculatePlayerScore(player, match, fieldingStats) {
   return points;
 }
 
+/* ============================================================
+   WINNING TEAM PLAYERS (unchanged)
+   ============================================================ */
 export function getWinningTeamPlayers(match) {
   const winner = match.result?.winner;
   const teamAPlayers = match.teams?.teamA?.players || [];
@@ -83,20 +159,39 @@ export function getWinningTeamPlayers(match) {
   return [...new Set([...teamAPlayers, ...teamBPlayers])];
 }
 
+/* ============================================================
+   MAN OF THE MATCH
+   - Scored against match context (fair across formats/over-counts)
+   - Deterministic tie-break instead of "first one in the array wins"
+   ============================================================ */
 export function calculateManOfTheMatch(match, fieldingStats) {
   const players = getWinningTeamPlayers(match);
-  // const fieldingStats = deriveFieldingStats(match);
+  const context = computeMatchContext(match);
 
-  let bestPlayer = null;
-  let bestScore = -Infinity;
+  const ranked = players
+    .map((p) => {
+      const score = calculatePlayerScore(p, match, fieldingStats, context);
 
-  for (const p of players) {
-    const score = calculatePlayerScore(p, match, fieldingStats);
-    if (score > bestScore) {
-      bestScore = score;
-      bestPlayer = p;
-    }
-  }
+      // Tie-break signals: prefer the player who contributed in more
+      // ways (batting + bowling + fielding), then raw runs, then wickets.
+      let runs = 0;
+      let wickets = 0;
+      for (const inn of match.innings) {
+        runs += inn.battingStats?.[p]?.runs || 0;
+        wickets += inn.bowlingStats?.[p]?.wickets || 0;
+      }
+      const contributionTypes =
+        (runs > 0 ? 1 : 0) + (wickets > 0 ? 1 : 0) + (fieldingStats[p] ? 1 : 0);
 
-  return bestPlayer;
+      return { player: p, score, contributionTypes, runs, wickets };
+    })
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      if (b.contributionTypes !== a.contributionTypes)
+        return b.contributionTypes - a.contributionTypes;
+      if (b.runs !== a.runs) return b.runs - a.runs;
+      return b.wickets - a.wickets;
+    });
+
+  return ranked[0]?.player ?? null;
 }
