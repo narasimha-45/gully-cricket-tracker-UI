@@ -1,4 +1,5 @@
 import { useMemo, useReducer } from "react";
+import { Flag, ShieldCheck } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import {
   LeaderboardState,
@@ -52,7 +53,12 @@ export default function MiscStats() {
     dispatch({ type: LEADERBOARD_ACTIONS.SORT, payload: column });
 
   return (
-    <LeaderboardState
+    <div className={styles.page}>
+      <header className={styles.statsHeading}>
+        <div><span className={styles.statsKicker}><Flag size={13} /> Fielding</span><h2>Fielding stats</h2></div>
+        <span className={styles.statsIcon}><ShieldCheck size={21} /></span>
+      </header>
+      <LeaderboardState
       loading={query.isLoading}
       fetching={query.isFetching && !query.isLoading}
       error={query.error}
@@ -119,6 +125,7 @@ export default function MiscStats() {
           </div>
         ))}
       </div>
-    </LeaderboardState>
+      </LeaderboardState>
+    </div>
   );
 }

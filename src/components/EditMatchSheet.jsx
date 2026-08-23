@@ -11,6 +11,8 @@ import { MATCH_ACTIONS } from "../features/match/state/matchActions";
 import { useMatchSession } from "../features/match/state/useMatchSession";
 import styles from "./EditMatchSheet.module.css";
 
+// Extra ball is always true for wide/no-ball — it's the near-universal
+// rule and isn't exposed as a toggle. Extra run stays configurable.
 const DEFAULT_RULES = {
   wide: { extraRun: false, extraBall: true },
   noBall: { extraRun: true, extraBall: true },
@@ -164,7 +166,7 @@ export default function EditMatchSheet({ open, onClose }) {
         <div className={styles.sectionTitleRow}>
           <div>
             <h3>Extras rules</h3>
-            <p>Control automatic penalty runs and delivery counting.</p>
+            <p>Control automatic penalty runs for a wide or no-ball.</p>
           </div>
         </div>
         <RuleToggle
@@ -176,27 +178,11 @@ export default function EditMatchSheet({ open, onClose }) {
           }
         />
         <RuleToggle
-          title="Wide is an extra ball"
-          description="Wide does not count as a legal delivery."
-          checked={rules.wide.extraBall}
-          onChange={(checked) =>
-            updateRules({ wide: { ...rules.wide, extraBall: checked } })
-          }
-        />
-        <RuleToggle
           title="No-ball gives a run"
           description="Automatically add one penalty run for a no-ball."
           checked={rules.noBall.extraRun}
           onChange={(checked) =>
             updateRules({ noBall: { ...rules.noBall, extraRun: checked } })
-          }
-        />
-        <RuleToggle
-          title="No-ball is an extra ball"
-          description="No-ball does not count as a legal delivery."
-          checked={rules.noBall.extraBall}
-          onChange={(checked) =>
-            updateRules({ noBall: { ...rules.noBall, extraBall: checked } })
           }
         />
       </section>
@@ -221,6 +207,9 @@ export default function EditMatchSheet({ open, onClose }) {
 
 function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
   const [overs, setOvers] = useState(initialOvers);
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const hasChanged = overs !== initialOvers;
 
   const updateOvers = (delta) => {
     setOvers((current) => {
@@ -230,12 +219,17 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
     });
   };
 
-  const applyOvers = () => {
-    if (overs < minOversNeeded) return;
+  const requestUpdate = () => {
+    if (overs < minOversNeeded || !hasChanged) return;
+    setConfirmOpen(true);
+  };
+
+  const confirmUpdate = () => {
     dispatch({
       type: MATCH_ACTIONS.UPDATE_SETTINGS,
       payload: { totalOvers: overs },
     });
+    setConfirmOpen(false);
   };
 
   return (
@@ -262,11 +256,74 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
       <button
         type="button"
         className={styles.primaryButton}
-        onClick={applyOvers}
+        onClick={requestUpdate}
+        disabled={!hasChanged}
       >
         Update overs
       </button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="Change total overs?"
+        message={`This match will be updated to ${overs} overs`}
+        confirmLabel="Update overs"
+        cancelLabel="Cancel"
+        onConfirm={confirmUpdate}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </>
+  );
+}
+
+function ConfirmDialog({
+  open,
+  title,
+  message,
+  confirmLabel = "Confirm",
+  cancelLabel = "Cancel",
+  onConfirm,
+  onCancel,
+}) {
+  if (!open) return null;
+
+  return (
+    <div
+      className={styles.confirmOverlay}
+      role="presentation"
+      onClick={onCancel}
+    >
+      <div
+        className={styles.confirmCard}
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby="confirm-dialog-title"
+        aria-describedby="confirm-dialog-message"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <h4 id="confirm-dialog-title" className={styles.confirmTitle}>
+          {title}
+        </h4>
+        <p id="confirm-dialog-message" className={styles.confirmMessage}>
+          {message}
+        </p>
+        <div className={styles.confirmActions}>
+          <button
+            type="button"
+            className={styles.confirmCancel}
+            onClick={onCancel}
+          >
+            {cancelLabel}
+          </button>
+          <button
+            type="button"
+            className={styles.confirmConfirm}
+            onClick={onConfirm}
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }
 

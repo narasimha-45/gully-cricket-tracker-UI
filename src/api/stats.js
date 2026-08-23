@@ -7,6 +7,9 @@ export const statsApi = {
   getPlayerProfileBySeason: (playerId, seasonId, options) =>
     apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, { seasonId }, options),
 
+  comparePlayers: (filters = {}, options) =>
+    apiClient.get(`/stats/player/compare`, filters, options),
+
   getTeamProfile: (teamId, seasonId, options) =>
     apiClient.get(`/stats/team/${encodeURIComponent(teamId)}`, { seasonId }, options),
 
@@ -22,4 +25,13 @@ export const statsApi = {
 
   getTeamLeaderboard: (filters = {}, options) =>
     apiClient.get(`/stats/leaderboard/teams`, filters, options),
+
+  getPartnershipInnings: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/partnerships/innings`, filters, options),
+
+  getAggregatedPartnerships: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/partnerships/aggregated`, filters, options),
+
+  getRivalries: (filters = {}, options) =>
+    apiClient.get(`/stats/rivalries`, filters, options),
 };

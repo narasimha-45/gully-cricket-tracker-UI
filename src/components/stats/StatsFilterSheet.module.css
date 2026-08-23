@@ -110,6 +110,10 @@
     min-width: 0;
 }
 
+.fieldOpen {
+    grid-column: 1 / -1;
+}
+
 .label {
     display: block;
     margin: 0 0 4px 1px;
@@ -123,22 +127,33 @@
     position: relative;
 }
 
+.selectWrapOpen {
+    z-index: 2;
+}
+
 .select {
     width: 100%;
     min-width: 0;
     height: 40px;
-    appearance: none;
-    -webkit-appearance: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     border: 1px solid var(--color-border);
     border-radius: 9px;
     outline: none;
     background: var(--color-slate-50);
     color: var(--color-slate-800);
-    padding: 0 32px 0 9px;
+    padding: 0 9px;
     font: inherit;
     font-size: 11px;
     font-weight: 600;
     cursor: pointer;
+}
+
+.select span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .select:focus {
@@ -148,13 +163,56 @@
 }
 
 .selectIcon {
-    position: absolute;
-    top: 50%;
-    right: 9px;
-    z-index: 1;
+    flex: 0 0 auto;
     color: var(--color-indigo-600);
-    pointer-events: none;
-    transform: translateY(-50%);
+    transition: transform 140ms ease;
+}
+
+.select[aria-expanded="true"] .selectIcon {
+    transform: rotate(180deg);
+}
+
+.optionMenu {
+    position: static;
+    margin-top: 5px;
+    max-height: none;
+    overflow: visible;
+    padding: 4px;
+    border: 1px solid var(--color-border);
+    border-radius: 9px;
+    background: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.option,
+.optionActive {
+    width: 100%;
+    min-height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--color-slate-700);
+    font: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.option:hover,
+.optionActive {
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-700);
+}
+
+.optionCheck {
+    color: var(--color-indigo-600);
+    font-size: 14px;
+    font-weight: 800;
 }
 
 .footer {

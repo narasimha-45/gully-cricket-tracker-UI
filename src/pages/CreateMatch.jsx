@@ -22,6 +22,22 @@ const normalizePlayers = (players = []) => [
   ...new Set(players.map(normalizeName).filter(Boolean)),
 ];
 
+function Switch({ checked, onChange, label }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
+      className={styles.switch}
+      data-on={checked}
+      onClick={() => onChange(!checked)}
+    >
+      <span className={styles.switchThumb} />
+    </button>
+  );
+}
+
 export default function CreateMatch() {
   const navigate = useNavigate();
   const { seasonId } = useParams();
@@ -35,6 +51,11 @@ export default function CreateMatch() {
   );
   const [teamALoading, setTeamALoading] = useState(false);
   const [teamBLoading, setTeamBLoading] = useState(false);
+
+  // Extras rules — extra ball is a fixed law of the game for wide/no-ball,
+  // only the run is configurable per match
+  const [wideExtraRun, setWideExtraRun] = useState(false);
+  const [noBallExtraRun, setNoBallExtraRun] = useState(true);
 
   const normalizedTeamA = normalizeName(teamA.name || teamA.query);
   const normalizedTeamB = normalizeName(teamB.name || teamB.query);
@@ -81,8 +102,8 @@ export default function CreateMatch() {
           ? { inningsPerTeam: testInningsPerTeam }
           : null,
       rules: {
-        wide: { extraRun: false, extraBall: true },
-        noBall: { extraRun: true, extraBall: true },
+        wide: { extraRun: wideExtraRun, extraBall: true },
+        noBall: { extraRun: noBallExtraRun, extraBall: true },
       },
       teams: {
         teamA: resolveTeam(teamA),
@@ -151,7 +172,6 @@ export default function CreateMatch() {
           <span aria-hidden="true">⚙️</span>
           <div>
             <h2>Match format</h2>
-            <p>Test matches do not use an over limit.</p>
           </div>
         </div>
 
@@ -222,6 +242,48 @@ export default function CreateMatch() {
             </div>
           </div>
         )}
+      </section>
+
+      <section className={styles.card}>
+        <div className={styles.sectionHeading}>
+          <span aria-hidden="true">🏏</span>
+          <div>
+            <h2>Extras rules</h2>
+            <p>Set how wides and no-balls are scored.</p>
+          </div>
+        </div>
+
+        <div className={styles.extrasGrid}>
+          <div className={styles.extraRow}>
+            <div className={styles.extraInfo}>
+              <span className={styles.extraLabel}>Wide</span>
+              {/* <span className={styles.extraFixed}>Extra ball · always</span> */}
+            </div>
+            <div className={styles.extraControl}>
+              <span className={styles.extraRunLabel}>+1 run</span>
+              <Switch
+                checked={wideExtraRun}
+                onChange={setWideExtraRun}
+                label="Wide adds an extra run"
+              />
+            </div>
+          </div>
+
+          <div className={styles.extraRow}>
+            <div className={styles.extraInfo}>
+              <span className={styles.extraLabel}>No ball</span>
+              {/* <span className={styles.extraFixed}>Extra ball · always</span> */}
+            </div>
+            <div className={styles.extraControl}>
+              <span className={styles.extraRunLabel}>+1 run</span>
+              <Switch
+                checked={noBallExtraRun}
+                onChange={setNoBallExtraRun}
+                label="No ball adds an extra run"
+              />
+            </div>
+          </div>
+        </div>
       </section>
 
       <div className={styles.footer}>

@@ -1,81 +1,152 @@
 /* ============================================================
    InsightsTab.module.css
+   Refined for a calmer, more premium mobile feel:
+   consistent spacing/radius scale, softer depth, segmented
+   controls in place of native selects, and clearer touch states.
    ============================================================ */
 
 .wrapper {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 16px;
+
+  padding-bottom: 4px;
 }
 
-/* ── Section ────────────────────────────────────────────────── */
+/* ============================================================
+   SECTION
+   ============================================================ */
+
 .section {
   background: white;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--color-slate-200);
   overflow: hidden;
+
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
 
 .sectionTitle {
-  padding: 12px 14px 10px;
+  padding: 13px 16px 11px;
   font-size: 13px;
   font-weight: 700;
   color: var(--color-slate-800);
+  letter-spacing: -0.01em;
+
   border-bottom: 1px solid var(--color-slate-100);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   flex-wrap: wrap;
   gap: 8px;
 }
 
-/* Title row with dropdown */
 .sectionTitleRow {
-  padding: 10px 14px;
+  padding: 11px 16px;
+
   border-bottom: 1px solid var(--color-slate-100);
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   gap: 8px;
   flex-wrap: wrap;
 }
 
 .sectionTitleText {
   font-size: 13px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--color-slate-900, #0f172a);
+}
+
+/* ============================================================
+   SEGMENTED CONTROL
+   (replaces native <select> — larger touch targets, no
+   platform chrome, and an animated active pill)
+   ============================================================ */
+
+.segmented {
+  position: relative;
+
+  display: flex;
+  align-items: stretch;
+
+  gap: 2px;
+
+  padding: 3px;
+
+  background: var(--color-slate-100);
+  border-radius: 11px;
+
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.segmentedBtn {
+  position: relative;
+  z-index: 1;
+
+  flex: 1;
+
+  min-width: 0;
+
+  border: none;
+  background: transparent;
+
+  padding: 8px 8px;
+
+  font-size: 11.5px;
   font-weight: 700;
-  color: var(--color-slate-800);
-}
+  font-family: inherit;
 
-.directionSelect {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--color-indigo-600);
-  background: var(--color-indigo-50);
-  border: 1px solid var(--color-indigo-200);
+  color: var(--color-slate-500);
+
   border-radius: 8px;
-  padding: 4px 8px;
+
   cursor: pointer;
-  outline: none;
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%234f46e5'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  padding-right: 22px;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  transition:
+    color 0.18s ease,
+    background-color 0.18s ease;
+
+  -webkit-tap-highlight-color: transparent;
 }
 
-.directionSelect option {
+.segmentedBtn[data-active="true"] {
   background: white;
-  color: var(--color-slate-800);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 10px;
-  border-radius: 10px;
+  color: var(--color-slate-900, #0f172a);
+
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.14);
 }
 
-/* ── Graph legend ───────────────────────────────────────────── */
+.segmentedBtn:active {
+  transform: scale(0.97);
+}
+
+.segmentedRow {
+  display: flex;
+
+  gap: 6px;
+
+  width: 100%;
+}
+
+/* ============================================================
+   GRAPH LEGEND
+   ============================================================ */
+
 .graphLegend {
   display: flex;
+  align-items: center;
+
   gap: 12px;
   flex-wrap: wrap;
 }
@@ -83,91 +154,529 @@
 .legendItem {
   display: flex;
   align-items: center;
+
   gap: 5px;
+
   font-size: 11px;
   font-weight: 600;
+
   color: var(--color-slate-500);
 }
 
 .legendDot {
   width: 8px;
   height: 8px;
+
   border-radius: 50%;
+
   flex-shrink: 0;
+
+  box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 14%, transparent);
 }
 
-/* ── Graph container ────────────────────────────────────────── */
+/* ============================================================
+   GRAPH
+   ============================================================ */
+
 .graphWrap {
-  padding: 12px 14px 4px;
+  padding: 14px 12px 6px;
 }
 
 .graphXLabel {
   text-align: center;
+
   font-size: 10px;
+  font-weight: 700;
+
   color: var(--color-slate-400);
-  font-weight: 600;
+
   margin-top: -2px;
   margin-bottom: 8px;
-  letter-spacing: 0.04em;
+
+  letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-/* ── Stat cards grid — FIX: align-items stretch so all cards same height ── */
+/* ============================================================
+   OVER BATTLE
+   ============================================================ */
+
+.battleTeams {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 12px 16px 0;
+}
+
+.battleTeamLabel {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.leadPill {
+  margin: 9px 16px 2px;
+
+  padding: 8px 10px;
+
+  border-radius: 10px;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  text-align: center;
+
+  background: var(--color-slate-100);
+  color: var(--color-slate-600);
+}
+
+.leadPill[data-state="ahead"] {
+  background: var(--color-green-50, #f0fdf4);
+  color: var(--color-green-600);
+}
+
+.leadPill[data-state="behind"] {
+  background: #fef2f2;
+  color: var(--color-red-600);
+}
+
+.battleList {
+  max-height: 300px;
+
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+
+  padding: 11px 16px 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+}
+
+.battleRow {
+  display: grid;
+
+  grid-template-columns:
+    1fr 22px 1fr;
+
+  align-items: center;
+
+  gap: 6px;
+}
+
+.battleOverLabel {
+  text-align: center;
+
+  font-size: 9px;
+  font-weight: 700;
+
+  color: var(--color-slate-400);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.battleSideLeft {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  gap: 5px;
+}
+
+.battleSideRight {
+  display: flex;
+  align-items: center;
+
+  gap: 5px;
+}
+
+.battleValue {
+  font-size: 11px;
+  font-weight: 700;
+
+  color: var(--color-slate-700);
+
+  font-variant-numeric: tabular-nums;
+
+  min-width: 14px;
+
+  text-align: center;
+}
+
+.battleWicket {
+  display: grid;
+  place-items: center;
+
+  width: 15px;
+  height: 15px;
+
+  border-radius: 50%;
+
+  background: var(--color-red-600);
+  color: white;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  flex-shrink: 0;
+}
+
+.battleTrack {
+  position: relative;
+
+  flex: 1;
+
+  height: 12px;
+
+  background: var(--color-slate-100);
+
+  border-radius: 4px;
+
+  overflow: hidden;
+}
+
+.battleFillLeft {
+  position: absolute;
+
+  right: 0;
+  top: 0;
+
+  height: 100%;
+
+  border-radius: 4px 0 0 4px;
+
+  transition: width 0.25s ease;
+}
+
+.battleFillRight {
+  position: absolute;
+
+  left: 0;
+  top: 0;
+
+  height: 100%;
+
+  border-radius: 0 4px 4px 0;
+
+  transition: width 0.25s ease;
+}
+
+/* ============================================================
+   STAT CARDS
+   ============================================================ */
+
+.cardGroup {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+}
+
+.groupLabel {
+  padding-left: 3px;
+
+  font-size: 11px;
+  font-weight: 800;
+
+  color: var(--color-slate-500);
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.08em;
+}
+
 .cardsGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 9px;
+
   align-items: stretch;
+
   grid-auto-rows: 1fr;
 }
 
+.cardsGrid> :last-child:nth-child(odd) {
+  grid-column: 1 / -1;
+}
+
 .card {
+  position: relative;
+
   background: white;
-  border-radius: 14px;
+
+  border-radius: 15px;
+
   border: 1px solid var(--color-slate-200);
-  padding: 14px 14px 12px;
+
+  padding: 14px 14px 13px;
+
   display: flex;
   flex-direction: column;
+
   gap: 3px;
-  /* ensure sibling cards in same row share the same height */
+
   height: 100%;
+
   box-sizing: border-box;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.12s ease,
+    box-shadow 0.12s ease;
+}
+
+.card::before {
+  content: "";
+
+  position: absolute;
+
+  left: 0;
+  top: 0;
+  bottom: 0;
+
+  width: 3px;
+
+  background: var(--accent, var(--color-slate-200));
+}
+
+.card:active {
+  transform: scale(0.985);
+
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
 }
 
 .cardLabel {
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
+
   color: var(--color-slate-400);
+
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+
+  letter-spacing: 0.07em;
+
   margin-bottom: 4px;
 }
 
 .cardValue {
   font-size: 28px;
   font-weight: 800;
+
+  letter-spacing: -0.02em;
+
   line-height: 1;
+
   font-variant-numeric: tabular-nums;
 }
 
 .cardSub {
   font-size: 13px;
   font-weight: 700;
+
   color: var(--color-slate-800);
-  margin-top: 5px;
+
+  margin-top: 6px;
+
   line-height: 1.35;
+
   word-break: break-word;
 }
 
 .cardDetail {
   font-size: 11px;
-  color: var(--color-slate-400);
   font-weight: 500;
+
+  color: var(--color-slate-400);
+
   margin-top: 2px;
+
   line-height: 1.35;
 }
 
-/* ── H2H ────────────────────────────────────────────────────── */
+/* ============================================================
+   MOMENT
+   ============================================================ */
+
+.momentBanner {
+  position: relative;
+
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+
+  padding: 15px 16px;
+
+  border-radius: 16px;
+
+  background: linear-gradient(135deg,
+      var(--color-indigo-50, #eef2ff) 0%,
+      #f5f3ff 100%);
+
+  border: 1px solid var(--color-indigo-200);
+
+  overflow: hidden;
+}
+
+.momentBanner::after {
+  content: "";
+
+  position: absolute;
+
+  right: -30px;
+  top: -30px;
+
+  width: 110px;
+  height: 110px;
+
+  border-radius: 50%;
+
+  background: radial-gradient(circle,
+      rgba(99, 102, 241, 0.12) 0%,
+      transparent 70%);
+}
+
+.momentIcon {
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  width: 40px;
+  height: 40px;
+
+  border-radius: 12px;
+
+  background: white;
+
+  color: var(--color-indigo-600);
+
+  box-shadow: 0 1px 3px rgba(79, 70, 229, 0.18);
+}
+
+.momentValue {
+  flex-shrink: 0;
+
+  font-size: 30px;
+  font-weight: 800;
+
+  letter-spacing: -0.02em;
+
+  line-height: 1;
+
+  color: var(--color-indigo-700);
+
+  font-variant-numeric: tabular-nums;
+}
+
+.momentBody {
+  min-width: 0;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 2px;
+
+  z-index: 1;
+}
+
+.momentLabel {
+  font-size: 10px;
+  font-weight: 800;
+
+  color: var(--color-indigo-600);
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.07em;
+}
+
+.momentSub {
+  font-size: 13.5px;
+  font-weight: 700;
+
+  color: var(--color-slate-800);
+
+  line-height: 1.3;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+.momentDetail {
+  font-size: 11px;
+  font-weight: 500;
+
+  color: var(--color-slate-500);
+}
+
+/* ============================================================
+   ROLE TAGS
+   ============================================================ */
+
+.roleTag {
+  flex-shrink: 0;
+
+  padding: 2px 6px;
+
+  border-radius: 6px;
+
+  font-size: 8px;
+  font-weight: 800;
+
+  letter-spacing: 0.03em;
+
+  line-height: 1.3;
+}
+
+.roleBAT {
+  background: #f0fdf4;
+
+  color: #15803d;
+}
+
+.roleBOWL {
+  background: #fff7ed;
+
+  color: #c2410c;
+}
+
+/* ============================================================
+   COMPACT HEAD TO HEAD
+   ============================================================ */
+
+.h2hHeader {
+  display: flex;
+  flex-direction: column;
+
+  gap: 9px;
+
+  padding: 12px 14px 10px;
+
+  border-bottom: 1px solid var(--color-slate-100);
+}
+
+.h2hFilters {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  width: 100%;
+}
+
+/* Groups */
+
 .h2hWrap {
   display: flex;
   flex-direction: column;
@@ -181,86 +690,477 @@
   border-bottom: none;
 }
 
+/* Main batter/bowler header — now an interactive disclosure */
+
 .h2hGroupHeader {
-  padding: 9px 14px 4px;
-  background: var(--color-slate-50);
-  border-bottom: 1px solid var(--color-slate-100);
+  width: 100%;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+
+  min-height: 44px;
+
+  padding: 8px 14px;
+
+  background: #fbfafc;
+
+  border: none;
+
+  cursor: pointer;
+
+  font: inherit;
+  text-align: left;
+
+  -webkit-tap-highlight-color: transparent;
+
+  transition: background-color 0.15s ease;
+}
+
+.h2hGroupHeader:active {
+  background: var(--color-slate-100);
+}
+
+.h2hGroupAvatar {
+  flex-shrink: 0;
+
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  color: white;
+
+  font-size: 9px;
+  font-weight: 800;
 }
 
 .h2hGroupLabel {
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--color-indigo-600);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  flex: 1;
+
+  min-width: 0;
+
+  font-size: 12.5px;
+  font-weight: 800;
+
+  color: var(--color-slate-900, #0f172a);
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
 }
 
-.h2hRow {
-  display: grid;
-  grid-template-columns: 1.6fr repeat(4, 1fr);
-  padding: 9px 14px;
-  font-size: 12px;
+.h2hGroupCount {
+  flex-shrink: 0;
+
+  font-size: 10.5px;
   font-weight: 600;
-  color: var(--color-slate-700);
-  border-bottom: 1px solid var(--color-slate-50);
+
+  color: var(--color-slate-400);
+
+  white-space: nowrap;
+}
+
+.h2hChevron {
+  flex-shrink: 0;
+
+  color: var(--color-slate-400);
+
+  transition: transform 0.2s ease;
+}
+
+.h2hChevron[data-open="true"] {
+  transform: rotate(180deg);
+}
+
+.h2hRows {
+  display: grid;
+
+  grid-template-rows: 0fr;
+
+  transition: grid-template-rows 0.22s ease;
+}
+
+.h2hRows[data-open="true"] {
+  grid-template-rows: 1fr;
+}
+
+.h2hRowsInner {
+  overflow: hidden;
+}
+
+/*
+  One matchup row, laid out on two lines so the stats have room
+  to breathe instead of running together on a single cramped line:
+
+    [Avatar] Name            BOWL      5 (3 balls)
+             D 1 · 4s 1 · SR 166.7
+*/
+
+.h2hRow {
+  width: 100%;
+
+  padding: 10px 14px;
+
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  box-sizing: border-box;
+
+  border-top: 1px solid var(--color-slate-50, #f8fafc);
+}
+
+.h2hRowTop {
+  display: flex;
   align-items: center;
+
+  gap: 8px;
+}
+
+/* Left/player area */
+
+.h2hPlayer {
+  min-width: 0;
+
+  flex: 1 1 auto;
+
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+}
+
+.h2hAvatar {
+  flex-shrink: 0;
+
+  width: 26px;
+  height: 26px;
+
+  border-radius: 50%;
+
+  display: grid;
+  place-items: center;
+
+  color: white;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+/*
+  Full player name.
+
+  IMPORTANT:
+  No text-overflow ellipsis here.
+*/
+
+.h2hName {
+  min-width: 0;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  color: var(--color-slate-900, #0f172a);
+
+  line-height: 1.2;
+
+  white-space: nowrap;
+
+  overflow: visible;
+
+  text-overflow: clip;
+}
+
+/* Runs, top-right — the headline number for this matchup */
+
+.h2hRuns {
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: baseline;
+
+  gap: 3px;
+
+  color: var(--color-slate-500);
+
   font-variant-numeric: tabular-nums;
 }
 
-.h2hRow:last-child {
-  border-bottom: none;
+.h2hRuns strong {
+  font-size: 14px;
+  font-weight: 800;
+
+  color: var(--color-slate-900, #0f172a);
 }
 
-.h2hHead {
+.h2hRuns small {
+  font-size: 10px;
+  font-weight: 600;
+
+  color: var(--color-slate-400);
+
+  white-space: nowrap;
+}
+
+/* Secondary stats row — spaced chips, not a run-together string */
+
+.h2hStats {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+
+  gap: 6px;
+
+  padding-left: 33px;
+
+  font-variant-numeric: tabular-nums;
+}
+
+.h2hMiniStat {
+  display: inline-flex;
+  align-items: baseline;
+
+  gap: 3px;
+
+  padding: 3px 7px;
+
+  border-radius: 6px;
+
+  background: var(--color-slate-100);
+
   font-size: 10px;
   font-weight: 700;
-  color: var(--color-slate-400);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  background: var(--color-slate-50);
-  padding: 6px 14px;
+
+  color: var(--color-slate-600);
+  white-space: nowrap;
 }
 
-.h2hName {
-  font-weight: 700;
-  color: var(--color-slate-800);
+.h2hMiniStat span {
+  font-weight: 500;
+  color: var(--color-slate-400);
+
+  font-size: 9px;
+}
+
+.h2hSr {
+  display: inline-flex;
+  align-items: baseline;
+
+  gap: 3px;
+
+  padding: 3px 7px;
+
+  border-radius: 6px;
+
+  font-size: 10px;
+  font-weight: 800;
+
+  color: var(--color-slate-600);
+
+  background: var(--color-slate-100);
+
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .good {
   color: var(--color-green-600);
-  font-weight: 700;
+
+  background: var(--color-green-50, #f0fdf4);
 }
 
 .bad {
   color: var(--color-red-600);
-  font-weight: 700;
+
+  background: #fef2f2;
 }
 
 .wicket {
-  color: var(--color-red-600);
+  display: inline-flex;
+  align-items: baseline;
+
+  gap: 3px;
+
+  padding: 3px 7px;
+
+  border-radius: 6px;
+
+  color: white;
+  background: var(--color-red-600);
+
+  font-size: 10px;
   font-weight: 800;
+
+  white-space: nowrap;
 }
 
-/* ── Empty ──────────────────────────────────────────────────── */
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+
 .empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
   text-align: center;
-  padding: 40px 20px;
+
+  padding: 44px 24px;
+
   background: white;
-  border-radius: 14px;
+
+  border-radius: 16px;
+
   border: 1px solid var(--color-slate-200);
+}
+
+.emptyIcon {
+  display: grid;
+  place-items: center;
+
+  width: 48px;
+  height: 48px;
+
+  margin-bottom: 14px;
+
+  border-radius: 50%;
+
+  background: var(--color-slate-100);
+
+  color: var(--color-slate-400);
 }
 
 .empty p {
   font-size: 15px;
   font-weight: 700;
+
   color: var(--color-slate-600);
+
   margin-bottom: 6px;
 }
 
 .empty span {
   font-size: 13px;
+
   color: var(--color-slate-400);
+}
+
+/* ============================================================
+   ACCESSIBILITY / MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+
+  .segmentedBtn,
+  .card,
+  .h2hGroupHeader,
+  .h2hChevron,
+  .h2hRows,
+  .battleFillLeft,
+  .battleFillRight {
+    transition: none;
+  }
+}
+
+.segmentedBtn:focus-visible,
+.h2hGroupHeader:focus-visible {
+  outline: 2px solid var(--color-indigo-300, #a5b4fc);
+  outline-offset: 2px;
+}
+
+/* ============================================================
+   MOBILE
+   ============================================================ */
+
+@media (max-width: 390px) {
+  .h2hHeader {
+    padding: 10px 12px 8px;
+  }
+
+  .h2hRow {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .h2hGroupHeader {
+    padding: 8px 12px;
+  }
+
+  .h2hPlayer {
+    gap: 5px;
+  }
+
+  .h2hAvatar {
+    width: 23px;
+    height: 23px;
+  }
+
+  .h2hName {
+    font-size: 11px;
+  }
+
+  .h2hRuns strong {
+    font-size: 13px;
+  }
+
+  .h2hStats {
+    padding-left: 30px;
+
+    gap: 5px;
+  }
+
+  .h2hMiniStat,
+  .h2hSr,
+  .wicket {
+    font-size: 9.5px;
+
+    padding: 3px 6px;
+  }
+
+  .roleTag {
+    padding: 2px 4px;
+
+    font-size: 7px;
+  }
+
+  .cardValue {
+    font-size: 25px;
+  }
+}
+
+/*
+  Very narrow devices: tighten padding, keep the two-line
+  layout so stats never have to squeeze onto one line.
+*/
+
+@media (max-width: 340px) {
+  .h2hRow {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .h2hStats {
+    padding-left: 26px;
+
+    gap: 4px;
+  }
+
+  .h2hName {
+    font-size: 10.5px;
+  }
+
+  .h2hMiniStat,
+  .h2hSr,
+  .wicket {
+    font-size: 9px;
+
+    padding: 2px 5px;
+  }
 }

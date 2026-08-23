@@ -12,6 +12,10 @@ export default function Home({ open, onClose }) {
   const seasonsQuery = useSeasons();
   const seasons = seasonsQuery.data || [];
 
+  seasons.sort((a, b) => {
+    return a?.createdAt > b?.createdAt ? -1 : 1;
+  });
+
   return (
     <>
       <main className={styles.page}>

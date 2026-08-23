@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer } from "react";
+import { Shield } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import {
@@ -84,7 +85,7 @@ export default function BowlingStats({ isOverall = false }) {
 
   const filterDefinitions = useMemo(
     () => [
-      { key: "innings", label: "Innings", options: ["All", "First", "Second"] },
+      { key: "innings", label: "INN", options: ["All", "First", "Second"] },
       { key: "result", label: "Match Result", options: ["All", "Won", "Lost"] },
       {
         key: "opponentTeamId",
@@ -108,7 +109,8 @@ export default function BowlingStats({ isOverall = false }) {
         const option = definition?.options.find(
           (item) => (typeof item === "string" ? item : item.value) === value,
         );
-        return [typeof option === "string" ? option : option?.label || value];
+        const label = typeof option === "string" ? option : option?.label || value;
+        return [`${definition?.label || key}: ${label}`];
       }),
     [filterDefinitions, state.filters],
   );
@@ -130,6 +132,11 @@ export default function BowlingStats({ isOverall = false }) {
             : number(player.average);
         case "fiveWicketHauls":
           return number(player.fiveWicketHauls);
+        case "bestBowling": {
+          const wickets = number(player.bestBowlingFigures?.wickets);
+          const runsConceded = number(player.bestBowlingFigures?.runsConceded);
+          return wickets * 1000 - runsConceded;
+        }
         default:
           return 0;
       }
@@ -147,6 +154,10 @@ export default function BowlingStats({ isOverall = false }) {
 
   return (
     <div className={styles.page}>
+      <header className={styles.statsHeading}>
+        <div><span className={styles.statsKicker}><Shield size={13} /> Bowling</span><h2>Bowling stats</h2></div>
+        <span className={styles.statsIcon}><Shield size={21} /></span>
+      </header>
       <LeaderboardToolbar
         activeLabels={activeLabels}
         warning={teamsQuery.isError ? "Team filters unavailable" : ""}
@@ -209,12 +220,12 @@ export default function BowlingStats({ isOverall = false }) {
               ariaLabel="Sort by average"
             />
             <SortButton
-              label="5W"
-              column="fiveWicketHauls"
+              label="BB"
+              column="bestBowling"
               activeColumn={state.sortKey}
               direction={state.sortDir}
               onSort={onSort}
-              ariaLabel="Sort by five wicket hauls"
+              ariaLabel="Sort by best bowling"
             />
           </div>
 
@@ -253,7 +264,8 @@ export default function BowlingStats({ isOverall = false }) {
                   : number(player.average).toFixed(2)}
               </span>
               <span className={styles.stat}>
-                {number(player.fiveWicketHauls)}
+                {number(player.bestBowlingFigures.wickets)}/
+                {number(player.bestBowlingFigures.runsConceded)}
               </span>
             </div>
           ))}

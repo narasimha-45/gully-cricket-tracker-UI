@@ -38,6 +38,7 @@ function LiveMatchContent() {
   const [tab, setTab] = useState("live");
   const [ackSubmitting, setAckSubmitting] = useState(false);
   const [finalizeError, setFinalizeError] = useState("");
+  const [finalizeSuccess, setFinalizeSuccess] = useState(false);
 
   if (phase === "loading") {
     return <p className={styles.stateMessage}>Loading match…</p>;
@@ -96,9 +97,13 @@ function LiveMatchContent() {
     if (ackSubmitting) return;
     setAckSubmitting(true);
     setFinalizeError("");
+    setFinalizeSuccess(false);
     try {
       await finalizeAndSyncMatch({ match, dispatch });
-      navigate(`/season/${match.seasonId}/matches`, { replace: true });
+      // Stay on this page after a successful save — the person may still
+      // want to review the scorecard, insights, or the result banner
+      // instead of being bounced back to the matches list.
+      setFinalizeSuccess(true);
     } catch (syncError) {
       logger.error("match.finalize.failed", {
         matchId: match.id,
@@ -129,12 +134,46 @@ function LiveMatchContent() {
         </span>
       </div>
 
-      <MatchPersistenceStatus />
+      {/* <MatchPersistenceStatus /> */}
       {finalizeError && (
         <div className={styles.finalizeError} role="alert">
           <strong>Finish match needs attention</strong>
           <span>{finalizeError}</span>
           <button type="button" onClick={() => setFinalizeError("")}>
+            Dismiss
+          </button>
+        </div>
+      )}
+      {finalizeSuccess && (
+        <div
+          role="status"
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 10,
+            margin: "0 0 10px",
+            padding: "10px 12px",
+            borderRadius: 10,
+            background: "#f0fdf4",
+            border: "1px solid #bbf7d0",
+            color: "#166534",
+            fontSize: 12,
+            fontWeight: 600,
+          }}
+        >
+          <span>Match saved and synced.</span>
+          <button
+            type="button"
+            onClick={() => setFinalizeSuccess(false)}
+            style={{
+              border: 0,
+              background: "transparent",
+              color: "#166534",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
             Dismiss
           </button>
         </div>
@@ -196,7 +235,19 @@ function LiveMatchContent() {
       <MatchPopup
         open={Boolean(live.pendingNextInnings)}
         title="Innings complete"
-        subtitle={`${formatName(currentInnings.battingTeam)} finished on ${currentInnings.totalRuns}-${currentInnings.wickets}${currentInnings.completionReason === "DECLARED" ? " declared" : ""}.${followOnAvailable ? ` ${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} and may enforce the follow-on.` : ""}`}
+        subtitle={`${formatName(currentInnings.battingTeam)}'s innings has ended${currentInnings.completionReason === "DECLARED" ? " by declaration" : ""}.`}
+        scoreline={{
+          label: formatName(currentInnings.battingTeam),
+          runs: currentInnings.totalRuns,
+          wickets: currentInnings.wickets,
+          declared: currentInnings.completionReason === "DECLARED",
+          overs: `${Math.floor(currentInnings.balls / 6)}.${currentInnings.balls % 6}`,
+        }}
+        banner={
+          followOnAvailable
+            ? `${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} run${followOnLead === 1 ? "" : "s"} and may enforce the follow-on.`
+            : undefined
+        }
         primaryText={`Start innings ${nextInningsIndex + 1}`}
         onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_NEXT_INNINGS })}
         secondaryText={

@@ -7,6 +7,8 @@ export default function MatchPopup({
   open,
   title,
   subtitle,
+  scoreline,
+  banner,
   primaryText,
   primaryLoadingText = "Working…",
   loading = false,
@@ -40,6 +42,38 @@ export default function MatchPopup({
           <p id={`${titleId}-description`} className={styles.subtitle}>
             {subtitle}
           </p>
+        )}
+
+        {scoreline && (
+          <div className={styles.scoreline}>
+            <div className={styles.scorelineTeam}>{scoreline.label}</div>
+
+            <div className={styles.scorelineScore}>
+              <span className={styles.scorelineRuns}>{scoreline.runs}</span>
+              <span className={styles.scorelineDivider} aria-hidden="true">
+                /
+              </span>
+              <span className={styles.scorelineWickets}>
+                {scoreline.wickets}
+              </span>
+
+              {scoreline.declared && (
+                <span className={styles.scorelineBadge}>Declared</span>
+              )}
+            </div>
+
+            {scoreline.overs && (
+              <div className={styles.scorelineOvers}>
+                {scoreline.overs} overs
+              </div>
+            )}
+          </div>
+        )}
+
+        {banner && (
+          <div className={styles.banner} role="note">
+            {banner}
+          </div>
         )}
 
         <div className={styles.actions}>
