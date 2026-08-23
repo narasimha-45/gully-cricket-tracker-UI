@@ -123,6 +123,63 @@ input:focus-visible {
   }
 }
 
+/* Mobile readability pass: compact data surfaces should remain scannable
+   without forcing users to zoom. Keep display values and headings untouched. */
+@media (max-width: 520px) {
+  [class*="filterChip"],
+  [class*="allChip"],
+  [class*="warningChip"] {
+    font-size: 11px !important;
+  }
+
+  [class*="filterButton"],
+  [class*="segment"],
+  [class*="tab"] {
+    font-size: 12px !important;
+  }
+
+  [class*="tableHeader"],
+  [class*="header"] {
+    font-size: 10px !important;
+  }
+
+  [class*="table"] [class*="row"],
+  [class*="grid"] [class*="row"] {
+    font-size: 12px;
+  }
+
+  [class*="pairCell"] strong,
+  [class*="contest"] strong,
+  [class*="playerButton"],
+  [class*="compactName"],
+  [class*="spotlightName"] {
+    font-size: 13px !important;
+  }
+
+  [class*="pairCell"] small,
+  [class*="contest"] small,
+  [class*="compactSecondary"],
+  [class*="spotlightSecondary"],
+  [class*="instanceMeta"],
+  [class*="summaryStrip"] {
+    font-size: 11px !important;
+  }
+
+  [class*="label"],
+  [class*="kicker"],
+  [class*="eyebrow"],
+  [class*="sectionLabel"] {
+    font-size: 11px !important;
+  }
+
+  [class*="select"],
+  [class*="input"],
+  [class*="pickerValue"],
+  [class*="pickerPlaceholder"] {
+    font-size: 13px !important;
+  }
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);

@@ -1,13 +1,13 @@
 .page {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .topBar {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
 }
 
 .headerRow {
@@ -23,9 +23,10 @@
     display: grid;
     place-items: center;
     border: 1px solid var(--color-border);
-    border-radius: 9px;
-    background: white;
-    color: var(--color-indigo-700);
+    border-radius: 50%;
+    background: var(--color-slate-900);
+    border-color: var(--color-slate-900);
+    color: white;
     font-size: 18px;
     font-weight: 700;
     cursor: pointer;
@@ -45,8 +46,8 @@
     display: grid;
     place-items: center;
     flex: 0 0 38px;
-    border-radius: 10px;
-    background: var(--color-indigo-600);
+    border-radius: 12px;
+    background: var(--color-amber-500);
     color: white;
     font-size: 18px;
 }
@@ -54,7 +55,7 @@
 .headingMini {
     margin: 0;
     color: var(--color-slate-500);
-    font-size: 8px;
+    font-size: 9px;
     font-weight: 700;
     letter-spacing: .07em;
     text-transform: uppercase;
@@ -63,7 +64,7 @@
 .headingTitle {
     margin: 1px 0 0;
     color: var(--color-slate-900);
-    font-size: 21px;
+    font-size: 24px;
     line-height: 1.15;
     letter-spacing: -.02em;
 }
@@ -74,9 +75,105 @@
     align-items: center;
     padding: 0 10px;
     border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-xs);
+}
+
+.seasonLabel {
+    flex: 0 0 auto;
+    margin-right: 8px;
+    color: var(--color-indigo-600);
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: .06em;
+}
+
+.seasonControl {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    padding: 0 9px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-white);
+    box-shadow: var(--shadow-xs);
+}
+
+.filterButton {
+    min-width: 0;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--color-slate-800);
+    font-size: 11px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.filterButton span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.filterButton svg {
+    flex: 0 0 auto;
+    color: var(--color-indigo-600);
+    transition: transform 140ms ease;
+}
+
+.chevronOpen {
+    transform: rotate(180deg);
+}
+
+.seasonMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 120;
+    width: min(230px, calc(100vw - 28px));
+    padding: 5px;
+    border: 1px solid var(--color-border);
     border-radius: 10px;
     background: white;
-    box-shadow: var(--shadow-xs);
+    box-shadow: var(--shadow-lg);
+}
+
+.seasonOption,
+.seasonOptionActive {
+    width: 100%;
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 9px;
+    border: 0;
+    border-radius: 7px;
+    background: transparent;
+    color: var(--color-slate-700);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: left;
+    cursor: pointer;
+}
+
+.seasonOption span {
+    color: var(--color-slate-400);
+    font-size: 10px;
+    font-weight: 500;
+}
+
+.seasonOption:hover,
+.seasonOptionActive {
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-700);
 }
 
 .filterSelect {
@@ -86,7 +183,7 @@
     outline: 0;
     background: transparent;
     color: var(--color-slate-800);
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     cursor: pointer;
 }
@@ -95,27 +192,38 @@
     position: sticky;
     top: 60px;
     z-index: 80;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 3px;
-    margin: 0 -14px 8px;
-    padding: 7px 14px;
+    display: flex;
+    gap: 6px;
+    margin: 0 -14px 4px;
+    padding: 2px 14px 8px;
     background: rgba(247, 248, 251, .96);
     backdrop-filter: blur(10px);
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    /* Defensive: stop CSS scroll anchoring from nudging this container's
+       scrollLeft in response to layout shifts elsewhere on the page (e.g.
+       the tab content below changing height when switching tabs). */
+    overflow-anchor: none;
+}
+
+.tabs::-webkit-scrollbar {
+    display: none;
 }
 
 .tab,
 .activeTab {
-    min-width: 0;
-    min-height: 34px;
+    flex: 0 0 auto;
+    min-height: 38px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 0 4px;
+    padding: 0 12px;
     border: 1px solid transparent;
-    border-radius: 9px;
+    border-radius: 10px;
     text-decoration: none;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
     white-space: nowrap;
 }
@@ -124,10 +232,15 @@
     color: var(--color-slate-600);
 }
 
+.tab:hover {
+    background: var(--color-slate-100);
+    color: var(--color-slate-900);
+}
+
 .activeTab {
     border-color: var(--color-indigo-100);
-    background: var(--color-indigo-50);
-    color: var(--color-indigo-700);
+    background: var(--color-slate-900);
+    color: white;
     font-weight: 700;
 }
 

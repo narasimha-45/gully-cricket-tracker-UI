@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { ShieldCheck, Trophy } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { useTeamLeaderboard } from "../hooks/queries";
@@ -10,9 +11,8 @@ const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 export default function TeamStats() {
   const navigate = useNavigate();
   const { globalFilter = "all" } = useOutletContext() || {};
-  const query = useTeamLeaderboard({
-    seasonId: globalFilter !== "all" ? globalFilter : undefined,
-  });
+  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const query = useTeamLeaderboard({ seasonId });
 
   const standings = useMemo(
     () =>
@@ -25,16 +25,24 @@ export default function TeamStats() {
   );
 
   return (
-    <LeaderboardState
-      loading={query.isLoading}
-      fetching={query.isFetching && !query.isLoading}
-      error={query.error}
-      empty={standings.length === 0}
-      onRetry={query.refetch}
-      emptyTitle="No team standings"
-      emptySubtitle="Complete matches to build the team table."
-    >
-      <div className={styles.table}>
+    <div className={styles.page}>
+      <header className={styles.heading}>
+        <div>
+          <span className={styles.kicker}><Trophy size={13} /> The board</span>
+          <h2>Team standings</h2>
+        </div>
+        <span className={styles.headingIcon}><ShieldCheck size={22} /></span>
+      </header>
+      <LeaderboardState
+        loading={query.isLoading}
+        fetching={query.isFetching && !query.isLoading}
+        error={query.error}
+        empty={standings.length === 0}
+        onRetry={query.refetch}
+        emptyTitle="No team standings"
+        emptySubtitle="Complete matches to build the team table."
+      >
+        <div className={styles.table}>
         <div className={`${styles.grid} ${styles.header}`}>
           <span>Team</span>
           <span>P</span>
@@ -54,10 +62,6 @@ export default function TeamStats() {
               <span className={styles.rank}>{index + 1}</span>
               <span>
                 <strong>{formatName(team.teamName)}</strong>
-                <small>
-                  {number(team.timesWonChasing)} chase wins ·{" "}
-                  {number(team.timesWonBattingFirst)} defend wins
-                </small>
               </span>
             </span>
             <span>{number(team.matchesPlayed)}</span>
@@ -69,7 +73,8 @@ export default function TeamStats() {
             </span>
           </button>
         ))}
-      </div>
-    </LeaderboardState>
+        </div>
+      </LeaderboardState>
+    </div>
   );
 }

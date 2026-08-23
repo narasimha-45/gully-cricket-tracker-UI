@@ -157,7 +157,7 @@ function TossPageContent() {
         <div className={styles.cardHeader}>
           <div>
             <h2>Coin flip</h2>
-            <p>Optional helper for deciding the toss.</p>
+            <p>Click on the toss, to flip</p>
           </div>
           {ui.flipResult && (
             <span className={styles.resultBadge}>

@@ -7,6 +7,7 @@ const asArray = (response) => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.content)) return data.content;
   if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.players)) return data.players;
   return [];
 };
 
@@ -80,6 +81,38 @@ export function useTeamLeaderboard(filters = {}) {
     queryKey: queryKeys.leaderboard("teams", filters),
     queryFn: async ({ signal }) =>
       asArray(await api.stats.getTeamLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
+  });
+}
+
+export function usePartnerships(view, filters = {}) {
+  return useQuery({
+    queryKey: queryKeys.partnerships(view, filters),
+    queryFn: async ({ signal }) =>
+      asArray(
+        await (view === "aggregated"
+          ? api.stats.getAggregatedPartnerships(filters, { signal })
+          : api.stats.getPartnershipInnings(filters, { signal })),
+      ),
+    ...leaderboardOptions,
+  });
+}
+
+export function useRivalries(filters = {}) {
+  return useQuery({
+    queryKey: queryKeys.rivalries(filters),
+    queryFn: async ({ signal }) =>
+      asArray(await api.stats.getRivalries(filters, { signal })),
+    ...leaderboardOptions,
+  });
+}
+
+export function usePlayerComparison(filters = {}) {
+  return useQuery({
+    queryKey: queryKeys.playerComparison(filters),
+    queryFn: async ({ signal }) =>
+      unwrapApiData(await api.stats.comparePlayers(filters, { signal })),
+    enabled: Boolean(filters.player1Id && filters.player2Id),
     ...leaderboardOptions,
   });
 }
