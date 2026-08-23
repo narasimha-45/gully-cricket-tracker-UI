@@ -4,6 +4,9 @@ export const queryKeys = Object.freeze({
   match: (matchId) => ["match", matchId],
   leaderboardRoot: ["leaderboard"],
   leaderboard: (type, filters) => ["leaderboard", type, filters],
+  partnerships: (view, filters) => ["partnerships", view, filters],
+  rivalries: (filters) => ["rivalries", filters],
+  playerComparison: (filters) => ["playerComparison", filters],
   playerProfileRoot: ["playerProfile"],
   playerProfile: (playerId, seasonId) => [
     "playerProfile",

@@ -108,6 +108,85 @@
     cursor: pointer;
 }
 
+.primaryButton:disabled {
+    background: var(--color-slate-200);
+    color: var(--color-slate-400);
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   CONFIRM DIALOG
+   Lightweight in-sheet confirmation for changes that affect an
+   in-progress match (currently: updating total overs).
+   ============================================================ */
+
+.confirmOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+
+    padding: 16px;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+
+    background: rgba(15, 23, 42, 0.45);
+}
+
+.confirmCard {
+    width: 100%;
+    max-width: 360px;
+
+    padding: 18px 18px 16px;
+
+    border-radius: 16px;
+    background: var(--color-white);
+
+    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+}
+
+.confirmTitle {
+    margin: 0 0 6px;
+    color: var(--color-slate-900);
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.confirmMessage {
+    margin: 0 0 16px;
+    color: var(--color-slate-500);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.confirmActions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.confirmCancel,
+.confirmConfirm {
+    min-height: 42px;
+    border: 0;
+    border-radius: 9px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.confirmCancel {
+    background: var(--color-slate-100);
+    color: var(--color-slate-700);
+}
+
+.confirmConfirm {
+    background: var(--color-indigo-600);
+    color: white;
+}
+
 .settingsRow {
     position: relative;
     min-height: 58px;

@@ -1,0 +1,715 @@
+/*
+  Team Profile — distinct from Player Profile on purpose.
+  A player has a face (avatar circle, individual stat sheet). A team has a
+  crest and a result history — so the two signature choices here are a
+  shield-shaped badge instead of a circle, and a "form guide" strip
+  (oldest → newest result chips) borrowed from how cricket scoreboards
+  actually show recent form. Same token system as the rest of the app
+  (tokens.css) for color/spacing/radius so it still reads as GullyCricket,
+  not a different product.
+*/
+
+.page {
+    display: grid;
+    gap: 14px;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Header / crest                                                          */
+/* ---------------------------------------------------------------------- */
+
+.headerCard {
+    border: 1px solid var(--color-slate-900);
+    border-radius: 16px;
+    background: var(--gradient-brand-deep);
+    box-shadow: var(--shadow-md);
+}
+
+.headerTop {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 16px 16px 12px;
+}
+
+.backButton {
+    width: 32px;
+    height: 32px;
+    flex: 0 0 32px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, .18);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, .08);
+    color: white;
+    cursor: pointer;
+}
+
+.identity {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Shield crest: a real jersey-badge silhouette, not a headshot circle.
+   Uses filter:drop-shadow (not box-shadow) because box-shadow ignores
+   clip-path and draws behind the original rectangular box, ghosting a
+   smudge behind the hexagon — drop-shadow follows the clipped shape. */
+.crest {
+    width: 44px;
+    height: 48px;
+    flex: 0 0 44px;
+    display: grid;
+    place-items: center;
+    clip-path: polygon(50% 0%, 100% 18%, 100% 62%, 50% 100%, 0% 62%, 0% 18%);
+    background: var(--color-amber-500);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .35));
+}
+
+.crest span {
+    margin-top: -3px;
+    color: var(--color-slate-900);
+    font-size: 18px;
+    font-weight: 800;
+}
+
+.titleWrap {
+    min-width: 0;
+}
+
+.eyebrow {
+    margin: 0 0 1px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    color: var(--color-amber-300);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+}
+
+.title {
+    margin: 0;
+    overflow: hidden;
+    color: white;
+    font-size: 21px;
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.subtitle {
+    margin: 3px 0 0;
+    color: rgba(255, 255, 255, .65);
+    font-size: 11px;
+}
+
+/* Season picker (custom dropdown, not native <select>) */
+
+.seasonPicker {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.select {
+    min-height: 34px;
+    max-width: 132px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 8px 5px 10px;
+    border: 1px solid rgba(255, 255, 255, .22);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .10);
+    color: white;
+    cursor: pointer;
+}
+
+.selectLabel {
+    overflow: hidden;
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.selectChevron {
+    flex: 0 0 auto;
+    color: rgba(255, 255, 255, .7);
+    transition: transform 140ms ease;
+}
+
+.seasonMenu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 6px);
+    z-index: 120;
+    width: min(220px, calc(100vw - 28px));
+    max-height: 240px;
+    margin: 0;
+    padding: 5px;
+    list-style: none;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: white;
+    box-shadow: var(--shadow-lg);
+}
+
+.seasonOption {
+    min-height: 36px;
+    display: flex;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 7px;
+    color: var(--color-slate-700);
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.seasonOptionActive {
+    background: var(--color-indigo-50);
+    color: var(--color-indigo-700);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Form guide — the signature element                                      */
+/* ---------------------------------------------------------------------- */
+
+.formGuide {
+    display: flex;
+    gap: 4px;
+    padding: 0 16px 12px;
+}
+
+.formChip {
+    width: 22px;
+    height: 22px;
+    flex: 1 1 0;
+    max-width: 26px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    color: white;
+    font-size: 9px;
+    font-weight: 800;
+}
+
+.formChipW {
+    background: var(--color-emerald-600);
+}
+
+.formChipL {
+    background: var(--color-red-500);
+}
+
+.formChipT {
+    background: var(--color-amber-500);
+}
+
+.formChipNR {
+    background: var(--color-slate-500);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Score rail                                                              */
+/* ---------------------------------------------------------------------- */
+
+.scoreRail {
+    display: flex;
+    align-items: center;
+    padding: 0 16px 14px;
+}
+
+.scoreItem {
+    flex: 1 1 0;
+    text-align: center;
+}
+
+.scoreItem strong {
+    display: block;
+    color: white;
+    font-size: 17px;
+    font-variant-numeric: tabular-nums;
+}
+
+.scoreValueWin {
+    color: var(--color-emerald-300);
+}
+
+.scoreValueLoss {
+    color: var(--color-red-300);
+}
+
+.scoreItem span {
+    display: block;
+    margin-top: 1px;
+    color: rgba(255, 255, 255, .6);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+}
+
+.scoreDivider {
+    width: 1px;
+    height: 26px;
+    flex: 0 0 auto;
+    background: rgba(255, 255, 255, .16);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Record bar                                                              */
+/* ---------------------------------------------------------------------- */
+
+.recordBarWrap {
+    padding: 0 16px 16px;
+}
+
+.recordBar {
+    display: flex;
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .10);
+}
+
+.recordSegWin {
+    background: var(--color-emerald-500);
+}
+
+.recordSegLoss {
+    background: var(--color-red-500);
+}
+
+.recordSegTie {
+    background: var(--color-amber-500);
+}
+
+.recordSegNr {
+    background: var(--color-slate-400);
+}
+
+.recordLegend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+    color: rgba(255, 255, 255, .75);
+    font-size: 10px;
+    font-weight: 600;
+}
+
+.recordLegend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.recordLegend i {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.dotWin {
+    background: var(--color-emerald-500);
+}
+
+.dotLoss {
+    background: var(--color-red-500);
+}
+
+.dotTie {
+    background: var(--color-amber-500);
+}
+
+.dotNr {
+    background: var(--color-slate-400);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Section shell                                                           */
+/* ---------------------------------------------------------------------- */
+
+.section {
+    padding: 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.sectionHeader {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 11px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--color-hairline);
+}
+
+.sectionHeader h2 {
+    margin: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--color-slate-900);
+    font-size: 16px;
+}
+
+.sectionHeader h2 svg {
+    color: var(--color-indigo-600);
+}
+
+/* ---------------------------------------------------------------------- */
+/* Match approach                                                          */
+/* ---------------------------------------------------------------------- */
+
+.approachPanel {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 10px;
+}
+
+.approachSide {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    padding: 12px 6px;
+    border-radius: var(--radius-md);
+    background: var(--color-slate-50);
+}
+
+.approachPct {
+    color: var(--color-slate-400);
+    font-size: 22px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.approachLead {
+    color: var(--color-indigo-600);
+}
+
+.approachLabel {
+    margin-top: 2px;
+    color: var(--color-slate-700);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.approachSub {
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 600;
+}
+
+.approachVs {
+    color: var(--color-slate-300);
+    font-size: 10px;
+    font-weight: 800;
+    text-transform: uppercase;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Scoring                                                                  */
+/* ---------------------------------------------------------------------- */
+
+.scoreCompareTop {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    color: var(--color-slate-600);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.scoreCompareBar {
+    display: flex;
+    height: 10px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--color-slate-100);
+}
+
+.scoreFillFor {
+    background: var(--color-indigo-500);
+}
+
+.scoreFillAgainst {
+    background: var(--color-slate-300);
+}
+
+.scoreCaption {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 6px;
+    margin-top: 9px;
+    font-size: 10px;
+    font-weight: 700;
+}
+
+.diffPositive {
+    color: var(--color-emerald-700);
+}
+
+.diffNegative {
+    color: var(--color-red-700);
+}
+
+.scoreCaptionMuted {
+    color: var(--color-slate-500);
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Records                                                                  */
+/* ---------------------------------------------------------------------- */
+
+.recordStrip {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+}
+
+.recordChip {
+    position: relative;
+    overflow: hidden;
+    padding: 10px 11px;
+    border-radius: var(--radius-md);
+    background: var(--color-slate-50);
+    border-left: 3px solid var(--color-slate-300);
+}
+
+.recordChipWin {
+    border-left-color: var(--color-emerald-500);
+}
+
+.recordChipLoss {
+    border-left-color: var(--color-red-500);
+}
+
+.recordChipIndigo {
+    border-left-color: var(--color-indigo-500);
+}
+
+.recordChipAmber {
+    border-left-color: var(--color-amber-500);
+}
+
+.recordChipLabel {
+    display: block;
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .02em;
+}
+
+.recordChipScore {
+    display: block;
+    margin-top: 3px;
+    color: var(--color-slate-900);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+}
+
+.recordChipMeta {
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    color: var(--color-slate-500);
+    font-size: 9px;
+    font-weight: 600;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.recordChipEmpty {
+    display: block;
+    margin-top: 4px;
+    color: var(--color-slate-400);
+    font-size: 10px;
+    font-style: italic;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Lists (recent matches + season history)                                 */
+/* ---------------------------------------------------------------------- */
+
+.list {
+    display: grid;
+    gap: 6px;
+}
+
+.empty {
+    padding: 14px;
+    border: 1px dashed var(--color-slate-300);
+    border-radius: 10px;
+    color: var(--color-slate-500);
+    font-size: 12px;
+    text-align: center;
+}
+
+.matchRow {
+    padding: 9px 10px;
+    border: 1px solid var(--color-hairline);
+    border-radius: 10px;
+}
+
+.matchRowTop {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+}
+
+.matchLeft {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+.matchBadge {
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+}
+
+.matchBadgeWin {
+    background: var(--color-emerald-600);
+}
+
+.matchBadgeLoss {
+    background: var(--color-red-500);
+}
+
+.matchBadgeNeutral {
+    background: var(--color-slate-400);
+}
+
+.matchOpponent {
+    overflow: hidden;
+    color: var(--color-slate-900);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.matchDate {
+    flex: 0 0 auto;
+    color: var(--color-slate-400);
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.matchDetail {
+    margin-top: 5px;
+    padding-left: 27px;
+    color: var(--color-slate-600);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.listRow {
+    display: grid;
+    grid-template-columns: minmax(105px, 1.5fr) repeat(4, 1fr);
+    align-items: center;
+    gap: 4px;
+    padding: 8px 9px;
+    border: 1px solid var(--color-hairline);
+    border-radius: 9px;
+    color: var(--color-slate-600);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
+}
+
+.listRow strong {
+    min-width: 0;
+    overflow: hidden;
+    color: var(--color-slate-800);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.listRow span {
+    text-align: center;
+}
+
+/* ---------------------------------------------------------------------- */
+/* Small screens                                                           */
+/* ---------------------------------------------------------------------- */
+
+@media (max-width: 430px) {
+    .headerTop {
+        flex-wrap: wrap;
+    }
+
+    /* The picker wraps onto its own row here, and with only one item on that
+     row `justify-content: space-between` degenerates to flex-start — so it
+     sits at the LEFT, not the right like on desktop. Rather than patch that
+     with a magic-number margin (which is what broke the dropdown: the menu
+     was still anchored `right: 0` as if the picker were on the right, so it
+     shot off the left edge of the card), make the picker full-width here so
+     there's no ambiguity about where it sits, and anchor the menu to match.
+     Bigger tap target as a side benefit. */
+    .seasonPicker {
+        width: 100%;
+        margin-top: 2px;
+    }
+
+    .select {
+        width: 100%;
+        max-width: none;
+        justify-content: space-between;
+    }
+
+    .seasonMenu {
+        left: 0;
+        right: 0;
+        width: auto;
+    }
+
+    .recordStrip {
+        grid-template-columns: 1fr;
+    }
+
+    .listRow {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 5px;
+    }
+
+    .listRow strong {
+        grid-column: 1 / -1;
+        padding-bottom: 3px;
+        border-bottom: 1px solid var(--color-hairline-soft);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .selectChevron {
+        transition: none;
+    }
+}

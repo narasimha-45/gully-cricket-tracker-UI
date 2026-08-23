@@ -24,6 +24,7 @@ function StatsFilterDialog({
   const [draftFilters, setDraftFilters] = useState(() => ({
     ...selectedFilters,
   }));
+  const [openField, setOpenField] = useState(null);
   const dialogRef = useDialogA11y(true, onClose);
 
   const activeFilterCount = useMemo(
@@ -104,42 +105,53 @@ function StatsFilterDialog({
         <div className={styles.filtersGrid}>
           {filters.map((filter) => {
             const selectId = `${titleId}-${filter.key}`;
+            const selectedValue = draftFilters[filter.key] ?? ALL_VALUE;
+            const selectedOption = filter.options.find((option) =>
+              (typeof option === "string" ? option : option.value) === selectedValue,
+            );
+            const selectedLabel = selectedOption
+              ? typeof selectedOption === "string" ? selectedOption : selectedOption.label
+              : selectedValue;
 
             return (
-              <div key={filter.key} className={styles.field}>
+              <div key={filter.key} className={`${styles.field} ${openField === filter.key ? styles.fieldOpen : ""}`}>
                 <label className={styles.label} htmlFor={selectId}>
                   {filter.label}
                 </label>
 
-                <div className={styles.selectWrap}>
-                  <select
+                <div className={`${styles.selectWrap} ${openField === filter.key ? styles.selectWrapOpen : ""}`}>
+                  <button
                     id={selectId}
-                    value={draftFilters[filter.key] ?? ALL_VALUE}
-                    onChange={(event) =>
-                      handleSelect(filter.key, event.target.value)
-                    }
+                    type="button"
                     className={styles.select}
+                    aria-haspopup="listbox"
+                    aria-expanded={openField === filter.key}
+                    onClick={() => setOpenField((current) => current === filter.key ? null : filter.key)}
                   >
-                    {filter.options.map((option) => {
-                      const value =
-                        typeof option === "string" ? option : option.value;
-
-                      const label =
-                        typeof option === "string" ? option : option.label;
-
-                      return (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      );
-                    })}
-                  </select>
-                  <ChevronDown
-                    className={styles.selectIcon}
-                    size={17}
-                    strokeWidth={2.25}
-                    aria-hidden="true"
-                  />
+                    <span>{selectedLabel}</span>
+                    <ChevronDown className={styles.selectIcon} size={17} strokeWidth={2.25} aria-hidden="true" />
+                  </button>
+                  {openField === filter.key && (
+                    <div className={styles.optionMenu} role="listbox" aria-label={filter.label}>
+                      {filter.options.map((option) => {
+                        const value = typeof option === "string" ? option : option.value;
+                        const label = typeof option === "string" ? option : option.label;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            role="option"
+                            aria-selected={selectedValue === value}
+                            className={selectedValue === value ? styles.optionActive : styles.option}
+                            onClick={() => { handleSelect(filter.key, value); setOpenField(null); }}
+                          >
+                            <span>{label}</span>
+                            {selectedValue === value && <span className={styles.optionCheck}>✓</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
             );

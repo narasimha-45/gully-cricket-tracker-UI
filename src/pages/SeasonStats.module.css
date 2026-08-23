@@ -1,31 +1,73 @@
+/* ============================================================
+   SeasonStats.module.css
+   Same tab style/behavior as InsightsHub
+   ============================================================ */
+
 .subTabs {
   position: sticky;
   top: 109px;
   z-index: 80;
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 3px;
-  margin: 0 -14px 12px;
-  padding: 7px 14px;
-  background: rgba(247, 248, 251, .96);
-  backdrop-filter: blur(12px);
+
+  display: flex;
+  gap: 6px;
+
+  margin: 0 -14px 4px;
+  padding: 2px 14px 8px;
+
+  background: rgba(247, 248, 251, 0.96);
+  backdrop-filter: blur(10px);
+
+  overflow-x: auto;
+  overflow-y: hidden;
+
+  overscroll-behavior-x: contain;
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: none;
+
+  /* Important */
+  overflow-anchor: none;
 }
+
+.subTabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* ============================================================
+   TAB
+   ============================================================ */
 
 .tab,
 .activeTab {
-  min-height: 34px;
+  flex: 0 0 auto;
+
+  min-height: 38px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-  padding: 0 4px;
+
+  padding: 0 12px;
+
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: 10px;
+
   text-decoration: none;
-  font-size: 10px;
+
+  font-size: 11px;
   font-weight: 600;
+
+  line-height: 1;
+
   white-space: nowrap;
+
+  transition:
+    background 140ms ease,
+    color 140ms ease,
+    border-color 140ms ease;
 }
+
+/* Normal tab */
 
 .tab {
   color: var(--color-slate-600);
@@ -34,19 +76,41 @@
 
 .tab:hover {
   background: var(--color-slate-100);
+  color: var(--color-slate-900);
 }
+
+/* Active tab */
 
 .activeTab {
   border-color: var(--color-indigo-100);
-  background: var(--color-indigo-50);
-  color: var(--color-indigo-700);
+
+  background: var(--color-slate-900);
+
+  color: white;
+
   font-weight: 700;
 }
 
+/* ============================================================
+   CONTENT
+   ============================================================ */
+
 .content {
   min-height: 300px;
+
+  display: flex;
+  flex-direction: column;
+
+  /*
+   * SeasonStats is nested below the season header,
+   * so keep the larger sticky offset.
+   */
   --stats-header-top: 158px;
 }
+
+/* ============================================================
+   SAFE AREA
+   ============================================================ */
 
 @supports (padding: env(safe-area-inset-top)) {
   .subTabs {

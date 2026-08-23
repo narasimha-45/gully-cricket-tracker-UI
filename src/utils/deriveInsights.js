@@ -1,4 +1,8 @@
-/** Convert ball count → overs string: 7 balls → "1.1", 12 → "2.0" */
+/** Convert ball count → overs string:
+ *  7 balls → "1.1"
+ *  12 balls → "2.0"
+ */
+
 const BOWLER_WICKET_TYPES = new Set([
   "BOWLED",
   "CAUGHT",
@@ -10,91 +14,161 @@ const BOWLER_WICKET_TYPES = new Set([
 
 function ballsToOvers(balls) {
   const fullOvers = Math.floor(balls / 6);
-  const rem = balls % 6;
-  return `${fullOvers}.${rem}`;
+
+  const remainingBalls = balls % 6;
+
+  return `${fullOvers}.${remainingBalls}`;
 }
 
 export function deriveInsights(match) {
-  const { live, innings: allInnings } = match;
+  if (!match) {
+    return null;
+  }
+
+  const { live, innings: allInnings = [] } = match;
+
+  if (!allInnings.length) {
+    return null;
+  }
+
+  /* ============================================================
+     TOTAL OVERS
+     ============================================================ */
 
   const configuredOvers = Number(match.totalOvers);
+
   const longestInningsOvers = Math.max(
     1,
+
     ...allInnings.map((innings) =>
-      Math.max(1, Math.ceil((innings.balls || 0) / 6)),
+      Math.max(
+        1,
+
+        Math.ceil((innings.balls || 0) / 6),
+      ),
     ),
   );
+
   const totalOvers =
     Number.isFinite(configuredOvers) && configuredOvers > 0
       ? configuredOvers
       : longestInningsOvers;
 
+  /* ============================================================
+     VISIBLE INNINGS
+
+     During live match only consider innings up to current innings.
+     ============================================================ */
+
   const visibleInnings = live
     ? allInnings.slice(0, live.inningsIndex + 1)
     : allInnings;
 
-  const allBalls = visibleInnings.flatMap((inn) => inn.ballByBall ?? []);
+  const allBalls = visibleInnings.flatMap(
+    (innings) => innings.ballByBall ?? [],
+  );
 
-  if (!allBalls.length) return null;
+  if (!allBalls.length) {
+    return null;
+  }
+
+  /* ============================================================
+     INTERNAL MAPS
+     ============================================================ */
 
   const batterMap = {};
   const bowlerMap = {};
   const overMap = {};
   const h2h = {};
 
-  /* ─────────────────────────────────────────────
-     Helpers
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     HELPERS
+     ============================================================ */
 
   const ensureBatter = (name) => {
     if (!batterMap[name]) {
-      batterMap[name] = { runs: 0, balls: 0, dots: 0, fours: 0, sixes: 0 };
-    }
-  };
-
-  const ensureBowler = (name) => {
-    if (!bowlerMap[name]) {
-      bowlerMap[name] = { runs: 0, balls: 0, dots: 0, wickets: 0 };
-    }
-  };
-
-  const ensureH2H = (batter, bowler, inningsIdx) => {
-    const key = `${inningsIdx}|||${batter}|||${bowler}`;
-    if (!h2h[key]) {
-      h2h[key] = {
-        inningsIdx,
-        batter,
-        bowler,
+      batterMap[name] = {
         runs: 0,
         balls: 0,
         dots: 0,
         fours: 0,
         sixes: 0,
+      };
+    }
+  };
+
+  const ensureBowler = (name) => {
+    if (!bowlerMap[name]) {
+      bowlerMap[name] = {
+        runs: 0,
+        balls: 0,
+        dots: 0,
         wickets: 0,
       };
     }
+  };
+
+  const ensureH2H = (batter, bowler, inningsIdx) => {
+    /*
+      Include innings index so each innings
+      is stored independently.
+
+      UI can later aggregate when
+      "All Innings" is selected.
+    */
+
+    const key = `${inningsIdx}|||${batter}|||${bowler}`;
+
+    if (!h2h[key]) {
+      h2h[key] = {
+        inningsIdx,
+
+        batter,
+        bowler,
+
+        runs: 0,
+        balls: 0,
+
+        dots: 0,
+
+        fours: 0,
+        sixes: 0,
+
+        wickets: 0,
+      };
+    }
+
     return key;
   };
 
-  /* ─────────────────────────────────────────────
-     Process innings
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     PROCESS INNINGS
+     ============================================================ */
 
   visibleInnings.forEach((inn, inningsIdx) => {
     for (const ball of inn.ballByBall ?? []) {
-      const { striker, bowler, runs, type, isWicket, over } = ball;
+      const { striker, bowler, runs = 0, type, isWicket, over } = ball;
+
+      /*
+          RETIRE is not an actual delivery.
+        */
+
       if (ball.type === "RETIRE") {
         continue;
       }
 
-      if (!striker || !bowler) continue;
+      if (!striker || !bowler) {
+        continue;
+      }
 
       const isWide = type === "WIDE";
 
       const isNoBall = type === "NO_BALL";
 
       const isLegal = !isWide && !isNoBall;
+
       const wicketType = ball.wicket?.type;
+
       const isBowlerWicket = Boolean(
         isWicket && !isNoBall && BOWLER_WICKET_TYPES.has(wicketType),
       );
@@ -102,75 +176,121 @@ export function deriveInsights(match) {
       ensureBatter(striker);
       ensureBowler(bowler);
 
-      const hk = ensureH2H(striker, bowler, inningsIdx);
+      const h2hKey = ensureH2H(striker, bowler, inningsIdx);
 
-      /* ── Over map ── */
+      /* ======================================================
+           OVER MAP
+           ====================================================== */
+
       const overKey = `${inningsIdx}-${over}`;
+
       if (!overMap[overKey]) {
         overMap[overKey] = {
           label: `Inn${inningsIdx + 1} Ov${over + 1}`,
+
           runs: 0,
           wickets: 0,
+
           inningsIdx,
           over,
+
           batters: new Set(),
+
           bowler,
         };
       }
-      overMap[overKey].batters.add(striker);
-      overMap[overKey].runs += runs;
-      if (isWicket) overMap[overKey].wickets += 1;
 
-      /* ── Batter stats ── */
+      overMap[overKey].batters.add(striker);
+
+      overMap[overKey].runs += runs;
+
+      if (isWicket) {
+        overMap[overKey].wickets += 1;
+      }
+
+      /* ======================================================
+           BATTER BALL / DOT STATISTICS
+           ====================================================== */
+
       if (isLegal) {
         batterMap[striker].balls += 1;
-        h2h[hk].balls += 1;
+
+        h2h[h2hKey].balls += 1;
+
+        /*
+            Dot ball:
+            legal delivery with 0 total runs.
+          */
 
         if (runs === 0) {
           batterMap[striker].dots += 1;
-          h2h[hk].dots += 1;
+
+          h2h[h2hKey].dots += 1;
         }
       }
 
+      /* ======================================================
+           BATTER RUNS
+           ====================================================== */
+
       if (!isWide) {
+        /*
+            Prefer explicit battingRuns if available.
+
+            Otherwise derive batter runs from total runs.
+          */
+
         const batRuns = Number.isFinite(ball.battingRuns)
           ? ball.battingRuns
           : runs - (isNoBall && match.rules?.noBall?.extraRun ? 1 : 0);
 
         if (batRuns > 0) {
           batterMap[striker].runs += batRuns;
-          h2h[hk].runs += batRuns;
+
+          h2h[h2hKey].runs += batRuns;
 
           if (batRuns === 4) {
             batterMap[striker].fours += 1;
-            h2h[hk].fours += 1;
+
+            h2h[h2hKey].fours += 1;
           }
+
           if (batRuns === 6) {
             batterMap[striker].sixes += 1;
-            h2h[hk].sixes += 1;
+
+            h2h[h2hKey].sixes += 1;
           }
         }
       }
 
-      /* ── Bowler stats ──
-         FIX: count legal balls only (not wides/no-balls) for overs.
-         FIX: a wicket delivery is NOT a dot ball — count dots only when
-              runs === 0 AND NOT a wicket (dot = batter faced, scored 0, not dismissed).
-              Actually in cricket, a wicket ball where 0 runs are scored IS
-              a dot ball for the bowler. We keep it as a dot (maiden calculation).
-              The original bug was excluding wickets from dot count — we fix by
-              removing the `&& !isWicket` guard.
-      ── */
+      /* ======================================================
+           BOWLER WICKETS
+           ====================================================== */
+
       if (isBowlerWicket) {
         bowlerMap[bowler].wickets += 1;
-        h2h[hk].wickets += 1;
+
+        h2h[h2hKey].wickets += 1;
       }
+
+      /* ======================================================
+           BOWLER RUNS
+           ====================================================== */
 
       bowlerMap[bowler].runs += runs;
 
+      /* ======================================================
+           BOWLER BALLS / DOTS
+           ====================================================== */
+
       if (isLegal) {
         bowlerMap[bowler].balls += 1;
-        // Dot = 0 runs on a legal delivery (wicket ball with 0 runs is still a dot)
+
+        /*
+            A wicket ball with zero runs
+            is still a dot ball.
+          */
+
         if (runs === 0) {
           bowlerMap[bowler].dots += 1;
         }
@@ -178,223 +298,346 @@ export function deriveInsights(match) {
     }
   });
 
-  /* ─────────────────────────────────────────────
-     Batters
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     BATTER LIST
+     ============================================================ */
 
   const batters = Object.entries(batterMap)
-    .filter(([, s]) => s.balls > 0 || s.runs > 0)
-    .map(([name, s]) => ({
+    .filter(([, stats]) => stats.balls > 0 || stats.runs > 0)
+    .map(([name, stats]) => ({
       name,
-      runs: s.runs,
-      balls: s.balls,
-      dots: s.dots,
-      fours: s.fours,
-      sixes: s.sixes,
-      sr: s.balls ? +((s.runs / s.balls) * 100).toFixed(1) : 0,
-      dotPct: s.balls ? +((s.dots / s.balls) * 100).toFixed(1) : 0,
+
+      runs: stats.runs,
+
+      balls: stats.balls,
+
+      dots: stats.dots,
+
+      fours: stats.fours,
+
+      sixes: stats.sixes,
+
+      sr: stats.balls ? +((stats.runs / stats.balls) * 100).toFixed(1) : 0,
+
+      dotPct: stats.balls ? +((stats.dots / stats.balls) * 100).toFixed(1) : 0,
     }))
     .sort((a, b) => b.runs - a.runs);
 
-  /* ─────────────────────────────────────────────
-     Bowlers — FIX: show overs (e.g. "1.5") instead of raw balls
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     BOWLER LIST
+     ============================================================ */
 
   const bowlers = Object.entries(bowlerMap)
-    .filter(([, s]) => s.balls > 0 || s.runs > 0 || s.wickets > 0)
-    .map(([name, s]) => ({
+    .filter(
+      ([, stats]) => stats.balls > 0 || stats.runs > 0 || stats.wickets > 0,
+    )
+    .map(([name, stats]) => ({
       name,
-      runs: s.runs,
-      balls: s.balls,
-      overs: ballsToOvers(s.balls), // ← "1.5", "2.0", etc.
-      dots: s.dots,
-      wickets: s.wickets,
-      eco: s.balls ? +(s.runs / (s.balls / 6)).toFixed(2) : 0,
-      dotPct: s.balls ? +((s.dots / s.balls) * 100).toFixed(1) : 0,
+
+      runs: stats.runs,
+
+      balls: stats.balls,
+
+      overs: ballsToOvers(stats.balls),
+
+      dots: stats.dots,
+
+      wickets: stats.wickets,
+
+      eco: stats.balls ? +(stats.runs / (stats.balls / 6)).toFixed(2) : 0,
+
+      dotPct: stats.balls ? +((stats.dots / stats.balls) * 100).toFixed(1) : 0,
     }))
     .sort((a, b) => b.balls - a.balls);
 
-  /* ─────────────────────────────────────────────
-     Run progression graph
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     RUN PROGRESSION
+     ============================================================ */
 
   const oversByInnings = visibleInnings
-    .map((inn, i) => {
+    .map((inn, inningsIdx) => {
       const balls = inn.ballByBall ?? [];
-      const overNums = [...new Set(balls.map((b) => b.over))].sort(
-        (a, b) => a - b,
-      );
 
-      let cumRuns = 0;
-      let cumWickets = 0;
+      const overNums = [
+        ...new Set(
+          balls
+            .filter((ball) => ball.type !== "RETIRE")
+            .map((ball) => ball.over),
+        ),
+      ].sort((a, b) => a - b);
+
+      let cumulativeRuns = 0;
+
+      let cumulativeWickets = 0;
 
       const points = [
         {
           over: 0,
+
           cumulative: 0,
+
           runs: 0,
+
           wickets: 0,
+
+          wicketsThisOver: 0,
         },
       ];
 
-      for (const o of overNums) {
+      for (const overNumber of overNums) {
         const overBalls = balls.filter(
-          (b) => b.over === o && b.type !== "RETIRE",
+          (ball) => ball.over === overNumber && ball.type !== "RETIRE",
         );
 
-        const runs = overBalls.reduce((s, b) => s + b.runs, 0);
+        const runs = overBalls.reduce((sum, ball) => sum + (ball.runs || 0), 0);
 
-        const wicketsThisOver = overBalls.filter((b) => b.isWicket).length;
+        const wicketsThisOver = overBalls.filter(
+          (ball) => ball.isWicket,
+        ).length;
 
-        cumRuns += runs;
-        cumWickets += wicketsThisOver;
+        cumulativeRuns += runs;
+
+        cumulativeWickets += wicketsThisOver;
 
         points.push({
-          over: o + 1,
-          cumulative: cumRuns,
+          over: overNumber + 1,
+
+          cumulative: cumulativeRuns,
+
           runs,
-          wickets: cumWickets, // cumulative wickets
+
+          wickets: cumulativeWickets,
+
           wicketsThisOver,
         });
       }
 
       return {
-        inningsIdx: i,
+        inningsIdx,
+
         battingTeam: inn.battingTeam,
+
         points,
       };
     })
     .filter((inn) => inn.points.length > 1);
 
-  /* ─────────────────────────────────────────────
-     H2H list
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     H2H LIST
+     ============================================================ */
 
   const h2hList = Object.values(h2h)
-    .filter((r) => r.balls > 0 || r.runs > 0 || r.wickets > 0)
-    .map((r) => ({
-      ...r,
-      sr: r.balls ? +((r.runs / r.balls) * 100).toFixed(1) : 0,
+    .filter((row) => row.balls > 0 || row.runs > 0 || row.wickets > 0)
+    .map((row) => ({
+      ...row,
+
+      sr: row.balls ? +((row.runs / row.balls) * 100).toFixed(1) : 0,
     }))
     .sort((a, b) => b.balls - a.balls);
 
-  /* ─────────────────────────────────────────────
-     Cards — FIX: bowler detail shows overs not balls
-  ───────────────────────────────────────────── */
+  /* ============================================================
+     INSIGHT CARD DATA
+     ============================================================ */
 
   const minBalls = 1;
 
+  /* Batting */
+
   const mostRuns = [...batters].sort((a, b) => b.runs - a.runs)[0];
+
   const mostFours = [...batters].sort((a, b) => b.fours - a.fours)[0];
+
   const mostSixes = [...batters].sort((a, b) => b.sixes - a.sixes)[0];
+
   const highestSR = [...batters]
-    .filter((b) => b.balls >= minBalls)
+    .filter((batter) => batter.balls >= minBalls)
     .sort((a, b) => b.sr - a.sr)[0];
+
   const mostDotsBat = [...batters].sort((a, b) => b.dots - a.dots)[0];
 
+  /* Bowling */
+
   const mostWickets = [...bowlers].sort((a, b) => b.wickets - a.wickets)[0];
+
   const bestEco = [...bowlers]
-    .filter((b) => b.balls >= minBalls)
+    .filter((bowler) => bowler.balls >= minBalls)
     .sort((a, b) => a.eco - b.eco)[0];
+
   const mostExpensive = [...bowlers].sort((a, b) => b.eco - a.eco)[0];
+
   const mostDotsBowl = [...bowlers].sort((a, b) => b.dots - a.dots)[0];
 
+  /* ============================================================
+     BIGGEST / COSTLIEST OVER
+     ============================================================ */
+
   const biggestOver = Object.values(overMap).sort((a, b) => b.runs - a.runs)[0];
-  Object.values(overMap).forEach((o) => {
-    o.batterNames = [...o.batters].join(" & ");
+
+  Object.values(overMap).forEach((overStats) => {
+    overStats.batterNames = [...overStats.batters].join(" & ");
   });
+
+  /* ============================================================
+     CARDS
+     ============================================================ */
 
   const cards = [
     mostRuns && {
+      group: "batting",
+
       label: "Top Scorer",
+
       value: mostRuns.runs,
+
       sub: mostRuns.name,
+
       detail: `${mostRuns.balls}b · SR ${mostRuns.sr}`,
+
       color: "var(--color-indigo-600)",
     },
 
     highestSR && {
+      group: "batting",
+
       label: "Highest SR",
+
       value: highestSR.sr,
+
       sub: highestSR.name,
+
       detail: `${highestSR.runs}(${highestSR.balls})`,
+
       color: "var(--color-green-600)",
     },
 
     mostFours && {
-      label: "Most Fours",
-      value: mostFours.fours,
-      sub: mostFours.name,
-      detail: `${mostFours.runs} runs`,
-      color: "#3b82f6",
-    },
+      group: "batting",
 
-    mostSixes && {
-      label: "Most Sixes",
-      value: mostSixes.sixes,
-      sub: mostSixes.name,
-      detail: `${mostSixes.runs} runs`,
+      label: "Most Fours",
+
+      value: mostFours.fours,
+
+      sub: mostFours.name,
+
+      detail: `${mostFours.runs} runs`,
+
       color: "var(--color-violet-600)",
     },
 
-    mostDotsBat && {
-      label: "Most Dots (Bat)",
-      value: mostDotsBat.dots,
-      sub: mostDotsBat.name,
-      detail: `${mostDotsBat.dotPct}% of balls`,
+    mostSixes && {
+      group: "batting",
+
+      label: "Most Sixes",
+
+      value: mostSixes.sixes,
+
+      sub: mostSixes.name,
+
+      detail: `${mostSixes.runs} runs`,
+
       color: "var(--color-amber-500)",
     },
 
+    mostDotsBat && {
+      group: "batting",
+
+      label: "Most Dots (Bat)",
+
+      value: mostDotsBat.dots,
+
+      sub: mostDotsBat.name,
+
+      detail: `${mostDotsBat.dotPct}% of balls`,
+
+      color: "var(--color-slate-500)",
+    },
+
     mostWickets && {
+      group: "bowling",
+
       label: "Most Wickets",
+
       value: mostWickets.wickets,
+
       sub: mostWickets.name,
-      // FIX: show overs instead of balls
+
       detail: `${mostWickets.overs} ov · Eco ${mostWickets.eco}`,
+
       color: "var(--color-red-600)",
     },
 
     bestEco && {
+      group: "bowling",
+
       label: "Best Economy",
+
       value: bestEco.eco,
+
       sub: bestEco.name,
-      // FIX: show overs instead of balls
+
       detail: `${bestEco.runs}r in ${bestEco.overs} ov`,
-      color: "#0891b2",
+
+      color: "var(--color-green-600)",
     },
 
     mostExpensive && {
+      group: "bowling",
+
       label: "Most Expensive",
+
       value: mostExpensive.eco,
+
       sub: mostExpensive.name,
-      // FIX: show overs instead of balls
+
       detail: `${mostExpensive.runs}r in ${mostExpensive.overs} ov`,
-      color: "var(--color-red-600)",
+
+      color: "var(--color-amber-500)",
     },
 
     mostDotsBowl && {
+      group: "bowling",
+
       label: "Most Dots (Bowl)",
+
       value: mostDotsBowl.dots,
+
       sub: mostDotsBowl.name,
+
       detail: `${mostDotsBowl.dotPct}% dot balls`,
-      color: "#ea580c",
+
+      color: "var(--color-slate-500)",
     },
 
     biggestOver && {
-      label: "Expensive Over",
+      group: "moment",
+
+      label: "Costliest Over",
+
       value: `${biggestOver.runs}`,
+
       sub: `${biggestOver.batterNames} vs ${biggestOver.bowler}`,
-      detail: `${biggestOver.label} • ${biggestOver.wickets}W`,
-      color: "var(--color-green-600)",
+
+      detail: `${biggestOver.label} · ${biggestOver.wickets}W`,
+
+      color: "var(--color-indigo-600)",
     },
   ].filter(Boolean);
 
+  /* ============================================================
+     RETURN
+     ============================================================ */
+
   return {
     cards,
+
     oversByInnings,
+
     h2hList,
+
     batters,
+
     bowlers,
+
     totalOvers,
   };
 }

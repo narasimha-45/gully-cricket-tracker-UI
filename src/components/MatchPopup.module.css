@@ -45,6 +45,106 @@
     line-height: 1.5;
 }
 
+/* ============================================================
+   SCORELINE
+   A dedicated, legible score display instead of folding the
+   score into the subtitle sentence.
+   ============================================================ */
+
+.scoreline {
+    margin-top: 14px;
+    padding: 14px 16px;
+
+    border-radius: 14px;
+    background: var(--color-indigo-50, #eef2ff);
+    border: 1px solid var(--color-indigo-100, #e0e7ff);
+
+    text-align: center;
+}
+
+.scorelineTeam {
+    color: var(--color-indigo-700);
+    font-size: 11px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+}
+
+.scorelineScore {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+
+    margin-top: 4px;
+}
+
+.scorelineRuns {
+    color: var(--color-slate-900);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: -.02em;
+    font-variant-numeric: tabular-nums;
+}
+
+.scorelineDivider {
+    color: var(--color-slate-300);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.scorelineWickets {
+    color: var(--color-slate-600);
+    font-size: 20px;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+}
+
+.scorelineBadge {
+    margin-left: 6px;
+    padding: 3px 9px;
+
+    border-radius: 999px;
+    background: var(--color-amber-500);
+    color: white;
+
+    font-size: 9px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+
+    align-self: center;
+}
+
+.scorelineOvers {
+    margin-top: 3px;
+    color: var(--color-slate-500);
+    font-size: 11px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+/* ============================================================
+   BANNER
+   A distinct callout for secondary but important context, e.g.
+   follow-on eligibility, separate from the main scoreline.
+   ============================================================ */
+
+.banner {
+    margin-top: 10px;
+    padding: 10px 12px;
+
+    border-radius: 10px;
+    background: #fffbeb;
+    border: 1px solid #fde68a;
+
+    color: #92400e;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.45;
+}
+
 .actions {
     display: grid;
     gap: 8px;
@@ -129,6 +229,10 @@
 
     .title {
         font-size: 20px;
+    }
+
+    .scorelineRuns {
+        font-size: 28px;
     }
 }
 

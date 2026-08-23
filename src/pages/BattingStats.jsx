@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useReducer } from "react";
+import { Badge, Trophy } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import {
@@ -83,7 +84,7 @@ export default function BattingStats({ isOverall = false }) {
 
   const filterDefinitions = useMemo(
     () => [
-      { key: "innings", label: "Innings", options: ["All", "First", "Second"] },
+      { key: "innings", label: "INN", options: ["All", "First", "Second"] },
       { key: "result", label: "Match Result", options: ["All", "Won", "Lost"] },
       {
         key: "position",
@@ -117,7 +118,9 @@ export default function BattingStats({ isOverall = false }) {
       const option = definition?.options.find(
         (item) => (typeof item === "string" ? item : item.value) === value,
       );
-      return [typeof option === "string" ? option : option?.label || value];
+      const label =
+        typeof option === "string" ? option : option?.label || value;
+      return [`${definition?.label || key}: ${label}`];
     });
   }, [filterDefinitions, state.filters]);
 
@@ -151,6 +154,17 @@ export default function BattingStats({ isOverall = false }) {
 
   return (
     <div className={styles.page}>
+      <header className={styles.statsHeading}>
+        <div>
+          <span className={styles.statsKicker}>
+            <Trophy size={13} /> Batting
+          </span>
+          <h2>Batting stats</h2>
+        </div>
+        <span className={styles.statsIcon}>
+          <Badge size={21} />
+        </span>
+      </header>
       <LeaderboardToolbar
         activeLabels={activeLabels}
         warning={teamsQuery.isError ? "Team filters unavailable" : ""}
@@ -189,14 +203,6 @@ export default function BattingStats({ isOverall = false }) {
               ariaLabel="Sort by runs"
             />
             <SortButton
-              label="B"
-              column="balls"
-              activeColumn={state.sortKey}
-              direction={state.sortDir}
-              onSort={onSort}
-              ariaLabel="Sort by balls faced"
-            />
-            <SortButton
               label="Avg"
               column="average"
               activeColumn={state.sortKey}
@@ -217,6 +223,14 @@ export default function BattingStats({ isOverall = false }) {
               direction={state.sortDir}
               onSort={onSort}
               ariaLabel="Sort by highest score"
+            />
+            <SortButton
+              label="0s"
+              column="ducks"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by ducks"
             />
           </div>
 
@@ -244,15 +258,15 @@ export default function BattingStats({ isOverall = false }) {
                 {number(player.totalRuns)}
               </span>
               <span className={styles.stat}>
-                {number(player.totalBallsFaced)}
-              </span>
-              <span className={styles.stat}>
-                {number(player.average).toFixed(1)}
+                {player.average == null
+                  ? number(player.totalRuns)
+                  : number(player.average).toFixed(1)}
               </span>
               <span className={styles.stat}>
                 {number(player.strikeRate).toFixed(1)}
               </span>
               <span className={styles.stat}>{number(player.highestScore)}</span>
+              <span className={styles.stat}>{number(player.ducks)}</span>
             </div>
           ))}
         </div>

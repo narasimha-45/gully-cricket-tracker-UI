@@ -22,6 +22,8 @@ const TossPage = lazy(() => import("../pages/TossPage"));
 const LiveMatch = lazy(() => import("../pages/LiveMatch"));
 const MatchSummary = lazy(() => import("../pages/MatchSummary"));
 const AnalyticsOverview = lazy(() => import("../pages/AnalyticsOverview"));
+const Partnerships = lazy(() => import("../pages/Partnerships"));
+const Rivalry = lazy(() => import("../pages/Rivalry"));
 
 function RouteFallback() {
   return <LoadingState label="Loading screen…" />;
@@ -75,6 +77,8 @@ export default function AppRoutes() {
             <Route path="bowling" element={<BowlingStats isOverall />} />
             <Route path="teams" element={<TeamStats />} />
             <Route path="misc" element={<MiscStats isOverall />} />
+            <Route path="partnerships" element={<Partnerships />} />
+            <Route path="rivalry" element={<Rivalry />} />
             {/* Backward-compatible redirect while matchup APIs are not part of the stable backend. */}
             <Route
               path="matchups"
@@ -101,15 +105,28 @@ export default function AppRoutes() {
 
           <Route path="/season/:seasonId" element={<SeasonShell />}>
             <Route index element={<Navigate to="matches" replace />} />
+
             <Route element={<SeasonLayout />}>
               <Route path="matches" element={<SeasonMatches />} />
+
               <Route path="stats" element={<SeasonStats />}>
                 <Route index element={<Navigate to="overview" replace />} />
+
                 <Route path="overview" element={<AnalyticsOverview />} />
+
                 <Route path="batting" element={<BattingStats />} />
+
                 <Route path="bowling" element={<BowlingStats />} />
+
                 <Route path="teams" element={<TeamStats />} />
+
                 <Route path="misc" element={<MiscStats />} />
+
+                {/* Same as InsightsHub */}
+                <Route path="partnerships" element={<Partnerships />} />
+
+                <Route path="rivalry" element={<Rivalry />} />
+
                 <Route
                   path="matchups"
                   element={<Navigate to="../overview" replace />}
