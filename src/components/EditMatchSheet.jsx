@@ -25,7 +25,7 @@ export default function EditMatchSheet({ open, onClose }) {
   const [newPlayer, setNewPlayer] = useState("");
   const innings = match.innings[live.inningsIndex];
   const testMatch = isTestMatch(match);
-  const canEditTestFormat = testMatch && live.inningsIndex === 0;
+  const canEditTestFormat = testMatch && live.inningsIndex < 2;
   const testInningsPerTeam = getTestInningsPerTeam(match);
 
   const usedPlayers = useMemo(() => {

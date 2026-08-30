@@ -4,12 +4,10 @@ import {
   getFinalInningsTarget,
   getScheduledInningsCount,
   getScheduledTeamsForInnings,
-  getTeamInningsOrdinal,
   getTestLeadStatus,
   isTestMatch,
+  sameName,
 } from "./matchModel";
-
-const ordinalLabel = (number) => (number === 1 ? "1st" : "2nd");
 
 export function formatMatchResult(result) {
   if (!result) return "Match complete";
@@ -37,22 +35,55 @@ export function formatMatchResult(result) {
 export function buildMatchHeroRows(match) {
   const currentIndex = match.live.inningsIndex;
 
+  // Once a match is COMPLETED there's no "live" innings left to bold, so every
+  // row used to fall back to the same muted grey — a completed match looked
+  // flatter than a live one even though the result is the most interesting
+  // part. Keeping the winner's row bold (and the loser's muted) preserves the
+  // same light/dark contrast the card has while live.
+  const isWinningTeam = (teamName) =>
+    match.status === "COMPLETED" &&
+    Boolean(match.result?.winner) &&
+    sameName(teamName, match.result.winner);
+
   if (isTestMatch(match)) {
-    return Array.from(
-      { length: getScheduledInningsCount(match) },
-      (_, index) => {
-        const existing = match.innings[index] || null;
-        const teams = existing || getScheduledTeamsForInnings(match, index);
-        const ordinal = getTeamInningsOrdinal(match, index);
-        return {
-          key: `test-${index}`,
-          label: `${formatName(teams.battingTeam)} · ${ordinalLabel(ordinal)}`,
+    const scheduledCount = getScheduledInningsCount(match);
+
+    // Group by team identity rather than innings index, since follow-on can
+    // flip which team bats at index 2 vs 3. Each team gets one row; innings
+    // that haven't started yet are simply omitted (no placeholder segment),
+    // so a completed innings never gets a dangling "& yet to bat" tacked on.
+    const teamOrder = [];
+    for (let index = 0; index < scheduledCount; index += 1) {
+      const scheduledTeam = getScheduledTeamsForInnings(
+        match,
+        index,
+      ).battingTeam;
+      if (!teamOrder.some((team) => sameName(team, scheduledTeam))) {
+        teamOrder.push(scheduledTeam);
+      }
+    }
+
+    return teamOrder.map((teamName) => {
+      const rowIsWinner = isWinningTeam(teamName);
+      const segments = [];
+      for (let index = 0; index < scheduledCount; index += 1) {
+        const existing = match.innings[index];
+        if (!existing || !sameName(existing.battingTeam, teamName)) continue;
+        segments.push({
           innings: existing,
-          isCurrent: index === currentIndex && match.status !== "COMPLETED",
-          isFuture: index > currentIndex,
-        };
-      },
-    );
+          isCurrent:
+            rowIsWinner ||
+            (index === currentIndex && match.status !== "COMPLETED"),
+        });
+      }
+
+      return {
+        key: `test-team-${teamName}`,
+        label: formatName(teamName),
+        segments,
+        isCurrent: rowIsWinner || segments.some((segment) => segment.isCurrent),
+      };
+    });
   }
 
   const rows = [];
@@ -63,7 +94,9 @@ export function buildMatchHeroRows(match) {
       key: `main-${index}`,
       label: formatName(teams.battingTeam),
       innings: existing,
-      isCurrent: index === currentIndex && match.status !== "COMPLETED",
+      isCurrent:
+        isWinningTeam(teams.battingTeam) ||
+        (index === currentIndex && match.status !== "COMPLETED"),
       isFuture: index > currentIndex,
     });
   }
@@ -91,19 +124,6 @@ export function buildMatchHeroRows(match) {
   }
 
   return rows;
-}
-
-// Picks which row from buildMatchHeroRows() should be shown as the big, prominent
-// score (the actively-live innings, or — once the match is over — the most recent
-// innings with any runs on the board). Every other row is rendered small underneath.
-export function pickPrimaryHeroRow(rows) {
-  const scoreRows = rows.filter((row) => !row.isSectionLabel);
-  return (
-    scoreRows.find((row) => row.isCurrent) ||
-    [...scoreRows].reverse().find((row) => row.innings) ||
-    scoreRows[0] ||
-    null
-  );
 }
 
 export function buildMatchStatusLine(match) {

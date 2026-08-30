@@ -1,10 +1,9 @@
 import { formatOvers } from "../utils/calculators";
 import { formatName } from "../utils/helpers";
-import { getTestInningsPerTeam, isTestMatch } from "../utils/matchModel";
+import { isTestMatch, getTestInningsPerTeam } from "../utils/matchModel";
 import {
   buildMatchHeroRows,
   buildMatchStatusLine,
-  pickPrimaryHeroRow,
 } from "../utils/matchPresentation";
 import styles from "./MatchHero.module.css";
 
@@ -15,16 +14,44 @@ const formatInningsScore = (innings) =>
       )})${innings.completionReason === "DECLARED" ? " d" : ""}`
     : null;
 
+// Renders one team's score for a test-match row: completed innings are joined
+// with " & " in a muted, smaller weight; the live innings (if any) is bold and
+// slightly larger so the eye lands on what's actually happening right now.
+function TestScoreSegments({ segments }) {
+  if (segments.length === 0) {
+    return <span className={styles.yetToBat}>Yet to bat</span>;
+  }
+
+  return segments.map((segment, index) => (
+    <span key={index}>
+      {index > 0 && <span className={styles.segmentSeparator}> & </span>}
+      <span
+        // Keying on the score forces a remount when it changes, replaying the
+        // pop animation below as a lightweight "just updated" cue.
+        key={
+          segment.isCurrent
+            ? `${segment.innings.totalRuns}-${segment.innings.wickets}-${segment.innings.balls}`
+            : undefined
+        }
+        className={
+          segment.isCurrent
+            ? `${styles.segmentLive} ${styles.scoreValuePulse}`
+            : styles.segmentDone
+        }
+      >
+        {formatInningsScore(segment.innings)}
+      </span>
+    </span>
+  ));
+}
+
 export default function MatchHero({ match, onAction }) {
   const rows = buildMatchHeroRows(match);
   const status = buildMatchStatusLine(match);
   const completed = match.status === "COMPLETED";
   const testMatch = isTestMatch(match);
-  // The actively-live innings (or, once the match ends, the most recent one with
-  // runs on the board) gets the big, prominent score treatment; everything else
-  // is listed compactly underneath.
-  const primaryRow = pickPrimaryHeroRow(rows);
-  const secondaryRows = rows.filter((row) => row !== primaryRow);
+
+  let previousWasRow = false;
 
   return (
     <section className={styles.card}>
@@ -54,84 +81,66 @@ export default function MatchHero({ match, onAction }) {
         </button>
       </div>
 
-      {primaryRow && (
-        <div className={styles.primaryScore}>
-          <span
-            className={
-              primaryRow.isSuperOver
-                ? styles.superOverTeam
-                : styles.primaryScoreTeam
-            }
-          >
-            {primaryRow.label}
-          </span>
-          <span
-            // Keying on the score itself forces a remount whenever the
-            // total/wickets/balls change, which replays the CSS pop
-            // animation below — a lightweight way to give the score a
-            // "just updated" beat without any extra state or effects.
-            key={
-              primaryRow.innings
-                ? `${primaryRow.innings.totalRuns}-${primaryRow.innings.wickets}-${primaryRow.innings.balls}`
-                : "yet-to-bat"
-            }
-            className={`${styles.primaryScoreValue} ${
-              primaryRow.isCurrent ? styles.scoreValuePulse : ""
-            }`}
-          >
-            {formatInningsScore(primaryRow.innings) || (
-              <span className={styles.yetToBat}>Yet to bat</span>
-            )}
-          </span>
-        </div>
-      )}
-
-      {secondaryRows.length > 0 && (
-        <div className={styles.scoreRows}>
-          {secondaryRows.map((row) => {
-            if (row.isSectionLabel) {
-              return (
-                <div key={row.key} className={styles.sectionDivider}>
-                  <span className={styles.sectionLine} />
-                  <span className={styles.sectionLabel}>{row.label}</span>
-                  <span className={styles.sectionLine} />
-                </div>
-              );
-            }
-
+      <div className={styles.rows}>
+        {rows.map((row) => {
+          if (row.isSectionLabel) {
+            previousWasRow = false;
             return (
-              <div
-                key={row.key}
-                className={`${styles.scoreRow} ${
-                  row.isFuture ? styles.future : ""
-                }`}
-              >
-                <span className={row.isSuperOver ? styles.superOverTeam : ""}>
+              <div key={row.key} className={styles.sectionDivider}>
+                <span className={styles.sectionLine} />
+                <span className={styles.sectionLabel}>{row.label}</span>
+                <span className={styles.sectionLine} />
+              </div>
+            );
+          }
+
+          const showSeparator = previousWasRow;
+          previousWasRow = true;
+
+          return (
+            <div key={row.key}>
+              {showSeparator && <div className={styles.rowSeparator} />}
+              <div className={styles.teamRow}>
+                <span
+                  className={`${
+                    row.isCurrent
+                      ? styles.teamNameCurrent
+                      : styles.teamNameMuted
+                  } ${row.isSuperOver ? styles.superOverTeam : ""}`}
+                >
                   {row.label}
                 </span>
                 <span className={styles.scoreValue}>
-                  {formatInningsScore(row.innings) || (
+                  {row.segments ? (
+                    <TestScoreSegments segments={row.segments} />
+                  ) : row.innings ? (
+                    <span
+                      key={`${row.innings.totalRuns}-${row.innings.wickets}-${row.innings.balls}`}
+                      className={
+                        row.isCurrent
+                          ? `${styles.segmentLive} ${styles.scoreValuePulse}`
+                          : styles.segmentDone
+                      }
+                    >
+                      {formatInningsScore(row.innings)}
+                    </span>
+                  ) : (
                     <span className={styles.yetToBat}>Yet to bat</span>
                   )}
                 </span>
               </div>
-            );
-          })}
-        </div>
-      )}
+            </div>
+          );
+        })}
+      </div>
 
-      <div className={styles.status}>
+      <div className={styles.statusFooter}>
         {status.type === "text" && (
           <div className={styles.resultText}>{status.text}</div>
         )}
 
         {status.type === "crr" && (
           <div className={styles.statusCenter}>
-            {status.isSuperOver && (
-              <span className={styles.superOverBadge}>
-                Super Over {status.superOverNumber}
-              </span>
-            )}
             <span>CRR: {status.crr}</span>
           </div>
         )}
@@ -150,9 +159,6 @@ export default function MatchHero({ match, onAction }) {
               <span>RRR: {status.rrr}</span>
             </div>
             <div className={styles.statusCenter}>
-              {status.isSuperOver && (
-                <span className={styles.superOverBadge}>Super Over</span>
-              )}
               <span>
                 Need {status.need} in {status.ballsLeft} balls
               </span>
