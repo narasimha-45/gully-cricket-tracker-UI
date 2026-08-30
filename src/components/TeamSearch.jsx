@@ -5,14 +5,27 @@ import { useTeamSearch } from "../hooks/queries";
 import { normalizeName } from "../utils/matchModel";
 import styles from "./TeamSearch.module.css";
 
+const capitalizeFirstLetter = (name = "") => {
+  const trimmed = name.trim();
+  if (!trimmed) return "";
+
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+};
+
 const getTeamId = (team) => team?.teamId || team?.id || team?._id || "";
-const getTeamName = (team) => team?.teamName || team?.name || "";
+
+const getTeamName = (team) =>
+  capitalizeFirstLetter(team?.teamName || team?.name || "");
 
 const normalizePlayerName = (player) => {
   if (!player) return "";
-  if (typeof player === "string") return normalizeName(player);
+
+  if (typeof player === "string") {
+    return normalizeName(player);
+  }
 
   const nestedPlayer = player.player || player.playerDto || {};
+
   return normalizeName(
     player.playerName ||
       player.displayName ||
@@ -26,11 +39,13 @@ const normalizePlayerName = (player) => {
 
 const toArray = (response) => {
   const payload = unwrapApiData(response);
+
   if (Array.isArray(payload)) return payload;
   if (Array.isArray(payload?.content)) return payload.content;
   if (Array.isArray(payload?.players)) return payload.players;
   if (Array.isArray(payload?.items)) return payload.items;
   if (Array.isArray(payload?.suggestions)) return payload.suggestions;
+
   return [];
 };
 
@@ -45,16 +60,21 @@ export function TeamSearch({
   const [isOpen, setIsOpen] = useState(false);
   const [squadLoading, setSquadLoading] = useState(false);
   const [error, setError] = useState("");
+
   const containerRef = useRef(null);
 
   const searchText = useDebouncedValue(value.query?.trim() || "", 250);
+
   const teamsQuery = useTeamSearch(searchText);
+
   const searchLoading = Boolean(
     (value.query?.trim()?.length || 0) >= 2 &&
     (teamsQuery.isLoading || searchText !== value.query?.trim()),
   );
+
   const results = useMemo(() => {
     const otherTeam = normalizeName(otherSelectedName);
+
     return (teamsQuery.data || []).filter(
       (team) => normalizeName(getTeamName(team)) !== otherTeam,
     );
@@ -71,7 +91,10 @@ export function TeamSearch({
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
-    return () => document.removeEventListener("mousedown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("mousedown", handleOutsideClick);
+    };
   }, []);
 
   const setSquadLoadingState = (next) => {
@@ -86,6 +109,7 @@ export function TeamSearch({
     setIsOpen(false);
     setError("");
     setSquadLoadingState(true);
+
     setValue({
       id,
       name,
@@ -96,6 +120,7 @@ export function TeamSearch({
 
     try {
       const response = await api.teams.getTeamSeasonPlayers(id, seasonId);
+
       const players = [
         ...new Set(toArray(response).map(normalizePlayerName).filter(Boolean)),
       ];
@@ -115,6 +140,7 @@ export function TeamSearch({
         players: [],
         playersLoaded: true,
       });
+
       setError(
         "The team was selected, but its saved squad could not be loaded. Players can be added on the next screen.",
       );
@@ -124,7 +150,8 @@ export function TeamSearch({
   };
 
   const selectNewTeam = () => {
-    const name = value.query.trim();
+    const name = capitalizeFirstLetter(value.query);
+
     setValue({
       id: "",
       name,
@@ -132,6 +159,7 @@ export function TeamSearch({
       players: [],
       playersLoaded: true,
     });
+
     setIsOpen(false);
     setError("");
   };
@@ -158,6 +186,7 @@ export function TeamSearch({
               players: [],
               playersLoaded: true,
             });
+
             setError("");
             setIsOpen(true);
           }}
@@ -166,6 +195,7 @@ export function TeamSearch({
         {value.name && !searchLoading && !squadLoading && (
           <span className={styles.checkIcon}>✓</span>
         )}
+
         {(searchLoading || squadLoading) && (
           <span className={styles.spinner} aria-label="Loading" />
         )}
@@ -175,12 +205,16 @@ export function TeamSearch({
         <p className={styles.loadedMeta}>
           {loadedPlayerCount === 0
             ? "No saved players found"
-            : `${loadedPlayerCount} saved player${loadedPlayerCount === 1 ? "" : "s"} loaded`}
+            : `${loadedPlayerCount} saved player${
+                loadedPlayerCount === 1 ? "" : "s"
+              } loaded`}
         </p>
       )}
+
       {squadLoading && (
         <p className={styles.loadedMeta}>Loading saved squad…</p>
       )}
+
       {(error || teamsQuery.isError) && (
         <p className={styles.error}>
           {error ||
@@ -194,6 +228,7 @@ export function TeamSearch({
             ? results.map((team) => {
                 const id = getTeamId(team);
                 const name = getTeamName(team);
+
                 return (
                   <button
                     key={id || name}
@@ -202,6 +237,7 @@ export function TeamSearch({
                     onClick={() => selectExistingTeam(team)}
                   >
                     <span className={styles.teamIcon}>🛡️</span>
+
                     <span>
                       <strong>{name}</strong>
                       <small>Load this team and its season squad</small>
@@ -216,8 +252,12 @@ export function TeamSearch({
                   onClick={selectNewTeam}
                 >
                   <span className={styles.newTeamIcon}>+</span>
+
                   <span>
-                    <strong>New team: “{value.query.trim()}”</strong>
+                    <strong>
+                      New team: “{capitalizeFirstLetter(value.query)}”
+                    </strong>
+
                     <small>Create it for this match</small>
                   </span>
                 </button>

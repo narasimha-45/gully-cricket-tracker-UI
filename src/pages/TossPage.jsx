@@ -89,7 +89,7 @@ function TossPageContent() {
             ? "heads"
             : "tails",
       });
-    }, 700);
+    }, 1500);
     timersRef.current.push(timer);
   };
 
@@ -146,11 +146,18 @@ function TossPageContent() {
   return (
     <main className={styles.page}>
       <header className={styles.hero}>
-        <span className={styles.eyebrow}>Match setup</span>
-        <h1>Toss</h1>
-        <p>
-          {teamAName} <span>vs</span> {teamBName}
-        </p>
+        <div className={styles.heroTop}>
+          <span className={styles.eyebrow}>Match Setup</span>
+          <span className={styles.tossBadge}>Toss</span>
+        </div>
+
+        <div className={styles.matchup}>
+          <div className={styles.teamName}>{teamAName}</div>
+
+          <div className={styles.vsBadge}>VS</div>
+
+          <div className={styles.teamName}>{teamBName}</div>
+        </div>
       </header>
 
       <section className={styles.card}>
