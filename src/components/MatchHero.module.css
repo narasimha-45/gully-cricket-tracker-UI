@@ -33,8 +33,7 @@
 }
 
 .liveBadge,
-.formatPill,
-.superOverBadge {
+.formatPill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -77,39 +76,62 @@
   cursor: pointer;
 }
 
-.scoreRows {
-  display: grid;
-  gap: 3px;
+.rows {
   margin-top: 10px;
 }
 
-.scoreRow {
+.teamRow {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
   gap: 10px;
-  min-height: 22px;
-  color: rgba(255, 255, 255, .76);
-  font-size: 12px;
+  min-height: 24px;
 }
 
-.current {
-  color: white;
-  font-size: 13px;
+.rowSeparator {
+  height: 1px;
+  margin: 2px 0;
+  background: rgba(255, 255, 255, .1);
+}
+
+.teamNameCurrent {
+  font-size: 15px;
   font-weight: 700;
+  color: white;
 }
 
-.future {
-  opacity: .5;
+.teamNameMuted {
+  font-size: 14px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .5);
 }
 
 .scoreValue {
   flex-shrink: 0;
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+}
+
+.segmentLive {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+}
+
+.segmentDone {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .55);
+}
+
+.segmentSeparator {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .35);
+  margin: 0 1px;
 }
 
 .scoreValuePulse {
+  display: inline-block;
   animation: scoreValuePulse 320ms ease-out;
 }
 
@@ -125,8 +147,9 @@
 }
 
 .yetToBat {
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 12px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, .5);
 }
 
 .sectionDivider {
@@ -134,7 +157,7 @@
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
   gap: 7px;
-  margin: 4px 0 0;
+  margin: 6px 0;
 }
 
 .sectionLine {
@@ -154,10 +177,11 @@
   color: var(--color-red-200);
 }
 
-.status {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, .13);
+.statusFooter {
+  margin: 10px -14px -14px;
+  padding: 9px 14px;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  background: rgba(0, 0, 0, .14);
   font-size: 11px;
   font-weight: 600;
 }
@@ -183,14 +207,4 @@
   text-align: center;
   font-size: 12px;
   font-weight: 700;
-}
-
-.superOverBadge {
-  padding: 2px 6px;
-  background: rgba(239, 68, 68, .2);
-  color: var(--color-red-200);
-  font-size: 8px;
-  font-weight: 700;
-  letter-spacing: .04em;
-  text-transform: uppercase;
 }
