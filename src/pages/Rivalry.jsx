@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Crosshair, Filter, Swords } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import EmptyState from "../components/common/EmptyState";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import PlayerAutocomplete from "../components/PlayerAutocomplete";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
@@ -20,6 +21,7 @@ const playerId = (player) => player?.playerId || player?.id || player?._id || ""
 export default function Rivalry() {
   const { globalFilter = "all" } = useOutletContext() || {};
   const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const [matchType, setMatchType] = useState("OVERS");
   const [mode, setMode] = useState("rivalry");
   const [batter, setBatter] = useState(null);
   const [bowler, setBowler] = useState(null);
@@ -30,6 +32,7 @@ export default function Rivalry() {
   const teamsQuery = useTeamsForSeason("ALL");
   const rivalryFilters = {
     seasonId,
+    matchType,
     batsmanId: playerId(batter) || undefined,
     bowlerId: playerId(bowler) || undefined,
     inningsNumber: filters.inningsNumber === "All" ? undefined : filters.inningsNumber,
@@ -41,7 +44,7 @@ export default function Rivalry() {
     minDismissals: filters.minDismissals === "All" ? undefined : filters.minDismissals,
   };
   const rivalryQuery = useRivalries(rivalryFilters);
-  const comparisonQuery = usePlayerComparison({ seasonId, player1Id: playerId(playerOne) || undefined, player2Id: playerId(playerTwo) || undefined });
+  const comparisonQuery = usePlayerComparison({ seasonId, matchType, player1Id: playerId(playerOne) || undefined, player2Id: playerId(playerTwo) || undefined });
   const teams = useMemo(() => (teamsQuery.data || []).map((team) => ({ value: team.teamId || team.id, label: formatName(team.teamName || team.name) })).filter((team) => team.value), [teamsQuery.data]);
   const activeFilterCount = Object.values(filters).filter((entry) => entry !== "All").length;
   const filterDefinitions = [
@@ -73,6 +76,7 @@ export default function Rivalry() {
         <div><span className={styles.kicker}><Swords size={13} /> Matchups</span><h2>Rivalries</h2></div>
         <span className={styles.headingIcon}><Crosshair size={22} /></span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <div className={styles.modeTabs} role="tablist" aria-label="Comparison type">
         {MODES.map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={mode === key} className={mode === key ? styles.modeActive : styles.mode} onClick={() => changeMode(key)}>{label}</button>)}
       </div>

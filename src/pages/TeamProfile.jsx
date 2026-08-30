@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import LoadingState from "../components/common/LoadingState";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { useSeasons, useTeamProfile } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
@@ -27,7 +28,8 @@ export default function TeamProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [seasonId, setSeasonId] = useState("");
-  const profileQuery = useTeamProfile(id, seasonId || undefined);
+  const [matchType, setMatchType] = useState("OVERS");
+  const profileQuery = useTeamProfile(id, seasonId || undefined, matchType);
   const seasonsQuery = useSeasons();
   const profile = profileQuery.data;
   const seasonOptions = useMemo(
@@ -194,6 +196,8 @@ export default function TeamProfile() {
               </div>
             </div>
           </section>
+
+          <MatchTypeTabs value={matchType} onChange={setMatchType} />
 
           {/* Match approach */}
           <section className={styles.section}>
