@@ -7,7 +7,7 @@ import { useLocalSeasonMatches } from "../features/matches/hooks/useLocalSeasonM
 import { useSeasonMatches } from "../hooks/queries";
 import { deleteMatch as deleteLocalMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
-import { sameName } from "../utils/matchModel";
+import { isTestMatch, sameName } from "../utils/matchModel";
 import styles from "./SeasonMatches.module.css";
 
 const initialFilters = { sortOrder: "NEWEST", team: "ALL", result: "ALL" };
@@ -318,14 +318,21 @@ export default function SeasonMatches() {
                     navigate(`/season/${seasonId}/match/${match.id}`)
                   }
                 >
-                  <span className={styles.date}>
-                    {formatDateTime(match.completedAt || match.createdAt)}
+                  <span className={styles.dateRow}>
+                    <span className={styles.date}>
+                      {formatDateTime(match.completedAt || match.createdAt)}
+                    </span>
+                    <span className={styles.formatBadge}>
+                      {isTestMatch(match) ? "Test" : "Limited overs"}
+                    </span>
                   </span>
                   <ScoreRow
                     name={match.teamA}
                     score={match.teamAScore}
                     wickets={match.teamAWickets}
                     balls={match.teamABallsFaced}
+                    innings={match.teamAInnings}
+                    isTest={isTestMatch(match)}
                     winner={sameName(match.winner, match.teamA)}
                   />
                   <ScoreRow
@@ -333,6 +340,8 @@ export default function SeasonMatches() {
                     score={match.teamBScore}
                     wickets={match.teamBWickets}
                     balls={match.teamBBallsFaced}
+                    innings={match.teamBInnings}
+                    isTest={isTestMatch(match)}
                     winner={sameName(match.winner, match.teamB)}
                   />
                   <span className={styles.result}>
@@ -366,14 +375,32 @@ export default function SeasonMatches() {
   );
 }
 
-function ScoreRow({ name, score, wickets, balls, winner }) {
+// Renders each Test innings on its own ("286" or "177-7"), joined with " & " —
+// e.g. "286 & 177-7" — instead of quietly summing every innings into one line.
+const inningsToDisplay = (innings) =>
+  (innings || [])
+    .slice()
+    .sort((a, b) => (a.inningsNumber ?? 0) - (b.inningsNumber ?? 0))
+    .map((inn) =>
+      inn.completed && inn.wickets >= 10
+        ? `${inn.runs}`
+        : `${inn.runs}-${inn.wickets}`,
+    )
+    .join(" & ");
+
+function ScoreRow({ name, score, wickets, balls, innings, isTest, winner }) {
+  const hasInnings = isTest && Array.isArray(innings) && innings.length > 0;
   return (
     <span className={`${styles.scoreRow} ${winner ? styles.winner : ""}`}>
       <span>{formatName(name)}</span>
       <strong>
-        {score == null
-          ? "—"
-          : `${score}-${wickets ?? 0} (${ballsToOvers(balls)})`}
+        {hasInnings ? (
+          inningsToDisplay(innings)
+        ) : score == null ? (
+          "—"
+        ) : (
+          `${score}-${wickets ?? 0} (${ballsToOvers(balls)})`
+        )}
       </strong>
     </span>
   );

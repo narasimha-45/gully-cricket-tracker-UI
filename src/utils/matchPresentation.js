@@ -93,6 +93,19 @@ export function buildMatchHeroRows(match) {
   return rows;
 }
 
+// Picks which row from buildMatchHeroRows() should be shown as the big, prominent
+// score (the actively-live innings, or — once the match is over — the most recent
+// innings with any runs on the board). Every other row is rendered small underneath.
+export function pickPrimaryHeroRow(rows) {
+  const scoreRows = rows.filter((row) => !row.isSectionLabel);
+  return (
+    scoreRows.find((row) => row.isCurrent) ||
+    [...scoreRows].reverse().find((row) => row.innings) ||
+    scoreRows[0] ||
+    null
+  );
+}
+
 export function buildMatchStatusLine(match) {
   if (match.status === "COMPLETED") {
     return { type: "text", text: formatMatchResult(match.result) };

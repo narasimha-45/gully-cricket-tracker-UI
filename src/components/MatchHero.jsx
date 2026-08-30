@@ -4,14 +4,27 @@ import { getTestInningsPerTeam, isTestMatch } from "../utils/matchModel";
 import {
   buildMatchHeroRows,
   buildMatchStatusLine,
+  pickPrimaryHeroRow,
 } from "../utils/matchPresentation";
 import styles from "./MatchHero.module.css";
+
+const formatInningsScore = (innings) =>
+  innings
+    ? `${innings.totalRuns}-${innings.wickets} (${formatOvers(
+        innings.balls,
+      )})${innings.completionReason === "DECLARED" ? " d" : ""}`
+    : null;
 
 export default function MatchHero({ match, onAction }) {
   const rows = buildMatchHeroRows(match);
   const status = buildMatchStatusLine(match);
   const completed = match.status === "COMPLETED";
   const testMatch = isTestMatch(match);
+  // The actively-live innings (or, once the match ends, the most recent one with
+  // runs on the board) gets the big, prominent score treatment; everything else
+  // is listed compactly underneath.
+  const primaryRow = pickPrimaryHeroRow(rows);
+  const secondaryRows = rows.filter((row) => row !== primaryRow);
 
   return (
     <section className={styles.card}>
@@ -41,52 +54,71 @@ export default function MatchHero({ match, onAction }) {
         </button>
       </div>
 
-      <div className={styles.scoreRows}>
-        {rows.map((row) => {
-          if (row.isSectionLabel) {
+      {primaryRow && (
+        <div className={styles.primaryScore}>
+          <span
+            className={
+              primaryRow.isSuperOver
+                ? styles.superOverTeam
+                : styles.primaryScoreTeam
+            }
+          >
+            {primaryRow.label}
+          </span>
+          <span
+            // Keying on the score itself forces a remount whenever the
+            // total/wickets/balls change, which replays the CSS pop
+            // animation below — a lightweight way to give the score a
+            // "just updated" beat without any extra state or effects.
+            key={
+              primaryRow.innings
+                ? `${primaryRow.innings.totalRuns}-${primaryRow.innings.wickets}-${primaryRow.innings.balls}`
+                : "yet-to-bat"
+            }
+            className={`${styles.primaryScoreValue} ${
+              primaryRow.isCurrent ? styles.scoreValuePulse : ""
+            }`}
+          >
+            {formatInningsScore(primaryRow.innings) || (
+              <span className={styles.yetToBat}>Yet to bat</span>
+            )}
+          </span>
+        </div>
+      )}
+
+      {secondaryRows.length > 0 && (
+        <div className={styles.scoreRows}>
+          {secondaryRows.map((row) => {
+            if (row.isSectionLabel) {
+              return (
+                <div key={row.key} className={styles.sectionDivider}>
+                  <span className={styles.sectionLine} />
+                  <span className={styles.sectionLabel}>{row.label}</span>
+                  <span className={styles.sectionLine} />
+                </div>
+              );
+            }
+
             return (
-              <div key={row.key} className={styles.sectionDivider}>
-                <span className={styles.sectionLine} />
-                <span className={styles.sectionLabel}>{row.label}</span>
-                <span className={styles.sectionLine} />
+              <div
+                key={row.key}
+                className={`${styles.scoreRow} ${
+                  row.isFuture ? styles.future : ""
+                }`}
+              >
+                <span className={row.isSuperOver ? styles.superOverTeam : ""}>
+                  {row.label}
+                </span>
+                <span className={styles.scoreValue}>
+                  {formatInningsScore(row.innings) || (
+                    <span className={styles.yetToBat}>Yet to bat</span>
+                  )}
+                </span>
               </div>
             );
-          }
-
-          return (
-            <div
-              key={row.key}
-              className={`${styles.scoreRow} ${
-                row.isCurrent ? styles.current : ""
-              } ${row.isFuture ? styles.future : ""}`}
-            >
-              <span className={row.isSuperOver ? styles.superOverTeam : ""}>
-                {row.label}
-              </span>
-              <span
-                // Keying on the score itself forces a remount whenever the
-                // total/wickets/balls change, which replays the CSS pop
-                // animation below — a lightweight way to give the score a
-                // "just updated" beat without any extra state or effects.
-                key={
-                  row.innings
-                    ? `${row.innings.totalRuns}-${row.innings.wickets}-${row.innings.balls}`
-                    : "yet-to-bat"
-                }
-                className={`${styles.scoreValue} ${row.isCurrent ? styles.scoreValuePulse : ""}`}
-              >
-                {row.innings ? (
-                  `${row.innings.totalRuns}-${row.innings.wickets} (${formatOvers(
-                    row.innings.balls,
-                  )})${row.innings.completionReason === "DECLARED" ? " d" : ""}`
-                ) : (
-                  <span className={styles.yetToBat}>Yet to bat</span>
-                )}
-              </span>
-            </div>
-          );
-        })}
-      </div>
+          })}
+        </div>
+      )}
 
       <div className={styles.status}>
         {status.type === "text" && (
