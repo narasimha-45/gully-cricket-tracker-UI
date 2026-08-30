@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { Badge, Trophy } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import {
   LeaderboardState,
@@ -45,6 +46,8 @@ export default function BattingStats({ isOverall = false }) {
       ? globalFilter
       : "ALL";
 
+  const [matchType, setMatchType] = useState("OVERS");
+
   const [state, dispatch] = useReducer(
     leaderboardReducer,
     createLeaderboardState(DEFAULT_FILTERS, "runs"),
@@ -69,6 +72,7 @@ export default function BattingStats({ isOverall = false }) {
   const apiFilters = useMemo(
     () => ({
       seasonId: statsSeasonId,
+      matchType,
       inningsNumber: INNINGS_NUMBER[state.filters.innings],
       result: MATCH_RESULT[state.filters.result],
       battingPosition: optional(state.filters.position)
@@ -77,7 +81,7 @@ export default function BattingStats({ isOverall = false }) {
       teamId: optional(state.filters.teamId),
       opponentTeamId: optional(state.filters.opponentTeamId),
     }),
-    [statsSeasonId, state.filters],
+    [statsSeasonId, matchType, state.filters],
   );
 
   const statsQuery = useBattingLeaderboard(apiFilters);
@@ -165,6 +169,7 @@ export default function BattingStats({ isOverall = false }) {
           <Badge size={21} />
         </span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <LeaderboardToolbar
         activeLabels={activeLabels}
         warning={teamsQuery.isError ? "Team filters unavailable" : ""}

@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useParams, useNavigate } from "react-router-dom";
 import LoadingState from "../components/common/LoadingState";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { usePlayerProfile, useSeasons } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
@@ -52,7 +53,8 @@ export default function PlayerProfile() {
     }
   };
   const [seasonId, setSeasonId] = useState("");
-  const profileQuery = usePlayerProfile(id, seasonId || undefined);
+  const [matchType, setMatchType] = useState("OVERS");
+  const profileQuery = usePlayerProfile(id, seasonId || undefined, matchType);
   const seasonsQuery = useSeasons();
   const profile = profileQuery.data;
 
@@ -158,6 +160,8 @@ export default function PlayerProfile() {
               />
             </div>
           </section>
+
+          <MatchTypeTabs value={matchType} onChange={setMatchType} />
 
           <section className={styles.section}>
             <SectionHeader title="Batting" icon={BarChart3} />

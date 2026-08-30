@@ -3,6 +3,7 @@ import { ArrowDown, ArrowUp, Filter, Handshake } from "lucide-react";
 import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
 import EmptyState from "../components/common/EmptyState";
 import { useOutletContext } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import { usePartnerships, useTeamsForSeason } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
@@ -44,6 +45,7 @@ function PartnershipPair({ partnership, showStar = false }) {
 
 export default function Partnerships() {
   const [view, setView] = useState("aggregated");
+  const [matchType, setMatchType] = useState("OVERS");
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sort, setSort] = useState({ key: "runs", direction: "desc" });
@@ -55,6 +57,7 @@ export default function Partnerships() {
     .filter((team) => team.value);
   const query = usePartnerships(view, {
     seasonId: globalFilter !== "all" ? globalFilter : undefined,
+    matchType,
     inningsNumber: filters.inningsNumber === "All" ? undefined : filters.inningsNumber,
     result: filters.result === "All" ? undefined : filters.result === "Won" ? "WIN" : "LOSS",
     partnershipNumber: filters.partnershipNumber === "All" ? undefined : filters.partnershipNumber,
@@ -101,6 +104,7 @@ export default function Partnerships() {
         </div>
         <span className={styles.headingIcon}><Handshake size={22} /></span>
       </div>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <div className={styles.toolbar}>
         <div className={styles.filterSummary}>
           {activeFilters.length ? activeFilters.map((filter) => <span className={styles.filterChip} key={filter.label}>{filter.label}: <b>{filter.value}</b></span>) : "All partnerships"}

@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Activity, RefreshCw } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
 import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
@@ -146,9 +147,10 @@ export default function AnalyticsOverview() {
   const { globalFilter = "all" } = useOutletContext() || {};
   const navigate = useNavigate();
   const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const [matchType, setMatchType] = useState("OVERS");
 
-  const battingQuery = useBattingLeaderboard({ seasonId });
-  const bowlingQuery = useBowlingLeaderboard({ seasonId });
+  const battingQuery = useBattingLeaderboard({ seasonId, matchType });
+  const bowlingQuery = useBowlingLeaderboard({ seasonId, matchType });
 
   const topBatters = useMemo(
     () =>
@@ -177,6 +179,7 @@ export default function AnalyticsOverview() {
         <div><span className={styles.statsKicker}><Activity size={13} /> At a glance</span><h2>Overview</h2></div>
         <span className={styles.statsIcon}><Activity size={21} /></span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       {/* {(trackedBatters > 0 || trackedBowlers > 0) && (
         <div className={styles.summaryStrip} aria-label="Tracked player counts">
           <span>

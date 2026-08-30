@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useReducer } from "react";
+import { useEffect, useMemo, useReducer, useState } from "react";
 import { Shield } from "lucide-react";
 import { useNavigate, useOutletContext, useParams } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import {
   LeaderboardState,
@@ -49,6 +50,8 @@ export default function BowlingStats({ isOverall = false }) {
       ? globalFilter
       : "ALL";
 
+  const [matchType, setMatchType] = useState("OVERS");
+
   const [state, dispatch] = useReducer(
     leaderboardReducer,
     createLeaderboardState(DEFAULT_FILTERS, "wickets"),
@@ -73,12 +76,13 @@ export default function BowlingStats({ isOverall = false }) {
   const apiFilters = useMemo(
     () => ({
       seasonId: statsSeasonId,
+      matchType,
       inningsNumber: INNINGS_NUMBER[state.filters.innings],
       result: MATCH_RESULT[state.filters.result],
       teamId: optional(state.filters.teamId),
       opponentTeamId: optional(state.filters.opponentTeamId),
     }),
-    [statsSeasonId, state.filters],
+    [statsSeasonId, matchType, state.filters],
   );
 
   const statsQuery = useBowlingLeaderboard(apiFilters);
@@ -158,6 +162,7 @@ export default function BowlingStats({ isOverall = false }) {
         <div><span className={styles.statsKicker}><Shield size={13} /> Bowling</span><h2>Bowling stats</h2></div>
         <span className={styles.statsIcon}><Shield size={21} /></span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <LeaderboardToolbar
         activeLabels={activeLabels}
         warning={teamsQuery.isError ? "Team filters unavailable" : ""}

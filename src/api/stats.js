@@ -1,17 +1,14 @@
 import { apiClient } from "./client";
 
 export const statsApi = {
-  getPlayerProfile: (playerId, options) =>
-    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, undefined, options),
-
-  getPlayerProfileBySeason: (playerId, seasonId, options) =>
-    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, { seasonId }, options),
+  getPlayerProfile: (playerId, filters = {}, options) =>
+    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, filters, options),
 
   comparePlayers: (filters = {}, options) =>
     apiClient.get(`/stats/player/compare`, filters, options),
 
-  getTeamProfile: (teamId, seasonId, options) =>
-    apiClient.get(`/stats/team/${encodeURIComponent(teamId)}`, { seasonId }, options),
+  getTeamProfile: (teamId, filters = {}, options) =>
+    apiClient.get(`/stats/team/${encodeURIComponent(teamId)}`, filters, options),
 
 
   getBattingLeaderboard: (filters = {}, options) =>
