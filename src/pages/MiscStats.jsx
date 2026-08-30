@@ -1,6 +1,7 @@
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useState } from "react";
 import { Flag, ShieldCheck } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import {
   LeaderboardState,
   SortButton,
@@ -19,6 +20,7 @@ const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 export default function MiscStats() {
   const navigate = useNavigate();
   const { globalFilter = "all" } = useOutletContext() || {};
+  const [matchType, setMatchType] = useState("OVERS");
   const [state, dispatch] = useReducer(
     leaderboardReducer,
     createLeaderboardState({}, "manOfTheMatch"),
@@ -26,6 +28,7 @@ export default function MiscStats() {
 
   const query = useFieldingLeaderboard({
     seasonId: globalFilter !== "all" ? globalFilter : undefined,
+    matchType,
   });
 
   const players = useMemo(() => {
@@ -58,6 +61,7 @@ export default function MiscStats() {
         <div><span className={styles.statsKicker}><Flag size={13} /> Fielding</span><h2>Fielding stats</h2></div>
         <span className={styles.statsIcon}><ShieldCheck size={21} /></span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <LeaderboardState
       loading={query.isLoading}
       fetching={query.isFetching && !query.isLoading}

@@ -1,6 +1,7 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { ShieldCheck, Trophy } from "lucide-react";
 import { useNavigate, useOutletContext } from "react-router-dom";
+import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { useTeamLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
@@ -12,7 +13,8 @@ export default function TeamStats() {
   const navigate = useNavigate();
   const { globalFilter = "all" } = useOutletContext() || {};
   const seasonId = globalFilter !== "all" ? globalFilter : undefined;
-  const query = useTeamLeaderboard({ seasonId });
+  const [matchType, setMatchType] = useState("OVERS");
+  const query = useTeamLeaderboard({ seasonId, matchType });
 
   const standings = useMemo(
     () =>
@@ -33,6 +35,7 @@ export default function TeamStats() {
         </div>
         <span className={styles.headingIcon}><ShieldCheck size={22} /></span>
       </header>
+      <MatchTypeTabs value={matchType} onChange={setMatchType} />
       <LeaderboardState
         loading={query.isLoading}
         fetching={query.isFetching && !query.isLoading}

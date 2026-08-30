@@ -117,23 +117,21 @@ export function usePlayerComparison(filters = {}) {
   });
 }
 
-export function usePlayerProfile(playerId, seasonId) {
+export function usePlayerProfile(playerId, seasonId, matchType) {
   return useQuery({
-    queryKey: queryKeys.playerProfile(playerId, seasonId),
+    queryKey: queryKeys.playerProfile(playerId, seasonId, matchType),
     queryFn: ({ signal }) =>
-      seasonId
-        ? api.stats.getPlayerProfileBySeason(playerId, seasonId, { signal })
-        : api.stats.getPlayerProfile(playerId, { signal }),
+      api.stats.getPlayerProfile(playerId, { seasonId, matchType }, { signal }),
     enabled: Boolean(playerId),
     staleTime: 30_000,
   });
 }
 
-export function useTeamProfile(teamId, seasonId) {
+export function useTeamProfile(teamId, seasonId, matchType) {
   return useQuery({
-    queryKey: queryKeys.teamProfile(teamId, seasonId),
+    queryKey: queryKeys.teamProfile(teamId, seasonId, matchType),
     queryFn: ({ signal }) =>
-      api.stats.getTeamProfile(teamId, seasonId, { signal }),
+      api.stats.getTeamProfile(teamId, { seasonId, matchType }, { signal }),
     enabled: Boolean(teamId),
     staleTime: 30_000,
   });
