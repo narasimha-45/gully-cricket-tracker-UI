@@ -83,7 +83,9 @@ export const startNextInnings = (match, { followOn = false } = {}) => {
   const updated = deepCopy(match);
   takeSnapshot(updated, followOn ? "ENFORCE_FOLLOW_ON" : "START_NEXT_INNINGS");
 
-  if (followOn && canEnforceFollowOn(updated)) {
+  const isFollowOnInnings = followOn && canEnforceFollowOn(updated);
+
+  if (isFollowOnInnings) {
     updated.testConfig = {
       ...(updated.testConfig || {}),
       followOnEnforced: true,
@@ -98,6 +100,7 @@ export const startNextInnings = (match, { followOn = false } = {}) => {
   updated.innings[nextIndex] = createEmptyInnings({
     ...scheduledTeams,
     inningsNumber: getTeamInningsOrdinal(updated, nextIndex),
+    isFollowOn: isFollowOnInnings,
   });
   updated.live = {
     ...updated.live,

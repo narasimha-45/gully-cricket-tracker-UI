@@ -30,6 +30,7 @@ export const buildMatchSyncPayload = (match) => ({
     dismissals: inn.dismissals || {},
     ballByBall: inn.ballByBall || [],
     isSuperOver: inn.isSuperOver ?? false,
+    isFollowOn: inn.isFollowOn ?? false,
     completed: true,
     completionReason: inn.completionReason ?? null,
   })),

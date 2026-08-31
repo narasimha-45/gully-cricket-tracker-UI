@@ -167,6 +167,10 @@ export function deriveInsights(match) {
 
       const isLegal = !isWide && !isNoBall;
 
+      // A no-ball is still faced by the batter — it only fails to count
+      // toward the innings/over/bowler tally, which is what `isLegal` gates.
+      const battingBallFaced = !isWide;
+
       const wicketType = ball.wicket?.type;
 
       const isBowlerWicket = Boolean(
@@ -209,57 +213,56 @@ export function deriveInsights(match) {
       }
 
       /* ======================================================
+           BATTER RUNS (computed first so dot-ball check below
+           can use the batter's actual runs, not the raw total
+           which may include an automatic no-ball extra)
+           ====================================================== */
+
+      // Prefer explicit battingRuns if available; otherwise derive
+      // batter runs from total runs (stripping the automatic no-ball run).
+      const batRuns = isWide
+        ? 0
+        : Number.isFinite(ball.battingRuns)
+          ? ball.battingRuns
+          : runs - (isNoBall && match.rules?.noBall?.extraRun ? 1 : 0);
+
+      if (!isWide && batRuns > 0) {
+        batterMap[striker].runs += batRuns;
+
+        h2h[h2hKey].runs += batRuns;
+
+        if (batRuns === 4) {
+          batterMap[striker].fours += 1;
+
+          h2h[h2hKey].fours += 1;
+        }
+
+        if (batRuns === 6) {
+          batterMap[striker].sixes += 1;
+
+          h2h[h2hKey].sixes += 1;
+        }
+      }
+
+      /* ======================================================
            BATTER BALL / DOT STATISTICS
            ====================================================== */
 
-      if (isLegal) {
+      if (battingBallFaced) {
         batterMap[striker].balls += 1;
 
         h2h[h2hKey].balls += 1;
 
         /*
-            Dot ball:
-            legal delivery with 0 total runs.
+            Dot ball for the batter: 0 runs scored off the bat.
+            A no-ball still counts here if the batter scored nothing
+            off it (the automatic no-ball run is not the batter's).
           */
 
-        if (runs === 0) {
+        if (batRuns === 0) {
           batterMap[striker].dots += 1;
 
           h2h[h2hKey].dots += 1;
-        }
-      }
-
-      /* ======================================================
-           BATTER RUNS
-           ====================================================== */
-
-      if (!isWide) {
-        /*
-            Prefer explicit battingRuns if available.
-
-            Otherwise derive batter runs from total runs.
-          */
-
-        const batRuns = Number.isFinite(ball.battingRuns)
-          ? ball.battingRuns
-          : runs - (isNoBall && match.rules?.noBall?.extraRun ? 1 : 0);
-
-        if (batRuns > 0) {
-          batterMap[striker].runs += batRuns;
-
-          h2h[h2hKey].runs += batRuns;
-
-          if (batRuns === 4) {
-            batterMap[striker].fours += 1;
-
-            h2h[h2hKey].fours += 1;
-          }
-
-          if (batRuns === 6) {
-            batterMap[striker].sixes += 1;
-
-            h2h[h2hKey].sixes += 1;
-          }
         }
       }
 

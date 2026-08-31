@@ -38,6 +38,8 @@ export default function InningsCard({ innings, teams, label, tone }) {
           aria-label={`${totalRuns} for ${innings.wickets ?? 0}`}
         >
           {totalRuns}/{innings.wickets ?? 0}
+          {innings.completionReason === "DECLARED" && <span className={styles.overs}> d </span> }
+          {innings.isFollowOn && <span className={styles.overs}> f/o</span>}
           <span className={styles.overs}>({overs} ov)</span>
         </div>
       </header>
