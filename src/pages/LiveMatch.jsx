@@ -120,7 +120,6 @@ function LiveMatchContent() {
   return (
     <main className={styles.page}>
       <EditMatchSheet open={editOpen} onClose={() => setEditOpen(false)} />
-
       <div className={styles.topRow}>
         <button
           type="button"
@@ -133,7 +132,6 @@ function LiveMatchContent() {
           {match.status === "LIVE" ? "Live scoring" : "Match complete"}
         </span>
       </div>
-
       {/* <MatchPersistenceStatus /> */}
       {finalizeError && (
         <div className={styles.finalizeError} role="alert">
@@ -177,16 +175,18 @@ function LiveMatchContent() {
             Dismiss
           </button>
         </div>
-      )}
-      <MatchHero match={match} onAction={handleHeroAction} />
+      )}{" "}
 
+      <div className={styles.stickyHero}>
+        <MatchHero match={match} onAction={handleHeroAction} />
+      </div>
+      
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
         <section className={styles.motmCard}>
           <strong>🏆 Man of the Match</strong>
           <span>{formatName(match.result.manOfTheMatch)}</span>
         </section>
       )}
-
       <nav className={styles.tabs} aria-label="Match views">
         {tabs.map((item) => (
           <button
@@ -204,7 +204,6 @@ function LiveMatchContent() {
           </button>
         ))}
       </nav>
-
       {tab === "scorecard" && <Scorecard match={match} />}
       {tab === "overs" && <OversTimeline match={match} />}
       {tab === "insights" && <InsightsTab match={match} />}
@@ -212,7 +211,6 @@ function LiveMatchContent() {
         <MatchSummaryTab match={match} />
       )}
       {tab === "live" && match.status === "LIVE" && <LiveScoringPanel />}
-
       {match.status === "COMPLETED" && match.result && (
         <MatchPopup
           open={!match.ui?.matchResultSeen}
@@ -231,7 +229,6 @@ function LiveMatchContent() {
           }
         />
       )}
-
       <MatchPopup
         open={Boolean(live.pendingNextInnings)}
         title="Innings complete"
@@ -279,7 +276,6 @@ function LiveMatchContent() {
             : null
         }
       />
-
       <MatchPopup
         open={Boolean(live.pendingSuperOver)}
         title="Match tied"
