@@ -99,6 +99,8 @@ export default function MatchSummaryTab({ match }) {
 
               <div className={styles.summaryScore}>
                 {innings.totalRuns}/{innings.wickets}
+                {innings.completionReason === "DECLARED" ? " d" : ""}
+                {innings.isFollowOn ? " f/o" : ""}
                 <div className={styles.summaryOvers}>
                   ({formatOvers(innings.balls)} ov)
                 </div>
