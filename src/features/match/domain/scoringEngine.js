@@ -75,6 +75,8 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
   innings.totalRuns += totalRuns;
   innings.bowlingStats[live.bowler].runs += totalRuns;
 
+  const battingBallFaced = !isWide;
+
   if (!isWide) {
     const batter = innings.battingStats[live.striker];
     batter.runs += battingRuns;
@@ -82,8 +84,11 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
     if (battingRuns === 6) batter.sixes += 1;
   }
 
-  if (legal) {
+  if (battingBallFaced) {
     innings.battingStats[live.striker].balls += 1;
+  }
+
+  if (legal) {
     innings.balls += 1;
     innings.bowlingStats[live.bowler].balls += 1;
   }
@@ -175,8 +180,13 @@ export const takeWicket = (
   innings.bowlingStats[live.bowler].runs += totalRuns;
   if (!isWide) innings.battingStats[live.striker].runs += completedRuns;
 
-  if (legal) {
+  const battingBallFaced = !isWide;
+
+  if (battingBallFaced) {
     innings.battingStats[live.striker].balls += 1;
+  }
+
+  if (legal) {
     innings.balls += 1;
     innings.bowlingStats[live.bowler].balls += 1;
   }

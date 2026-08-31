@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import BottomSheetSelector from "./BottomSheetSelector";
 import { formatName } from "../utils/helpers";
 import {
@@ -9,44 +9,96 @@ import {
 } from "../utils/matchModel";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
 import { useMatchSession } from "../features/match/state/useMatchSession";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { usePlayerSearch } from "../hooks/queries";
 import styles from "./EditMatchSheet.module.css";
 
-// Extra ball is always true for wide/no-ball — it's the near-universal
-// rule and isn't exposed as a toggle. Extra run stays configurable.
+/*
+ * Extra ball is always true for wide/no-ball.
+ * Extra run stays configurable.
+ */
 const DEFAULT_RULES = {
-  wide: { extraRun: false, extraBall: true },
-  noBall: { extraRun: true, extraBall: true },
+  wide: {
+    extraRun: false,
+    extraBall: true,
+  },
+  noBall: {
+    extraRun: true,
+    extraBall: true,
+  },
+};
+
+const getPlayerName = (player) => {
+  if (typeof player === "string") {
+    return normalizeName(player);
+  }
+
+  if (!player || typeof player !== "object") {
+    return "";
+  }
+
+  return normalizeName(
+    player.playerName ||
+      player.displayName ||
+      player.name ||
+      player.player?.playerName ||
+      player.player?.name ||
+      "",
+  );
 };
 
 export default function EditMatchSheet({ open, onClose }) {
   const { match, dispatch } = useMatchSession();
+
   const { live } = match;
+
   const [openTeam, setOpenTeam] = useState(null);
-  const [newPlayer, setNewPlayer] = useState("");
+
   const innings = match.innings[live.inningsIndex];
+
   const testMatch = isTestMatch(match);
+
   const canEditTestFormat = testMatch && live.inningsIndex < 2;
+
   const testInningsPerTeam = getTestInningsPerTeam(match);
 
+  /*
+   * Players who already participated in the match
+   * cannot be removed.
+   */
   const usedPlayers = useMemo(() => {
     const used = new Set(
-      [
-        live.striker,
-        live.nonStriker,
-        live.bowler,
-        ...(live.outBatsmen || []),
-      ].filter(Boolean),
+      [live.striker, live.nonStriker, live.bowler, ...(live.outBatsmen || [])]
+        .map(normalizeName)
+        .filter(Boolean),
     );
 
     match.innings.forEach((item) => {
-      Object.keys(item.battingStats || {}).forEach((player) =>
-        used.add(player),
-      );
-      Object.keys(item.bowlingStats || {}).forEach((player) =>
-        used.add(player),
-      );
-      Object.keys(item.dismissals || {}).forEach((player) => used.add(player));
+      Object.keys(item.battingStats || {}).forEach((player) => {
+        const name = normalizeName(player);
+
+        if (name) {
+          used.add(name);
+        }
+      });
+
+      Object.keys(item.bowlingStats || {}).forEach((player) => {
+        const name = normalizeName(player);
+
+        if (name) {
+          used.add(name);
+        }
+      });
+
+      Object.keys(item.dismissals || {}).forEach((player) => {
+        const name = normalizeName(player);
+
+        if (name) {
+          used.add(name);
+        }
+      });
     });
+
     return used;
   }, [
     live.striker,
@@ -56,61 +108,104 @@ export default function EditMatchSheet({ open, onClose }) {
     match.innings,
   ]);
 
-  const isPlayerLocked = (player) => usedPlayers.has(player);
+  const isPlayerLocked = (player) => usedPlayers.has(normalizeName(player));
+
   const minOversNeeded = Math.max(1, Math.ceil(innings.balls / 6));
 
   const updateTestInnings = (inningsPerTeam) => {
-    if (!canEditTestFormat) return;
+    if (!canEditTestFormat) {
+      return;
+    }
+
     dispatch({
       type: MATCH_ACTIONS.UPDATE_SETTINGS,
-      payload: { testConfig: { ...(match.testConfig || {}), inningsPerTeam } },
+      payload: {
+        testConfig: {
+          ...(match.testConfig || {}),
+          inningsPerTeam,
+        },
+      },
     });
   };
 
-  const addPlayer = (teamKey) => {
-    const player = normalizeName(newPlayer);
-    if (!player) return;
-    if (
-      (match.teams[teamKey].players || []).some(
-        (item) => normalizeName(item) === player,
-      )
-    ) {
-      setNewPlayer("");
-      return;
+  /*
+   * Add player.
+   *
+   * Returns true when successfully added.
+   * Returns false when invalid or already selected.
+   */
+  const addPlayer = (teamKey, rawName) => {
+    const player = normalizeName(rawName);
+
+    if (!player) {
+      return false;
     }
+
+    const alreadyExists = (match.teams[teamKey].players || []).some(
+      (item) => normalizeName(item) === player,
+    );
+
+    if (alreadyExists) {
+      return false;
+    }
+
     dispatch({
       type: MATCH_ACTIONS.ADD_TEAM_PLAYER,
-      payload: { teamKey, player },
+      payload: {
+        teamKey,
+        player,
+      },
     });
-    setNewPlayer("");
+
+    return true;
   };
 
   const removePlayer = (teamKey, player) => {
-    if (isPlayerLocked(player)) return;
+    if (isPlayerLocked(player)) {
+      return;
+    }
+
     dispatch({
       type: MATCH_ACTIONS.REMOVE_TEAM_PLAYER,
-      payload: { teamKey, player },
+      payload: {
+        teamKey,
+        player,
+      },
     });
   };
 
   const rules = {
-    wide: { ...DEFAULT_RULES.wide, ...(match.rules?.wide || {}) },
-    noBall: { ...DEFAULT_RULES.noBall, ...(match.rules?.noBall || {}) },
+    wide: {
+      ...DEFAULT_RULES.wide,
+      ...(match.rules?.wide || {}),
+    },
+    noBall: {
+      ...DEFAULT_RULES.noBall,
+      ...(match.rules?.noBall || {}),
+    },
   };
 
   const updateRules = (partial) => {
     dispatch({
       type: MATCH_ACTIONS.UPDATE_SETTINGS,
-      payload: { rules: { ...rules, ...partial } },
+      payload: {
+        rules: {
+          ...rules,
+          ...partial,
+        },
+      },
     });
   };
 
   return (
     <BottomSheetSelector open={open} title="Match settings" onClose={onClose}>
+      {/* Match format / overs */}
+
       <section className={styles.sectionCard}>
         <div className={styles.sectionTitleRow}>
           <div>
             <h3>{testMatch ? "Test format" : "Overs"}</h3>
+
             <p>
               {testMatch
                 ? "Test matches have no over limit."
@@ -118,6 +213,7 @@ export default function EditMatchSheet({ open, onClose }) {
             </p>
           </div>
         </div>
+
         {testMatch ? (
           <>
             <div className={styles.segmentedControl}>
@@ -133,6 +229,7 @@ export default function EditMatchSheet({ open, onClose }) {
               >
                 Single innings
               </button>
+
               <button
                 type="button"
                 className={
@@ -146,6 +243,7 @@ export default function EditMatchSheet({ open, onClose }) {
                 Double innings
               </button>
             </div>
+
             <p className={styles.helperNote}>
               {canEditTestFormat
                 ? "This option remains editable throughout the first innings."
@@ -162,30 +260,47 @@ export default function EditMatchSheet({ open, onClose }) {
         )}
       </section>
 
+      {/* Extras */}
+
       <section className={styles.sectionCard}>
         <div className={styles.sectionTitleRow}>
           <div>
             <h3>Extras rules</h3>
+
             <p>Control automatic penalty runs for a wide or no-ball.</p>
           </div>
         </div>
+
         <RuleToggle
           title="Wide gives a run"
           description="Automatically add one penalty run for a wide."
           checked={rules.wide.extraRun}
           onChange={(checked) =>
-            updateRules({ wide: { ...rules.wide, extraRun: checked } })
+            updateRules({
+              wide: {
+                ...rules.wide,
+                extraRun: checked,
+              },
+            })
           }
         />
+
         <RuleToggle
           title="No-ball gives a run"
           description="Automatically add one penalty run for a no-ball."
           checked={rules.noBall.extraRun}
           onChange={(checked) =>
-            updateRules({ noBall: { ...rules.noBall, extraRun: checked } })
+            updateRules({
+              noBall: {
+                ...rules.noBall,
+                extraRun: checked,
+              },
+            })
           }
         />
       </section>
+
+      {/* Team players */}
 
       {["teamA", "teamB"].map((teamKey) => (
         <TeamEditor
@@ -197,16 +312,19 @@ export default function EditMatchSheet({ open, onClose }) {
           isPlayerLocked={isPlayerLocked}
           removePlayer={removePlayer}
           addPlayer={addPlayer}
-          newPlayer={newPlayer}
-          setNewPlayer={setNewPlayer}
         />
       ))}
     </BottomSheetSelector>
   );
 }
 
+/* ============================================================
+   OVERS EDITOR
+   ============================================================ */
+
 function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
   const [overs, setOvers] = useState(initialOvers);
+
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const hasChanged = overs !== initialOvers;
@@ -214,21 +332,31 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
   const updateOvers = (delta) => {
     setOvers((current) => {
       const next = current + delta;
-      if (next < minOversNeeded || next > 50) return current;
+
+      if (next < minOversNeeded || next > 50) {
+        return current;
+      }
+
       return next;
     });
   };
 
   const requestUpdate = () => {
-    if (overs < minOversNeeded || !hasChanged) return;
+    if (overs < minOversNeeded || !hasChanged) {
+      return;
+    }
+
     setConfirmOpen(true);
   };
 
   const confirmUpdate = () => {
     dispatch({
       type: MATCH_ACTIONS.UPDATE_SETTINGS,
-      payload: { totalOvers: overs },
+      payload: {
+        totalOvers: overs,
+      },
     });
+
     setConfirmOpen(false);
   };
 
@@ -243,7 +371,9 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
         >
           −
         </button>
+
         <strong>{overs}</strong>
+
         <button
           type="button"
           onClick={() => updateOvers(1)}
@@ -253,6 +383,7 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
           +
         </button>
       </div>
+
       <button
         type="button"
         className={styles.primaryButton}
@@ -275,6 +406,10 @@ function OversEditor({ initialOvers, minOversNeeded, dispatch }) {
   );
 }
 
+/* ============================================================
+   CONFIRM DIALOG
+   ============================================================ */
+
 function ConfirmDialog({
   open,
   title,
@@ -284,7 +419,9 @@ function ConfirmDialog({
   onConfirm,
   onCancel,
 }) {
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   return (
     <div
@@ -303,9 +440,11 @@ function ConfirmDialog({
         <h4 id="confirm-dialog-title" className={styles.confirmTitle}>
           {title}
         </h4>
+
         <p id="confirm-dialog-message" className={styles.confirmMessage}>
           {message}
         </p>
+
         <div className={styles.confirmActions}>
           <button
             type="button"
@@ -314,6 +453,7 @@ function ConfirmDialog({
           >
             {cancelLabel}
           </button>
+
           <button
             type="button"
             className={styles.confirmConfirm}
@@ -327,6 +467,10 @@ function ConfirmDialog({
   );
 }
 
+/* ============================================================
+   RULE TOGGLE
+   ============================================================ */
+
 function RuleToggle({ title, description, checked, onChange }) {
   return (
     <label className={styles.settingsRow}>
@@ -334,6 +478,7 @@ function RuleToggle({ title, description, checked, onChange }) {
         <strong>{title}</strong>
         <small>{description}</small>
       </span>
+
       <span className={styles.switchControl}>
         <input
           className={styles.switchInput}
@@ -342,6 +487,7 @@ function RuleToggle({ title, description, checked, onChange }) {
           onChange={(event) => onChange(event.target.checked)}
           aria-label={title}
         />
+
         <span className={styles.switchTrack} aria-hidden="true">
           <span className={styles.switchThumb} />
         </span>
@@ -349,6 +495,10 @@ function RuleToggle({ title, description, checked, onChange }) {
     </label>
   );
 }
+
+/* ============================================================
+   TEAM PLAYER EDITOR
+   ============================================================ */
 
 function TeamEditor({
   teamKey,
@@ -358,36 +508,168 @@ function TeamEditor({
   isPlayerLocked,
   removePlayer,
   addPlayer,
-  newPlayer,
-  setNewPlayer,
 }) {
   const team = match.teams[teamKey];
-  const isOpen = openTeam === teamKey;
+
+  const opponentKey = teamKey === "teamA" ? "teamB" : "teamA";
+
+  const expanded = openTeam === teamKey;
+
+  const searchContainerRef = useRef(null);
+
+  const [query, setQuery] = useState("");
+
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const [feedback, setFeedback] = useState("");
+
+  const debouncedQuery = useDebouncedValue(query.trim(), 250);
+
+  const playersQuery = usePlayerSearch(debouncedQuery);
+
+  const results = playersQuery.data || [];
+
+  const searchLoading = Boolean(
+    query.trim().length >= 2 &&
+    (playersQuery.isLoading || debouncedQuery !== query.trim()),
+  );
+
+  /*
+   * Current team's players.
+   */
+  const currentPlayers = useMemo(
+    () => new Set((team.players || []).map(normalizeName).filter(Boolean)),
+    [team.players],
+  );
+
+  /*
+   * Opponent squad.
+   *
+   * If a suggested player is already
+   * in the opponent team, we still allow
+   * selecting them as a Joker.
+   */
+  const opponentPlayers = useMemo(
+    () =>
+      new Set(
+        (match.teams[opponentKey]?.players || [])
+          .map(normalizeName)
+          .filter(Boolean),
+      ),
+    [match.teams, opponentKey],
+  );
+
+  const normalizedQuery = normalizeName(query);
+
+  const exactPlayerExists = results.some(
+    (player) => getPlayerName(player) === normalizedQuery,
+  );
+
+  /*
+   * Close suggestion list when clicking
+   * outside the search area.
+   */
+  useEffect(() => {
+    const handleOutsideClick = (event) => {
+      if (
+        searchContainerRef.current &&
+        !searchContainerRef.current.contains(event.target)
+      ) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener("pointerdown", handleOutsideClick);
+
+    return () => {
+      document.removeEventListener("pointerdown", handleOutsideClick);
+    };
+  }, []);
+
+  /*
+   * Reset search when collapsing
+   * this team.
+   */
+  useEffect(() => {
+    if (!expanded) {
+      setQuery("");
+      setFeedback("");
+      setSearchOpen(false);
+    }
+  }, [expanded]);
+
+  const handleAddPlayer = (rawName) => {
+    const player = normalizeName(rawName);
+
+    if (!player) {
+      return;
+    }
+
+    if (currentPlayers.has(player)) {
+      setFeedback(`${formatName(player)} is already in this squad.`);
+
+      return;
+    }
+
+    const added = addPlayer(teamKey, player);
+
+    if (!added) {
+      return;
+    }
+
+    setQuery("");
+    setFeedback("");
+    setSearchOpen(false);
+  };
+
   return (
     <section className={styles.sectionCard}>
+      {/* Team header */}
+
       <button
         type="button"
         className={styles.teamHeader}
-        onClick={() => setOpenTeam(isOpen ? null : teamKey)}
-        aria-expanded={isOpen}
+        onClick={() => setOpenTeam(expanded ? null : teamKey)}
+        aria-expanded={expanded}
       >
         <span>
           <strong>{formatName(team.name)}</strong>
-          <small>{team.players.length} players</small>
+
+          <small>
+            {(team.players || []).length} player
+            {(team.players || []).length === 1 ? "" : "s"}
+          </small>
         </span>
-        <span aria-hidden="true">{isOpen ? "▲" : "▼"}</span>
+
+        <span className={styles.expandIcon} aria-hidden="true">
+          {expanded ? "▲" : "▼"}
+        </span>
       </button>
-      {isOpen && (
+
+      {expanded && (
         <div className={styles.teamBody}>
+          {/* Existing squad */}
+
           <div className={styles.playerList}>
-            {team.players.map((player) => {
+            {(team.players || []).map((player) => {
+              const normalizedPlayer = normalizeName(player);
+
               const locked = isPlayerLocked(player);
+
+              const joker = opponentPlayers.has(normalizedPlayer);
+
               return (
                 <div key={player} className={styles.playerRow}>
                   <span>
                     <strong>{formatName(player)}</strong>
+
                     {locked && <small>Used in this match</small>}
+
+                    {!locked && joker && (
+                      <small>Also in opponent squad · Joker</small>
+                    )}
                   </span>
+
                   <button
                     type="button"
                     onClick={() => removePlayer(teamKey, player)}
@@ -399,18 +681,158 @@ function TeamEditor({
               );
             })}
           </div>
-          <div className={styles.addRow}>
-            <input
-              value={newPlayer}
-              placeholder="Add a player"
-              onChange={(event) => setNewPlayer(event.target.value)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter") addPlayer(teamKey);
-              }}
-            />
-            <button type="button" onClick={() => addPlayer(teamKey)}>
-              Add
-            </button>
+
+          {/* Search / add player */}
+
+          <div className={styles.playerSearch} ref={searchContainerRef}>
+            <div className={styles.addRow}>
+              <div className={styles.addInputWrapper}>
+                <input
+                  value={query}
+                  placeholder="Search or add player..."
+                  autoComplete="off"
+                  onFocus={() => {
+                    setSearchOpen(true);
+                  }}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+
+                    setFeedback("");
+
+                    setSearchOpen(true);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+
+                      handleAddPlayer(query);
+                    }
+
+                    if (event.key === "Escape") {
+                      setSearchOpen(false);
+                    }
+                  }}
+                />
+
+                {searchLoading && (
+                  <span
+                    className={styles.searchSpinner}
+                    aria-label="Searching players"
+                  />
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => handleAddPlayer(query)}
+                disabled={
+                  !normalizedQuery || currentPlayers.has(normalizedQuery)
+                }
+              >
+                Add
+              </button>
+            </div>
+
+            {/* Search feedback */}
+
+            {(feedback || playersQuery.isError) && (
+              <p className={styles.searchMessage} role="status">
+                {feedback ||
+                  "Player search is unavailable. You can still add the typed name."}
+              </p>
+            )}
+
+            {/* Suggestions */}
+
+            {searchOpen && query.trim() && (
+              <div
+                className={styles.playerSuggestions}
+                role="listbox"
+                aria-label="Player suggestions"
+              >
+                {results.map((player, index) => {
+                  const name = getPlayerName(player);
+
+                  if (!name) {
+                    return null;
+                  }
+
+                  const alreadySelected = currentPlayers.has(name);
+
+                  const opponentPlayer = opponentPlayers.has(name);
+
+                  return (
+                    <button
+                      key={player.id || player._id || `${name}-${index}`}
+                      type="button"
+                      className={styles.suggestionItem}
+                      disabled={alreadySelected}
+                      onClick={() => handleAddPlayer(name)}
+                    >
+                      <span
+                        className={styles.suggestionIcon}
+                        aria-hidden="true"
+                      >
+                        👤
+                      </span>
+
+                      <span className={styles.suggestionCopy}>
+                        <strong>{formatName(name)}</strong>
+
+                        {alreadySelected && <small>Already selected</small>}
+
+                        {!alreadySelected && opponentPlayer && (
+                          <small>Also in opponent squad · Joker</small>
+                        )}
+
+                        {!alreadySelected && !opponentPlayer && (
+                          <small>Select existing player</small>
+                        )}
+                      </span>
+                    </button>
+                  );
+                })}
+
+                {/* Create typed player */}
+
+                {!searchLoading &&
+                  normalizedQuery &&
+                  !exactPlayerExists &&
+                  !currentPlayers.has(normalizedQuery) && (
+                    <button
+                      type="button"
+                      className={styles.suggestionItem}
+                      onClick={() => handleAddPlayer(query)}
+                    >
+                      <span className={styles.newPlayerIcon} aria-hidden="true">
+                        +
+                      </span>
+
+                      <span className={styles.suggestionCopy}>
+                        <strong>Add “{formatName(query)}”</strong>
+
+                        <small>
+                          {opponentPlayers.has(normalizedQuery)
+                            ? "Also in opponent squad · Add as Joker"
+                            : "Create or add this player"}
+                        </small>
+                      </span>
+                    </button>
+                  )}
+
+                {searchLoading && (
+                  <div className={styles.searchingRow}>Searching players…</div>
+                )}
+
+                {!searchLoading &&
+                  results.length === 0 &&
+                  exactPlayerExists && (
+                    <div className={styles.searchingRow}>
+                      No other players found
+                    </div>
+                  )}
+              </div>
+            )}
           </div>
         </div>
       )}

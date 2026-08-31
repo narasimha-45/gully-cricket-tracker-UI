@@ -1,6 +1,6 @@
 import { MATCH_TYPES, normalizeName } from "../utils/matchModel";
 
-export const CURRENT_MATCH_SCHEMA_VERSION = 3;
+export const CURRENT_MATCH_SCHEMA_VERSION = 4;
 
 const normalizeRules = (rules = {}) => ({
   wide: {
@@ -13,11 +13,11 @@ const normalizeRules = (rules = {}) => ({
   },
 });
 
-const normalizeInnings = (innings = {}, index = 0) => ({
+const normalizeInnings = (innings = {}, inningsNumber = 1) => ({
   ...innings,
   battingTeam: normalizeName(innings.battingTeam),
   bowlingTeam: normalizeName(innings.bowlingTeam),
-  inningsNumber: Number(innings.inningsNumber || index + 1),
+  inningsNumber: Number(innings.inningsNumber || inningsNumber),
   totalRuns: Number(innings.totalRuns ?? innings.score ?? 0),
   wickets: Number(innings.wickets || 0),
   balls: Number(innings.balls || 0),
@@ -32,6 +32,8 @@ const normalizeInnings = (innings = {}, index = 0) => ({
   },
   thisOverBowlerChanged: Boolean(innings.thisOverBowlerChanged),
   completed: Boolean(innings.completed),
+  completionReason: innings.completionReason || null,
+  isFollowOn: Boolean(innings.isFollowOn),
   ...(innings.isSuperOver ? { isSuperOver: true } : {}),
 });
 
@@ -74,7 +76,15 @@ export function migrateStoredMatch(value) {
       },
     },
     innings: Array.isArray(value.innings)
-      ? value.innings.map(normalizeInnings)
+      ? (() => {
+          const teamCounts = new Map();
+          return value.innings.map((innings) => {
+            const team = normalizeName(innings?.battingTeam);
+            const nextOrdinal = (teamCounts.get(team) || 0) + 1;
+            if (!innings?.isSuperOver) teamCounts.set(team, nextOrdinal);
+            return normalizeInnings(innings, innings?.isSuperOver ? 1 : nextOrdinal);
+          });
+        })()
       : [],
     live: value.live
       ? {

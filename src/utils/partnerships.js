@@ -83,7 +83,9 @@ export function derivePartnerships(innings) {
 
     const isNoBall = type === "NO_BALL" || ball.extra === "NO_BALL";
     const isWide = type === "WIDE" || ball.extra === "WIDE";
-    const isLegal = !isWide && !isNoBall;
+    // A no-ball is still faced by the batter (it just doesn't count toward
+    // the innings/over tally) — only a wide isn't a ball faced.
+    const battingBallFaced = !isWide;
     const battingRuns = Number.isFinite(ball.battingRuns)
       ? ball.battingRuns
       : isWide
@@ -96,7 +98,7 @@ export function derivePartnerships(innings) {
     }
 
     // Batter balls
-    if (isLegal) {
+    if (battingBallFaced) {
       current.balls += 1;
       current.contributions[striker].balls += 1;
     }

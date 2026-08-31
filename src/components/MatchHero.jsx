@@ -7,16 +7,21 @@ import {
 } from "../utils/matchPresentation";
 import styles from "./MatchHero.module.css";
 
-const formatInningsScore = (innings) =>
+const formatInningsScore = (innings, { showOvers = true } = {}) =>
   innings
-    ? `${innings.totalRuns}-${innings.wickets} (${formatOvers(
-        innings.balls,
-      )})${innings.completionReason === "DECLARED" ? " d" : ""}`
+    ? `${innings.totalRuns}-${innings.wickets}${
+        showOvers ? ` (${formatOvers(innings.balls)})` : ""
+      }${innings.completionReason === "DECLARED" ? " d" : ""}${
+        innings.isFollowOn ? " f/o" : ""
+      }`
     : null;
 
 // Renders one team's score for a test-match row: completed innings are joined
 // with " & " in a muted, smaller weight; the live innings (if any) is bold and
 // slightly larger so the eye lands on what's actually happening right now.
+// Overs are only shown for the innings that's actually still in progress —
+// once an innings is done, only the final total/wickets (plus any d/f-o tag)
+// is worth the space in this compact summary.
 function TestScoreSegments({ segments }) {
   if (segments.length === 0) {
     return <span className={styles.yetToBat}>Yet to bat</span>;
@@ -39,7 +44,7 @@ function TestScoreSegments({ segments }) {
             : styles.segmentDone
         }
       >
-        {formatInningsScore(segment.innings)}
+        {formatInningsScore(segment.innings, { showOvers: segment.isLive })}
       </span>
     </span>
   ));

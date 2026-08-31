@@ -54,6 +54,7 @@ export const createEmptyInnings = ({
   bowlingTeam,
   inningsNumber = 1,
   isSuperOver = false,
+  isFollowOn = false,
 }) => ({
   battingTeam: normalizeName(battingTeam),
   bowlingTeam: normalizeName(bowlingTeam),
@@ -73,6 +74,7 @@ export const createEmptyInnings = ({
   thisOverBowlerChanged: false,
   completed: false,
   ...(isSuperOver ? { isSuperOver: true } : {}),
+  ...(isFollowOn ? { isFollowOn: true } : {}),
 });
 
 export const getFirstBattingTeam = (match) =>

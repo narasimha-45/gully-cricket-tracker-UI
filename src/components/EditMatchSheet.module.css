@@ -6,6 +6,10 @@
     background: var(--color-white);
 }
 
+/* ============================================================
+   SECTION TITLE
+   ============================================================ */
+
 .sectionTitleRow {
     display: flex;
     align-items: center;
@@ -28,6 +32,10 @@
     font-size: 10px;
     line-height: 1.4;
 }
+
+/* ============================================================
+   TEST FORMAT
+   ============================================================ */
 
 .segmentedControl {
     display: grid;
@@ -59,6 +67,10 @@
 .segmentedControl button:disabled {
     cursor: not-allowed;
 }
+
+/* ============================================================
+   OVERS
+   ============================================================ */
 
 .oversContainer {
     display: flex;
@@ -116,8 +128,6 @@
 
 /* ============================================================
    CONFIRM DIALOG
-   Lightweight in-sheet confirmation for changes that affect an
-   in-progress match (currently: updating total overs).
    ============================================================ */
 
 .confirmOverlay {
@@ -130,7 +140,8 @@
     justify-content: center;
 
     padding: 16px;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    padding-bottom: max(16px,
+            env(safe-area-inset-bottom));
 
     background: rgba(15, 23, 42, 0.45);
 }
@@ -144,7 +155,8 @@
     border-radius: 16px;
     background: var(--color-white);
 
-    box-shadow: 0 12px 32px rgba(15, 23, 42, 0.22);
+    box-shadow:
+        0 12px 32px rgba(15, 23, 42, 0.22);
 }
 
 .confirmTitle {
@@ -187,15 +199,23 @@
     color: white;
 }
 
+/* ============================================================
+   SETTINGS ROW
+   ============================================================ */
+
 .settingsRow {
     position: relative;
     min-height: 58px;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 12px;
     padding: 9px 0;
+
     border-top: 1px solid var(--color-hairline);
+
     cursor: pointer;
 }
 
@@ -226,6 +246,10 @@
     line-height: 1.35;
 }
 
+/* ============================================================
+   SWITCH
+   ============================================================ */
+
 .switchControl {
     position: relative;
     width: 38px;
@@ -236,37 +260,55 @@
 .switchInput {
     position: absolute;
     inset: 0;
+
     z-index: 2;
+
     width: 100%;
     height: 100%;
+
     margin: 0;
     opacity: 0;
+
     cursor: pointer;
 }
 
 .switchTrack {
     position: absolute;
     inset: 0;
+
     display: block;
+
     border-radius: 999px;
-    background: var(--color-slate-300);
-    transition: background-color 140ms ease;
+
+    background:
+        var(--color-slate-300);
+
+    transition:
+        background-color 140ms ease;
 }
 
 .switchThumb {
     position: absolute;
     top: 3px;
     left: 3px;
+
     width: 16px;
     height: 16px;
+
     border-radius: 50%;
+
     background: white;
-    box-shadow: 0 1px 3px rgba(15, 23, 42, .22);
-    transition: transform 140ms ease;
+
+    box-shadow:
+        0 1px 3px rgba(15, 23, 42, 0.22);
+
+    transition:
+        transform 140ms ease;
 }
 
 .switchInput:checked+.switchTrack {
-    background: var(--color-indigo-600);
+    background:
+        var(--color-indigo-600);
 }
 
 .switchInput:checked+.switchTrack .switchThumb {
@@ -275,30 +317,61 @@
 
 .switchInput:focus-visible+.switchTrack {
     outline: 2px solid var(--color-indigo-400);
+
     outline-offset: 2px;
 }
 
+/* ============================================================
+   TEAM HEADER
+   ============================================================ */
+
 .teamHeader {
     width: 100%;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
+    gap: 12px;
+
     padding: 0;
+
     border: 0;
+
     background: transparent;
     color: var(--color-slate-700);
+
     text-align: left;
+
     cursor: pointer;
 }
 
 .teamHeader strong {
+    color: var(--color-slate-900);
     font-size: 13px;
     font-weight: 700;
+}
+
+.teamHeader small {
+    color: var(--color-slate-500);
+    font-size: 10px;
+}
+
+.expandIcon {
+    flex-shrink: 0;
+
+    color: var(--color-slate-500);
+
+    font-size: 9px;
 }
 
 .teamBody {
     margin-top: 9px;
 }
+
+/* ============================================================
+   CURRENT PLAYER LIST
+   ============================================================ */
 
 .playerList {
     display: grid;
@@ -308,52 +381,393 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 9px;
+
     padding: 8px 0;
-    border-top: 1px solid var(--color-hairline);
+
+    border-top:
+        1px solid var(--color-hairline);
+}
+
+.playerRow:first-child {
+    border-top: 0;
+}
+
+.playerRow>span {
+    flex: 1;
+}
+
+.playerRow strong {
+    color: var(--color-slate-800);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.playerRow small {
+    color: var(--color-slate-500);
+    font-size: 10px;
+    line-height: 1.35;
 }
 
 .playerRow button {
+    flex-shrink: 0;
+
     padding: 6px 9px;
+
     border: 0;
     border-radius: 8px;
+
     background: var(--color-red-50);
     color: var(--color-red-700);
+
     font-size: 10px;
     font-weight: 600;
+
     cursor: pointer;
 }
 
 .playerRow button:disabled {
     background: var(--color-slate-100);
     color: var(--color-slate-500);
+
     cursor: not-allowed;
+}
+
+/* ============================================================
+   PLAYER SEARCH
+   ============================================================ */
+
+.playerSearch {
+    position: relative;
+
+    margin-top: 10px;
+
+    padding-top: 10px;
+
+    border-top:
+        1px solid var(--color-hairline);
 }
 
 .addRow {
     display: grid;
-    grid-template-columns: 1fr auto;
+
+    grid-template-columns:
+        minmax(0, 1fr) auto;
+
     gap: 7px;
-    margin-top: 9px;
+}
+
+.addInputWrapper {
+    position: relative;
+    min-width: 0;
 }
 
 .addRow input {
+    width: 100%;
     min-width: 0;
     min-height: 40px;
-    padding: 0 10px;
-    border: 1px solid var(--color-slate-300);
+
+    padding:
+        0 34px 0 10px;
+
+    border:
+        1px solid var(--color-slate-300);
+
     border-radius: 9px;
+
     background: white;
+    color: var(--color-slate-800);
+
     font-size: 12px;
+
+    outline: none;
+
+    box-sizing: border-box;
+
+    transition:
+        border-color 140ms ease,
+        box-shadow 140ms ease;
 }
 
-.addRow button {
+.addRow input::placeholder {
+    color: var(--color-slate-400);
+}
+
+.addRow input:focus {
+    border-color:
+        var(--color-indigo-500);
+
+    box-shadow:
+        0 0 0 3px rgba(99, 102, 241, 0.08);
+}
+
+.addRow>button {
+    min-width: 56px;
+
     padding: 0 14px;
+
     border: 0;
     border-radius: 9px;
-    background: var(--color-indigo-600);
+
+    background:
+        var(--color-indigo-600);
+
     color: white;
+
     font-size: 11px;
     font-weight: 700;
+
     cursor: pointer;
+}
+
+.addRow>button:disabled {
+    background:
+        var(--color-slate-200);
+
+    color:
+        var(--color-slate-400);
+
+    cursor: not-allowed;
+}
+
+/* ============================================================
+   SEARCH SPINNER
+   ============================================================ */
+
+.searchSpinner {
+    position: absolute;
+
+    top: 50%;
+    right: 11px;
+
+    width: 14px;
+    height: 14px;
+
+    margin-top: -7px;
+
+    border:
+        2px solid var(--color-slate-200);
+
+    border-top-color:
+        var(--color-indigo-600);
+
+    border-radius: 50%;
+
+    animation:
+        playerSearchSpin 0.7s linear infinite;
+}
+
+/* ============================================================
+   SEARCH MESSAGE
+   ============================================================ */
+
+.searchMessage {
+    margin: 6px 2px 0;
+
+    color: var(--color-red-700);
+
+    font-size: 9px;
+    line-height: 1.4;
+}
+
+/* ============================================================
+   PLAYER SUGGESTIONS
+   ============================================================ */
+
+.playerSuggestions {
+    overflow: hidden;
+
+    margin-top: 6px;
+
+    border:
+        1px solid var(--color-border);
+
+    border-radius: 10px;
+
+    background:
+        var(--color-white);
+
+    box-shadow:
+        0 8px 22px rgba(15, 23, 42, 0.10);
+}
+
+.suggestionItem {
+    width: 100%;
+    min-height: 47px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 9px;
+
+    padding: 8px 10px;
+
+    border: 0;
+    border-top:
+        1px solid var(--color-hairline);
+
+    background:
+        var(--color-white);
+
+    color:
+        var(--color-slate-800);
+
+    text-align: left;
+
+    cursor: pointer;
+}
+
+.suggestionItem:first-child {
+    border-top: 0;
+}
+
+.suggestionItem:hover {
+    background:
+        var(--color-slate-50);
+}
+
+.suggestionItem:active {
+    background:
+        var(--color-indigo-50);
+}
+
+.suggestionItem:disabled {
+    background:
+        var(--color-slate-50);
+
+    cursor: not-allowed;
+
+    opacity: 0.62;
+}
+
+/* ============================================================
+   SUGGESTION ICON
+   ============================================================ */
+
+.suggestionIcon,
+.newPlayerIcon {
+    width: 30px;
+    height: 30px;
+
+    flex: 0 0 30px;
+
+    display: grid;
+    place-items: center;
+
+    border-radius: 8px;
+
+    background:
+        var(--color-indigo-50);
+
+    font-size: 14px;
+}
+
+.newPlayerIcon {
+    color:
+        var(--color-indigo-700);
+
+    font-size: 18px;
+    font-weight: 700;
+}
+
+/* ============================================================
+   SUGGESTION TEXT
+   ============================================================ */
+
+.suggestionCopy {
+    min-width: 0;
+
+    display: grid;
+
+    gap: 2px;
+}
+
+.suggestionCopy strong {
+    overflow: hidden;
+
+    color:
+        var(--color-slate-800);
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.suggestionCopy small {
+    color:
+        var(--color-slate-500);
+
+    font-size: 9px;
+    line-height: 1.3;
+}
+
+/* ============================================================
+   SEARCHING ROW
+   ============================================================ */
+
+.searchingRow {
+    padding: 10px;
+
+    color:
+        var(--color-slate-500);
+
+    text-align: center;
+
+    font-size: 10px;
+}
+
+/* ============================================================
+   ANIMATION
+   ============================================================ */
+
+@keyframes playerSearchSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ============================================================
+   SMALL MOBILE
+   ============================================================ */
+
+@media (max-width: 350px) {
+    .sectionCard {
+        padding: 11px;
+    }
+
+    .addRow {
+        grid-template-columns:
+            minmax(0, 1fr) 52px;
+
+        gap: 6px;
+    }
+
+    .addRow>button {
+        min-width: 52px;
+        padding: 0 8px;
+    }
+
+    .suggestionItem {
+        padding:
+            8px;
+    }
+}
+
+/* ============================================================
+   REDUCED MOTION
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+    .searchSpinner {
+        animation: none;
+    }
+
+    .switchTrack,
+    .switchThumb,
+    .addRow input {
+        transition: none;
+    }
 }
