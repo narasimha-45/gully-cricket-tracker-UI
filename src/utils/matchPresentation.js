@@ -69,11 +69,15 @@ export function buildMatchHeroRows(match) {
       for (let index = 0; index < scheduledCount; index += 1) {
         const existing = match.innings[index];
         if (!existing || !sameName(existing.battingTeam, teamName)) continue;
+        // isLive is deliberately separate from isCurrent: isCurrent also
+        // turns on for the winner's row once the match is COMPLETED (for
+        // bold styling), but overs should only ever show for the innings
+        // that's actually still in progress.
+        const isLive = index === currentIndex && match.status !== "COMPLETED";
         segments.push({
           innings: existing,
-          isCurrent:
-            rowIsWinner ||
-            (index === currentIndex && match.status !== "COMPLETED"),
+          isLive,
+          isCurrent: rowIsWinner || isLive,
         });
       }
 
