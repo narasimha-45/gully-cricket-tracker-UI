@@ -41,6 +41,19 @@ export function useSeasonMatches(seasonId) {
   });
 }
 
+export function useLiveSeasonMatches(seasonId) {
+  return useQuery({
+    queryKey: queryKeys.liveSeasonMatches(seasonId),
+    queryFn: async ({ signal }) =>
+      asArray(await api.matches.getLiveMatches(seasonId, { signal })),
+    enabled: Boolean(seasonId),
+    staleTime: 5_000,
+    refetchInterval: 15_000,
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
+}
+
 export function useServerMatch(matchId) {
   return useQuery({
     queryKey: queryKeys.match(matchId),

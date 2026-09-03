@@ -1,10 +1,12 @@
 import { useMemo, useReducer, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { api } from "../api";
 import ConfirmSheet from "../components/common/ConfirmSheet";
 import EmptyState from "../components/common/EmptyState";
 import LoadingState from "../components/common/LoadingState";
+import { buildPublicLiveSnapshot } from "../features/live/liveMatchTransport";
 import { useLocalSeasonMatches } from "../features/matches/hooks/useLocalSeasonMatches";
-import { useSeasonMatches } from "../hooks/queries";
+import { useLiveSeasonMatches, useSeasonMatches } from "../hooks/queries";
 import { deleteMatch as deleteLocalMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
 import { isTestMatch, sameName } from "../utils/matchModel";
@@ -119,6 +121,169 @@ const formatMatchBadge = (match, format) => {
   return "Limited overs";
 };
 
+
+const getLiveInnings = (match) => {
+  if (match?.remoteLive) {
+    return (match?.liveSummary?.innings || []).map((innings) => ({
+      battingTeam: innings.battingTeam,
+      inningsNumber: innings.inningsNumber,
+      totalRuns: Number(innings.runs || 0),
+      wickets: Number(innings.wickets || 0),
+      balls: Number(innings.balls || 0),
+      completionReason: innings.completionReason || null,
+      isFollowOn: Boolean(innings.followOn),
+      isSuperOver: Boolean(innings.superOver),
+      completed: Boolean(innings.completed),
+    }));
+  }
+
+  return Array.isArray(match?.innings) ? match.innings : [];
+};
+
+const getLiveCurrentBattingTeam = (match) => {
+  if (match?.remoteLive) {
+    return match?.liveSummary?.battingTeam || "";
+  }
+
+  const inningsIndex = Number(match?.live?.inningsIndex || 0);
+  return match?.innings?.[inningsIndex]?.battingTeam || "";
+};
+
+const formatLiveInnings = (innings, isTest) => {
+  if (!innings) return "";
+
+  if (isTest) {
+    return formatTestInnings({
+      runs: innings.totalRuns,
+      wickets: innings.wickets,
+      completionReason: innings.completionReason,
+      followOn: innings.isFollowOn,
+      isFollowOn: innings.isFollowOn,
+    });
+  }
+
+  return `${Number(innings.totalRuns || 0)}-${Number(innings.wickets || 0)} (${ballsToOvers(innings.balls)})`;
+};
+
+const getLiveTeamScore = (match, teamName) => {
+  const isTest = match?.matchType === "TEST";
+  const teamInnings = getLiveInnings(match).filter(
+    (innings) =>
+      !innings?.isSuperOver && sameName(innings?.battingTeam, teamName),
+  );
+
+  if (teamInnings.length === 0) {
+    return "";
+  }
+
+  return teamInnings.map((innings) => formatLiveInnings(innings, isTest)).join(" & ");
+};
+
+const getLiveCardFormat = (match) =>
+  match?.matchType === "TEST" ? "TEST" : "LIMITED_OVERS";
+
+const getLiveCurrentInningsIndex = (match) =>
+  match?.remoteLive
+    ? Number(match?.liveSummary?.currentInningsIndex || 0)
+    : Number(match?.live?.inningsIndex || 0);
+
+const getLiveToss = (match) =>
+  match?.remoteLive
+    ? {
+        winner: match?.liveSummary?.tossWinner || "",
+        decision: match?.liveSummary?.tossDecision || "",
+      }
+    : match?.toss || {};
+
+const getLiveTestInningsPerTeam = (match) => {
+  if (match?.remoteLive) {
+    return Number(match?.liveSummary?.testInningsPerTeam || 0);
+  }
+  return Number(match?.testConfig?.inningsPerTeam || 0);
+};
+
+const getLiveCardFooter = (match) => {
+  if (["SETUP", "setup"].includes(match?.status)) {
+    return match?.toss ? "Ready to score" : "Match setup";
+  }
+
+  const innings = getLiveInnings(match);
+  const currentIndex = getLiveCurrentInningsIndex(match);
+  const current = innings[currentIndex];
+  if (!current) return "Match live";
+
+  const battingTeam = formatName(current.battingTeam);
+
+  if (currentIndex === 0) {
+    const toss = getLiveToss(match);
+    if (toss?.winner) {
+      const decision = toss.decision === "bowl" ? "bowl" : "bat";
+      return `${formatName(toss.winner)} elected to ${decision}`;
+    }
+    return `${battingTeam} batting first`;
+  }
+
+  if (match?.matchType !== "TEST") {
+    const previous = innings[currentIndex - 1];
+    if (!previous) return `${battingTeam} batting`;
+
+    const target = Number(previous.totalRuns || 0) + 1;
+    const need = Math.max(0, target - Number(current.totalRuns || 0));
+    const overLimit = current.isSuperOver ? 1 : Number(match?.totalOvers || 0);
+    const ballsLeft =
+      overLimit > 0
+        ? Math.max(0, overLimit * 6 - Number(current.balls || 0))
+        : null;
+
+    if (ballsLeft != null) {
+      return `${battingTeam} need ${need} run${need === 1 ? "" : "s"} in ${ballsLeft} ball${ballsLeft === 1 ? "" : "s"}`;
+    }
+
+    return `${battingTeam} need ${need} run${need === 1 ? "" : "s"}`;
+  }
+
+  const inningsPerTeam = getLiveTestInningsPerTeam(match);
+  const scheduledCount = inningsPerTeam > 0 ? inningsPerTeam * 2 : 0;
+  const isFinalInnings = scheduledCount > 0 && currentIndex === scheduledCount - 1;
+
+  const runsFor = (teamName, beforeIndex = innings.length) =>
+    innings.reduce((total, item, index) => {
+      if (
+        index >= beforeIndex ||
+        item?.isSuperOver ||
+        !sameName(item?.battingTeam, teamName)
+      ) {
+        return total;
+      }
+      return total + Number(item?.totalRuns || 0);
+    }, 0);
+
+  const otherTeam = sameName(current.battingTeam, match?.teams?.teamA?.name)
+    ? match?.teams?.teamB?.name
+    : match?.teams?.teamA?.name;
+
+  if (isFinalInnings && otherTeam) {
+    const battingBefore = runsFor(current.battingTeam, currentIndex);
+    const oppositionBefore = runsFor(otherTeam, currentIndex);
+    const target = Math.max(1, oppositionBefore - battingBefore + 1);
+    const need = Math.max(0, target - Number(current.totalRuns || 0));
+    return `${battingTeam} need ${need} run${need === 1 ? "" : "s"}`;
+  }
+
+  const battingTotal = runsFor(current.battingTeam, currentIndex + 1);
+  const oppositionTotal = otherTeam
+    ? runsFor(otherTeam, currentIndex + 1)
+    : 0;
+  const difference = battingTotal - oppositionTotal;
+
+  if (difference === 0) return "Scores level";
+  if (difference > 0) {
+    return `${battingTeam} lead by ${difference} run${difference === 1 ? "" : "s"}`;
+  }
+  const trail = Math.abs(difference);
+  return `${battingTeam} trail by ${trail} run${trail === 1 ? "" : "s"}`;
+};
+
 export default function SeasonMatches() {
   const { seasonId } = useParams();
 
@@ -131,10 +296,13 @@ export default function SeasonMatches() {
   const [filters, dispatch] = useReducer(filterReducer, initialFilters);
 
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const localQuery = useLocalSeasonMatches(seasonId);
 
   const serverQuery = useSeasonMatches(seasonId);
+
+  const remoteLiveQuery = useLiveSeasonMatches(seasonId);
 
   const localMatches = useMemo(() => localQuery.data || [], [localQuery.data]);
 
@@ -144,15 +312,51 @@ export default function SeasonMatches() {
   );
 
   /**
-   * Matches currently stored locally and still being played/setup.
+   * Local matches belong to this device (scorer). Remote matches are read-only
+   * live broadcasts discovered from the backend. Local always wins when the
+   * same match is present in both sources.
    */
-  const liveMatches = useMemo(
-    () =>
-      localMatches
-        .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))
-        .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0)),
-    [localMatches],
-  );
+  const liveMatches = useMemo(() => {
+    const merged = new Map();
+
+    (remoteLiveQuery.data || []).forEach((summary) => {
+      const id = summary.matchId || summary.id;
+      if (!id) return;
+      merged.set(id, {
+        id,
+        seasonId: summary.seasonId || seasonId,
+        status: "LIVE",
+        remoteLive: true,
+        updatedAt: summary.updatedAt || 0,
+        matchType: summary.matchType,
+        totalOvers: summary.totalOvers,
+        testConfig:
+          summary.testInningsPerTeam
+            ? { inningsPerTeam: Number(summary.testInningsPerTeam) }
+            : null,
+        toss:
+          summary.tossWinner
+            ? {
+                winner: summary.tossWinner,
+                decision: summary.tossDecision || "bat",
+              }
+            : null,
+        teams: {
+          teamA: { name: summary.teamA },
+          teamB: { name: summary.teamB },
+        },
+        liveSummary: summary,
+      });
+    });
+
+    localMatches
+      .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))
+      .forEach((match) => merged.set(match.id, match));
+
+    return [...merged.values()].sort(
+      (a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0),
+    );
+  }, [localMatches, remoteLiveQuery.data, seasonId]);
 
   /**
    * Completed locally but not yet successfully synced.
@@ -227,6 +431,11 @@ export default function SeasonMatches() {
   );
 
   const openLocalMatch = (match) => {
+    if (match.remoteLive) {
+      navigate(`/season/${seasonId}/match/${match.id}/live`);
+      return;
+    }
+
     if (["SETUP", "setup"].includes(match.status)) {
       navigate(
         match.toss
@@ -247,13 +456,27 @@ export default function SeasonMatches() {
   };
 
   const confirmRemoveLocal = async () => {
-    if (!pendingDelete) {
+    const matchToDelete = pendingDelete;
+    if (!matchToDelete) {
       return;
     }
 
-    await deleteLocalMatch(pendingDelete.id);
-
-    localQuery.reload();
+    setDeleteError("");
+    try {
+      if (matchToDelete.status === "LIVE" && matchToDelete.liveScoring?.scorerToken) {
+        await api.matches.endLiveMatch(
+          matchToDelete.id,
+          matchToDelete.liveScoring.scorerToken,
+          buildPublicLiveSnapshot(matchToDelete),
+        );
+      }
+      await deleteLocalMatch(matchToDelete.id);
+      localQuery.reload();
+    } catch (deleteFailure) {
+      setDeleteError(
+        "Could not end the live broadcast, so the match was kept on this device. Check the connection and try deleting it again.",
+      );
+    }
   };
 
   return (
@@ -288,69 +511,94 @@ export default function SeasonMatches() {
 
       {tab === "LIVE" && (
         <section aria-label="Live and setup matches">
-          {localQuery.loading ? (
-            <LoadingState label="Loading matches on this device…" />
-          ) : localQuery.error ? (
+          {deleteError && (
+            <div className={styles.inlineError} role="alert">
+              <span>{deleteError}</span>
+              <button type="button" onClick={() => setDeleteError("")}>
+                Dismiss
+              </button>
+            </div>
+          )}
+          {liveMatches.length === 0 &&
+          (localQuery.loading || remoteLiveQuery.isLoading) ? (
+            <LoadingState label="Loading live matches…" />
+          ) : liveMatches.length === 0 &&
+            localQuery.error &&
+            remoteLiveQuery.isError ? (
             <ErrorBlock
-              message="Could not read saved matches from this device."
-              onRetry={localQuery.reload}
+              message="Live matches could not be loaded from this device or the server."
+              onRetry={() => {
+                localQuery.reload();
+                remoteLiveQuery.refetch();
+              }}
             />
           ) : liveMatches.length === 0 ? (
             <EmptyState
               title="No live matches"
-              subtitle="Create a match and start scoring — it will remain available even when you go offline."
+              subtitle="Create a match and start scoring. Other users will see it here automatically once live scoring begins."
             />
           ) : (
             <div className={styles.list}>
-              {liveMatches.map((match) => (
-                <article key={match.id} className={styles.liveCard}>
-                  <button
-                    type="button"
-                    className={styles.liveCardOpen}
-                    onClick={() => openLocalMatch(match)}
-                    aria-label={`Open ${formatName(
-                      match.teams?.teamA?.name,
-                    )} versus ${formatName(match.teams?.teamB?.name)}`}
+              {liveMatches.map((match) => {
+                const teamA = match.teams?.teamA?.name;
+                const teamB = match.teams?.teamB?.name;
+                const currentBattingTeam = getLiveCurrentBattingTeam(match);
+                const format = getLiveCardFormat(match);
+
+                return (
+                  <article
+                    key={match.id}
+                    className={`${styles.liveCard} ${match.remoteLive ? styles.remoteLiveCard : ""}`}
                   >
-                    <span className={styles.cardMain}>
-                      <strong>
-                        {formatName(match.teams?.teamA?.name)}{" "}
-                        <span className={styles.vs}>vs</span>{" "}
-                        {formatName(match.teams?.teamB?.name)}
-                      </strong>
-
-                      <span className={styles.meta}>
-                        {match.status === "LIVE"
-                          ? "Live scoring"
-                          : match.toss
-                            ? "Ready to score"
-                            : "Match setup"}
-                      </span>
-                    </span>
-
-                    <span
-                      className={`${styles.statusPill} ${
-                        match.status === "LIVE" ? styles.livePill : ""
-                      }`}
+                    <button
+                      type="button"
+                      className={styles.liveCardOpen}
+                      onClick={() => openLocalMatch(match)}
+                      aria-label={`${match.remoteLive ? "Watch" : "Open"} ${formatName(
+                        teamA,
+                      )} versus ${formatName(teamB)}`}
                     >
-                      {match.status === "LIVE" ? "LIVE" : "SETUP"}
-                    </span>
-                  </button>
+                      <span className={styles.dateRow}>
+                        <span className={styles.liveNow}>● LIVE</span>
+                        <span className={styles.formatBadge}>
+                          {formatMatchBadge(match, format)}
+                        </span>
+                      </span>
 
-                  <button
-                    type="button"
-                    className={styles.deleteAction}
-                    aria-label={`Delete ${formatName(
-                      match.teams?.teamA?.name,
-                    )} versus ${formatName(
-                      match.teams?.teamB?.name,
-                    )} from this device`}
-                    onClick={(event) => requestRemoveLocal(event, match)}
-                  >
-                    ×
-                  </button>
-                </article>
-              ))}
+                      <LiveScoreRow
+                        name={teamA}
+                        score={getLiveTeamScore(match, teamA)}
+                        current={sameName(currentBattingTeam, teamA)}
+                      />
+
+                      <LiveScoreRow
+                        name={teamB}
+                        score={getLiveTeamScore(match, teamB)}
+                        current={sameName(currentBattingTeam, teamB)}
+                      />
+
+                      <span className={styles.result}>
+                        {getLiveCardFooter(match)}
+                      </span>
+                    </button>
+
+                    {!match.remoteLive && (
+                      <button
+                        type="button"
+                        className={styles.deleteAction}
+                        aria-label={`Delete ${formatName(
+                          teamA,
+                        )} versus ${formatName(
+                          teamB,
+                        )} from this device`}
+                        onClick={(event) => requestRemoveLocal(event, match)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>
@@ -608,6 +856,17 @@ const inningsToDisplay = (innings) =>
     )
     .map(formatTestInnings)
     .join(" & ");
+
+function LiveScoreRow({ name, score, current }) {
+  return (
+    <span
+      className={`${styles.scoreRow} ${current ? styles.liveCurrentScore : ""}`}
+    >
+      <span>{formatName(name)}</span>
+      <strong className={!score ? styles.emptyLiveScore : ""}>{score || ""}</strong>
+    </span>
+  );
+}
 
 function ScoreRow({ name, score, wickets, balls, innings, isTest, winner }) {
   const hasTestInnings = isTest && Array.isArray(innings) && innings.length > 0;

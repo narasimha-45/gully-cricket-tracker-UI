@@ -1,0 +1,100 @@
+.card {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-white);
+  box-shadow: var(--shadow-xs);
+}
+
+.titleRow,
+.teamHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.titleRow {
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.titleRow strong {
+  color: var(--color-slate-900);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.titleRow > span {
+  color: var(--color-slate-400);
+  font-size: 9px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.teamBlock {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 9px;
+  background: var(--color-slate-50);
+}
+
+.teamHeader strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-slate-800);
+  font-size: 10px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.teamHeader span {
+  flex: 0 0 auto;
+  color: var(--color-slate-400);
+  font-size: 8px;
+}
+
+.players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.playerChip {
+  max-width: 100%;
+  padding: 3px 6px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-white);
+  color: var(--color-slate-600);
+  font-size: 8px;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.empty {
+  color: var(--color-slate-400);
+  font-size: 9px;
+}
+
+@media (max-width: 480px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

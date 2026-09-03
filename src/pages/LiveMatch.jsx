@@ -3,21 +3,22 @@ import { useNavigate, useParams } from "react-router-dom";
 import EditMatchSheet from "../components/EditMatchSheet";
 import InsightsTab from "../components/InsightsTab.jsx";
 import LiveScoringPanel from "../components/LiveScoringPanel";
+import LiveViewerPanel from "../components/LiveViewerPanel";
 import MatchHero from "../components/MatchHero";
 import MatchPopup from "../components/MatchPopup";
 import MatchSummaryTab from "../components/MatchSummaryTab";
+import ViewerSquads from "../components/ViewerSquads";
 import OversTimeline from "../components/OversTimeline";
 import Scorecard from "../components/Scorecard";
-import MatchPersistenceStatus from "../features/match/components/MatchPersistenceStatus";
 import { finalizeAndSyncMatch } from "../features/match/services/finalizeMatch";
 import { MATCH_ACTIONS } from "../features/match/state/matchActions";
 import { MatchSessionProvider } from "../features/match/state/MatchSessionContext.jsx";
 import { useMatchSession } from "../features/match/state/useMatchSession";
+import { logger } from "../observability/logger";
 import { formatName } from "../utils/helpers";
 import { canEnforceFollowOn, getFollowOnLead } from "../utils/matchModel";
 import { formatMatchResult } from "../utils/matchPresentation";
 import { recreateMatch } from "../utils/recreateMatch";
-import { logger } from "../observability/logger";
 import styles from "./LiveMatch.module.css";
 
 const tabs = ["live", "scorecard", "overs", "insights"];
@@ -33,7 +34,15 @@ export default function LiveMatch() {
 
 function LiveMatchContent() {
   const navigate = useNavigate();
-  const { phase, match, dispatch, error } = useMatchSession();
+  const {
+    phase,
+    match,
+    dispatch,
+    error,
+    isScorer,
+    isViewer,
+    liveConnectionState,
+  } = useMatchSession();
   const [editOpen, setEditOpen] = useState(false);
   const [tab, setTab] = useState("live");
   const [ackSubmitting, setAckSubmitting] = useState(false);
@@ -48,7 +57,7 @@ function LiveMatchContent() {
     return (
       <main className={styles.page}>
         <p className={`${styles.stateMessage} ${styles.errorState}`}>
-          {error?.message || "Match not found on this device."}
+          {error?.message || "Live match is no longer available."}
         </p>
         <button
           type="button"
@@ -65,7 +74,9 @@ function LiveMatchContent() {
     return (
       <main className={styles.page}>
         <p className={`${styles.stateMessage} ${styles.errorState}`}>
-          Complete the toss before starting scoring.
+          {isViewer
+            ? "The live score is not ready yet."
+            : "Complete the toss before starting scoring."}
         </p>
         <button
           type="button"
@@ -82,10 +93,11 @@ function LiveMatchContent() {
   const currentInnings = match.innings[live.inningsIndex];
   const nextInningsIndex =
     live.pendingNextInningsIndex ?? live.inningsIndex + 1;
-  const followOnAvailable = canEnforceFollowOn(match);
+  const followOnAvailable = isScorer && canEnforceFollowOn(match);
   const followOnLead = followOnAvailable ? getFollowOnLead(match) : 0;
 
   const handleHeroAction = () => {
+    if (!isScorer) return;
     if (match.status === "COMPLETED") {
       recreateMatch(match, navigate);
       return;
@@ -94,16 +106,19 @@ function LiveMatchContent() {
   };
 
   const finishMatch = async () => {
-    if (ackSubmitting) return;
+    if (!isScorer || ackSubmitting) return;
     setAckSubmitting(true);
     setFinalizeError("");
     setFinalizeSuccess(false);
     try {
-      await finalizeAndSyncMatch({ match, dispatch });
-      // Stay on this page after a successful save — the person may still
-      // want to review the scorecard, insights, or the result banner
-      // instead of being bounced back to the matches list.
-      setFinalizeSuccess(true);
+      const result = await finalizeAndSyncMatch({ match, dispatch });
+      if (result?.synced) {
+        setFinalizeSuccess(true);
+      } else {
+        setFinalizeError(
+          "The match is safe on this device but could not sync to the server yet. Try Finish match again when the connection is available.",
+        );
+      }
     } catch (syncError) {
       logger.error("match.finalize.failed", {
         matchId: match.id,
@@ -117,9 +132,23 @@ function LiveMatchContent() {
     }
   };
 
+  const connectionLabel =
+    liveConnectionState === "connected"
+      ? isScorer
+        ? "Scorer live"
+        : "Watching live"
+      : liveConnectionState === "connecting" ||
+          liveConnectionState === "reconnecting"
+        ? "Reconnecting"
+        : isScorer
+          ? "Live scoring"
+          : "Live viewer";
+
   return (
     <main className={styles.page}>
-      <EditMatchSheet open={editOpen} onClose={() => setEditOpen(false)} />
+      {isScorer && (
+        <EditMatchSheet open={editOpen} onClose={() => setEditOpen(false)} />
+      )}
       <div className={styles.topRow}>
         <button
           type="button"
@@ -128,12 +157,14 @@ function LiveMatchContent() {
         >
           ← Matches
         </button>
-        <span className={styles.liveBadge}>
-          {match.status === "LIVE" ? "Live scoring" : "Match complete"}
+        <span
+          className={`${styles.liveBadge} ${isViewer ? styles.viewerBadge : ""}`}
+        >
+          {match.status === "LIVE" ? connectionLabel : "Match complete"}
         </span>
       </div>
-      {/* <MatchPersistenceStatus /> */}
-      {finalizeError && (
+
+      {isScorer && finalizeError && (
         <div className={styles.finalizeError} role="alert">
           <strong>Finish match needs attention</strong>
           <span>{finalizeError}</span>
@@ -142,51 +173,33 @@ function LiveMatchContent() {
           </button>
         </div>
       )}
-      {finalizeSuccess && (
-        <div
-          role="status"
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 10,
-            margin: "0 0 10px",
-            padding: "10px 12px",
-            borderRadius: 10,
-            background: "#f0fdf4",
-            border: "1px solid #bbf7d0",
-            color: "#166534",
-            fontSize: 12,
-            fontWeight: 600,
-          }}
-        >
+      {isScorer && finalizeSuccess && (
+        <div className={styles.finalizeSuccess} role="status">
           <span>Match saved and synced.</span>
-          <button
-            type="button"
-            onClick={() => setFinalizeSuccess(false)}
-            style={{
-              border: 0,
-              background: "transparent",
-              color: "#166534",
-              fontWeight: 700,
-              cursor: "pointer",
-            }}
-          >
+          <button type="button" onClick={() => setFinalizeSuccess(false)}>
             Dismiss
           </button>
         </div>
-      )}{" "}
+      )}
 
       <div className={styles.stickyHero}>
-        <MatchHero match={match} onAction={handleHeroAction} />
+        <MatchHero
+          match={match}
+          onAction={isScorer ? handleHeroAction : undefined}
+        />
       </div>
-      
+
+      {isViewer && match.status === "LIVE" && (
+        <ViewerSquads match={match} />
+      )}
+
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
         <section className={styles.motmCard}>
           <strong>🏆 Man of the Match</strong>
           <span>{formatName(match.result.manOfTheMatch)}</span>
         </section>
       )}
+
       <nav className={styles.tabs} aria-label="Match views">
         {tabs.map((item) => (
           <button
@@ -204,14 +217,21 @@ function LiveMatchContent() {
           </button>
         ))}
       </nav>
+
       {tab === "scorecard" && <Scorecard match={match} />}
       {tab === "overs" && <OversTimeline match={match} />}
       {tab === "insights" && <InsightsTab match={match} />}
       {tab === "live" && match.status === "COMPLETED" && (
         <MatchSummaryTab match={match} />
       )}
-      {tab === "live" && match.status === "LIVE" && <LiveScoringPanel />}
-      {match.status === "COMPLETED" && match.result && (
+      {tab === "live" && match.status === "LIVE" && isScorer && (
+        <LiveScoringPanel />
+      )}
+      {tab === "live" && match.status === "LIVE" && isViewer && (
+        <LiveViewerPanel />
+      )}
+
+      {isScorer && match.status === "COMPLETED" && match.result && (
         <MatchPopup
           open={!match.ui?.matchResultSeen}
           title={formatMatchResult(match.result)}
@@ -229,67 +249,73 @@ function LiveMatchContent() {
           }
         />
       )}
-      <MatchPopup
-        open={Boolean(live.pendingNextInnings)}
-        title="Innings complete"
-        subtitle={`${formatName(currentInnings.battingTeam)}'s innings has ended${currentInnings.completionReason === "DECLARED" ? " by declaration" : ""}.`}
-        scoreline={{
-          label: formatName(currentInnings.battingTeam),
-          runs: currentInnings.totalRuns,
-          wickets: currentInnings.wickets,
-          declared: currentInnings.completionReason === "DECLARED",
-          overs: `${Math.floor(currentInnings.balls / 6)}.${currentInnings.balls % 6}`,
-        }}
-        banner={
-          followOnAvailable
-            ? `${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} run${followOnLead === 1 ? "" : "s"} and may enforce the follow-on.`
-            : undefined
-        }
-        primaryText={`Start innings ${nextInningsIndex + 1}`}
-        onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_NEXT_INNINGS })}
-        secondaryText={
-          followOnAvailable
-            ? `Enforce follow-on · Start innings ${nextInningsIndex + 1}`
-            : "Undo last action"
-        }
-        onSecondary={
-          followOnAvailable
-            ? () =>
-                dispatch({
-                  type: MATCH_ACTIONS.START_NEXT_INNINGS,
-                  payload: { followOn: true },
-                })
-            : () =>
-                dispatch({
-                  type: MATCH_ACTIONS.UNDO,
-                  payload: { allowCompleted: true },
-                })
-        }
-        tertiaryText={followOnAvailable ? "Undo last action" : null}
-        onTertiary={
-          followOnAvailable
-            ? () =>
-                dispatch({
-                  type: MATCH_ACTIONS.UNDO,
-                  payload: { allowCompleted: true },
-                })
-            : null
-        }
-      />
-      <MatchPopup
-        open={Boolean(live.pendingSuperOver)}
-        title="Match tied"
-        subtitle="Scores are level. Start a Super Over to decide the winner."
-        primaryText="Start Super Over"
-        onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_SUPER_OVER })}
-        secondaryText="Undo last action"
-        onSecondary={() =>
-          dispatch({
-            type: MATCH_ACTIONS.UNDO,
-            payload: { allowCompleted: true },
-          })
-        }
-      />
+
+      {isScorer && (
+        <MatchPopup
+          open={Boolean(live.pendingNextInnings)}
+          title="Innings complete"
+          subtitle={`${formatName(currentInnings.battingTeam)}'s innings has ended${currentInnings.completionReason === "DECLARED" ? " by declaration" : ""}.`}
+          scoreline={{
+            label: formatName(currentInnings.battingTeam),
+            runs: currentInnings.totalRuns,
+            wickets: currentInnings.wickets,
+            declared: currentInnings.completionReason === "DECLARED",
+            overs: `${Math.floor(currentInnings.balls / 6)}.${currentInnings.balls % 6}`,
+          }}
+          banner={
+            followOnAvailable
+              ? `${formatName(match.innings[0].battingTeam)} lead by ${followOnLead} run${followOnLead === 1 ? "" : "s"} and may enforce the follow-on.`
+              : undefined
+          }
+          primaryText={`Start innings ${nextInningsIndex + 1}`}
+          onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_NEXT_INNINGS })}
+          secondaryText={
+            followOnAvailable
+              ? `Enforce follow-on · Start innings ${nextInningsIndex + 1}`
+              : "Undo last action"
+          }
+          onSecondary={
+            followOnAvailable
+              ? () =>
+                  dispatch({
+                    type: MATCH_ACTIONS.START_NEXT_INNINGS,
+                    payload: { followOn: true },
+                  })
+              : () =>
+                  dispatch({
+                    type: MATCH_ACTIONS.UNDO,
+                    payload: { allowCompleted: true },
+                  })
+          }
+          tertiaryText={followOnAvailable ? "Undo last action" : null}
+          onTertiary={
+            followOnAvailable
+              ? () =>
+                  dispatch({
+                    type: MATCH_ACTIONS.UNDO,
+                    payload: { allowCompleted: true },
+                  })
+              : null
+          }
+        />
+      )}
+
+      {isScorer && (
+        <MatchPopup
+          open={Boolean(live.pendingSuperOver)}
+          title="Match tied"
+          subtitle="Scores are level. Start a Super Over to decide the winner."
+          primaryText="Start Super Over"
+          onPrimary={() => dispatch({ type: MATCH_ACTIONS.START_SUPER_OVER })}
+          secondaryText="Undo last action"
+          onSecondary={() =>
+            dispatch({
+              type: MATCH_ACTIONS.UNDO,
+              payload: { allowCompleted: true },
+            })
+          }
+        />
+      )}
     </main>
   );
 }
