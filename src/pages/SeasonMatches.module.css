@@ -82,15 +82,30 @@
 .liveCardOpen {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 7px 11px 12px;
+    gap: 6px;
+    padding: 11px 12px;
     border: 0;
     background: transparent;
     color: inherit;
     text-align: left;
     cursor: pointer;
+}
+
+.liveNow {
+    color: var(--color-red-700);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .05em;
+}
+
+.liveCurrentScore {
+    color: var(--color-slate-900);
+    font-weight: 700;
+}
+
+.emptyLiveScore {
+    min-width: 48px;
+    min-height: 1em;
 }
 
 .completedCard {
@@ -345,4 +360,35 @@
     .filters label:last-child {
         grid-column: 1 / -1;
     }
+}
+.remoteLiveCard {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.inlineError {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 9px 10px;
+    border: 1px solid var(--color-red-200);
+    border-radius: 10px;
+    background: var(--color-red-50);
+    color: var(--color-red-800);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.inlineError button {
+    flex: 0 0 auto;
+    min-height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--color-red-200);
+    border-radius: 8px;
+    background: white;
+    color: var(--color-red-700);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
 }

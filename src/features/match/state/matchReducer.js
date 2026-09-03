@@ -1,4 +1,5 @@
 import { MATCH_ACTIONS } from "./matchActions";
+import { applyLivePatch } from "../../live/liveMatchTransport";
 import {
   addTeamPlayer,
   changeBowler,
@@ -18,7 +19,9 @@ import {
 
 export const initialMatchSessionState = Object.freeze({
   phase: "loading",
+  role: null,
   match: null,
+  remoteRevision: 0,
   extraMode: "NORMAL",
   revision: 0,
   persistence: {
@@ -50,7 +53,9 @@ export function matchSessionReducer(state, action) {
       return {
         ...initialMatchSessionState,
         phase: "ready",
+        role: action.role || null,
         match: action.payload || null,
+        remoteRevision: Number(action.remoteRevision || 0),
         extraMode: "NORMAL",
       };
 
@@ -59,6 +64,30 @@ export function matchSessionReducer(state, action) {
         ...initialMatchSessionState,
         phase: "error",
         error: action.error || new Error("Unable to load match"),
+      };
+
+    case MATCH_ACTIONS.REMOTE_SNAPSHOT:
+      if (state.role !== "VIEWER" || !action.payload) return state;
+      if (Number(action.remoteRevision || 0) < Number(state.remoteRevision || 0)) {
+        return state;
+      }
+      return {
+        ...state,
+        phase: "ready",
+        match: action.payload,
+        remoteRevision: Number(action.remoteRevision || state.remoteRevision || 0),
+        persistence: { status: "idle", savedAt: null, error: null },
+      };
+
+    case MATCH_ACTIONS.REMOTE_PATCH:
+      if (state.role !== "VIEWER" || !state.match || !action.payload) return state;
+      if (Number(action.remoteRevision || 0) <= Number(state.remoteRevision || 0)) {
+        return state;
+      }
+      return {
+        ...state,
+        match: applyLivePatch(state.match, action.payload),
+        remoteRevision: Number(action.remoteRevision || state.remoteRevision || 0),
       };
 
     case MATCH_ACTIONS.SELECT_PLAYER:

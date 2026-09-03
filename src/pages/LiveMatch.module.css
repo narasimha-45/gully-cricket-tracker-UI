@@ -139,3 +139,30 @@
   font-weight: 700;
   cursor: pointer;
 }
+.viewerBadge {
+  background: var(--color-emerald-50, #ecfdf5);
+  color: var(--color-emerald-700, #047857);
+}
+
+.finalizeSuccess {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid #bbf7d0;
+  border-radius: 10px;
+  background: #f0fdf4;
+  color: #166534;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.finalizeSuccess button {
+  border: 0;
+  background: transparent;
+  color: #166534;
+  font-weight: 700;
+  cursor: pointer;
+}

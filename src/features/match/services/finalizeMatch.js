@@ -9,6 +9,7 @@ import {
   deriveFieldingStats,
 } from "../../../utils/statsCalculator";
 import { logger } from "../../../observability/logger";
+import { buildPublicLiveSnapshot } from "../../live/liveMatchTransport";
 import { MATCH_ACTIONS } from "../state/matchActions";
 
 export async function finalizeAndSyncMatch({ match, dispatch }) {
@@ -38,6 +39,14 @@ export async function finalizeAndSyncMatch({ match, dispatch }) {
     await api.matches.createMatch(buildMatchSyncPayload(updated), {
       idempotencyKey: getMatchIdempotencyKey(updated),
     });
+    const scorerToken = updated.liveScoring?.scorerToken;
+    if (scorerToken) {
+      await api.matches.endLiveMatch(
+        updated.id,
+        scorerToken,
+        buildPublicLiveSnapshot(updated),
+      );
+    }
     await deleteMatch(updated.id);
     await invalidateAfterMatchSync(updated.seasonId);
     logger.info("match.sync.completed", {
