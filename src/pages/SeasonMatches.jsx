@@ -1,10 +1,12 @@
 import { useMemo, useReducer, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { api } from "../api";
 import ConfirmSheet from "../components/common/ConfirmSheet";
 import EmptyState from "../components/common/EmptyState";
 import LoadingState from "../components/common/LoadingState";
+import { buildPublicLiveSnapshot } from "../features/live/liveMatchTransport";
 import { useLocalSeasonMatches } from "../features/matches/hooks/useLocalSeasonMatches";
-import { useSeasonMatches } from "../hooks/queries";
+import { useLiveSeasonMatches, useSeasonMatches } from "../hooks/queries";
 import { deleteMatch as deleteLocalMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
 import { isTestMatch, sameName } from "../utils/matchModel";
@@ -131,10 +133,13 @@ export default function SeasonMatches() {
   const [filters, dispatch] = useReducer(filterReducer, initialFilters);
 
   const [pendingDelete, setPendingDelete] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
 
   const localQuery = useLocalSeasonMatches(seasonId);
 
   const serverQuery = useSeasonMatches(seasonId);
+
+  const remoteLiveQuery = useLiveSeasonMatches(seasonId);
 
   const localMatches = useMemo(() => localQuery.data || [], [localQuery.data]);
 
@@ -144,15 +149,40 @@ export default function SeasonMatches() {
   );
 
   /**
-   * Matches currently stored locally and still being played/setup.
+   * Local matches belong to this device (scorer). Remote matches are read-only
+   * live broadcasts discovered from the backend. Local always wins when the
+   * same match is present in both sources.
    */
-  const liveMatches = useMemo(
-    () =>
-      localMatches
-        .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))
-        .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0)),
-    [localMatches],
-  );
+  const liveMatches = useMemo(() => {
+    const merged = new Map();
+
+    (remoteLiveQuery.data || []).forEach((summary) => {
+      const id = summary.matchId || summary.id;
+      if (!id) return;
+      merged.set(id, {
+        id,
+        seasonId: summary.seasonId || seasonId,
+        status: "LIVE",
+        remoteLive: true,
+        updatedAt: summary.updatedAt || 0,
+        matchType: summary.matchType,
+        totalOvers: summary.totalOvers,
+        teams: {
+          teamA: { name: summary.teamA },
+          teamB: { name: summary.teamB },
+        },
+        liveSummary: summary,
+      });
+    });
+
+    localMatches
+      .filter((match) => ["SETUP", "setup", "LIVE"].includes(match.status))
+      .forEach((match) => merged.set(match.id, match));
+
+    return [...merged.values()].sort(
+      (a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0),
+    );
+  }, [localMatches, remoteLiveQuery.data, seasonId]);
 
   /**
    * Completed locally but not yet successfully synced.
@@ -227,6 +257,11 @@ export default function SeasonMatches() {
   );
 
   const openLocalMatch = (match) => {
+    if (match.remoteLive) {
+      navigate(`/season/${seasonId}/match/${match.id}/live`);
+      return;
+    }
+
     if (["SETUP", "setup"].includes(match.status)) {
       navigate(
         match.toss
@@ -247,13 +282,27 @@ export default function SeasonMatches() {
   };
 
   const confirmRemoveLocal = async () => {
-    if (!pendingDelete) {
+    const matchToDelete = pendingDelete;
+    if (!matchToDelete) {
       return;
     }
 
-    await deleteLocalMatch(pendingDelete.id);
-
-    localQuery.reload();
+    setDeleteError("");
+    try {
+      if (matchToDelete.status === "LIVE" && matchToDelete.liveScoring?.scorerToken) {
+        await api.matches.endLiveMatch(
+          matchToDelete.id,
+          matchToDelete.liveScoring.scorerToken,
+          buildPublicLiveSnapshot(matchToDelete),
+        );
+      }
+      await deleteLocalMatch(matchToDelete.id);
+      localQuery.reload();
+    } catch (deleteFailure) {
+      setDeleteError(
+        "Could not end the live broadcast, so the match was kept on this device. Check the connection and try deleting it again.",
+      );
+    }
   };
 
   return (
@@ -288,69 +337,99 @@ export default function SeasonMatches() {
 
       {tab === "LIVE" && (
         <section aria-label="Live and setup matches">
-          {localQuery.loading ? (
-            <LoadingState label="Loading matches on this device…" />
-          ) : localQuery.error ? (
+          {deleteError && (
+            <div className={styles.inlineError} role="alert">
+              <span>{deleteError}</span>
+              <button type="button" onClick={() => setDeleteError("")}>
+                Dismiss
+              </button>
+            </div>
+          )}
+          {liveMatches.length === 0 &&
+          (localQuery.loading || remoteLiveQuery.isLoading) ? (
+            <LoadingState label="Loading live matches…" />
+          ) : liveMatches.length === 0 &&
+            localQuery.error &&
+            remoteLiveQuery.isError ? (
             <ErrorBlock
-              message="Could not read saved matches from this device."
-              onRetry={localQuery.reload}
+              message="Live matches could not be loaded from this device or the server."
+              onRetry={() => {
+                localQuery.reload();
+                remoteLiveQuery.refetch();
+              }}
             />
           ) : liveMatches.length === 0 ? (
             <EmptyState
               title="No live matches"
-              subtitle="Create a match and start scoring — it will remain available even when you go offline."
+              subtitle="Create a match and start scoring. Other users will see it here automatically once live scoring begins."
             />
           ) : (
             <div className={styles.list}>
-              {liveMatches.map((match) => (
-                <article key={match.id} className={styles.liveCard}>
-                  <button
-                    type="button"
-                    className={styles.liveCardOpen}
-                    onClick={() => openLocalMatch(match)}
-                    aria-label={`Open ${formatName(
-                      match.teams?.teamA?.name,
-                    )} versus ${formatName(match.teams?.teamB?.name)}`}
+              {liveMatches.map((match) => {
+                const summary = match.liveSummary;
+                const liveMeta = match.remoteLive
+                  ? summary?.battingTeam
+                    ? `${formatName(summary.battingTeam)} ${Number(summary.runs || 0)}-${Number(summary.wickets || 0)} (${ballsToOvers(summary.balls)})`
+                    : "Watching live"
+                  : match.status === "LIVE"
+                    ? "Live scoring"
+                    : match.toss
+                      ? "Ready to score"
+                      : "Match setup";
+
+                return (
+                  <article
+                    key={match.id}
+                    className={`${styles.liveCard} ${match.remoteLive ? styles.remoteLiveCard : ""}`}
                   >
-                    <span className={styles.cardMain}>
-                      <strong>
-                        {formatName(match.teams?.teamA?.name)}{" "}
-                        <span className={styles.vs}>vs</span>{" "}
-                        {formatName(match.teams?.teamB?.name)}
-                      </strong>
-
-                      <span className={styles.meta}>
-                        {match.status === "LIVE"
-                          ? "Live scoring"
-                          : match.toss
-                            ? "Ready to score"
-                            : "Match setup"}
-                      </span>
-                    </span>
-
-                    <span
-                      className={`${styles.statusPill} ${
-                        match.status === "LIVE" ? styles.livePill : ""
-                      }`}
+                    <button
+                      type="button"
+                      className={styles.liveCardOpen}
+                      onClick={() => openLocalMatch(match)}
+                      aria-label={`${match.remoteLive ? "Watch" : "Open"} ${formatName(
+                        match.teams?.teamA?.name,
+                      )} versus ${formatName(match.teams?.teamB?.name)}`}
                     >
-                      {match.status === "LIVE" ? "LIVE" : "SETUP"}
-                    </span>
-                  </button>
+                      <span className={styles.cardMain}>
+                        <strong>
+                          {formatName(match.teams?.teamA?.name)}{" "}
+                          <span className={styles.vs}>vs</span>{" "}
+                          {formatName(match.teams?.teamB?.name)}
+                        </strong>
 
-                  <button
-                    type="button"
-                    className={styles.deleteAction}
-                    aria-label={`Delete ${formatName(
-                      match.teams?.teamA?.name,
-                    )} versus ${formatName(
-                      match.teams?.teamB?.name,
-                    )} from this device`}
-                    onClick={(event) => requestRemoveLocal(event, match)}
-                  >
-                    ×
-                  </button>
-                </article>
-              ))}
+                        <span className={styles.meta}>{liveMeta}</span>
+                      </span>
+
+                      <span
+                        className={`${styles.statusPill} ${
+                          match.status === "LIVE" ? styles.livePill : ""
+                        } ${match.remoteLive ? styles.watchPill : ""}`}
+                      >
+                        {match.remoteLive
+                          ? "WATCH"
+                          : match.status === "LIVE"
+                            ? "LIVE"
+                            : "SETUP"}
+                      </span>
+                    </button>
+
+                    {!match.remoteLive && (
+                      <button
+                        type="button"
+                        className={styles.deleteAction}
+                        aria-label={`Delete ${formatName(
+                          match.teams?.teamA?.name,
+                        )} versus ${formatName(
+                          match.teams?.teamB?.name,
+                        )} from this device`}
+                        onClick={(event) => requestRemoveLocal(event, match)}
+                      >
+                        ×
+                      </button>
+                    )}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

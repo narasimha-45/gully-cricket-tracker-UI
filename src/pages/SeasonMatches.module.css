@@ -346,3 +346,40 @@
         grid-column: 1 / -1;
     }
 }
+.remoteLiveCard {
+    grid-template-columns: minmax(0, 1fr);
+    border-color: var(--color-indigo-100);
+}
+
+.watchPill {
+    background: var(--color-emerald-50, #ecfdf5);
+    color: var(--color-emerald-700, #047857);
+}
+
+.inlineError {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+    padding: 9px 10px;
+    border: 1px solid var(--color-red-200);
+    border-radius: 10px;
+    background: var(--color-red-50);
+    color: var(--color-red-800);
+    font-size: 10px;
+    line-height: 1.4;
+}
+
+.inlineError button {
+    flex: 0 0 auto;
+    min-height: 30px;
+    padding: 0 8px;
+    border: 1px solid var(--color-red-200);
+    border-radius: 8px;
+    background: white;
+    color: var(--color-red-700);
+    font-size: 9px;
+    font-weight: 700;
+    cursor: pointer;
+}

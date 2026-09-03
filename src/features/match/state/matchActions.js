@@ -1,6 +1,8 @@
 export const MATCH_ACTIONS = Object.freeze({
   HYDRATE: "match/hydrate",
   HYDRATE_FAILED: "match/hydrateFailed",
+  REMOTE_SNAPSHOT: "match/remoteSnapshot",
+  REMOTE_PATCH: "match/remotePatch",
   SELECT_PLAYER: "match/selectPlayer",
   CHANGE_BOWLER: "match/changeBowler",
   SWITCH_STRIKE: "match/switchStrike",

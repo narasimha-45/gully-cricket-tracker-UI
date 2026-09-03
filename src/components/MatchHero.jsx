@@ -76,14 +76,16 @@ export default function MatchHero({ match, onAction }) {
           </span>
         </div>
 
-        <button
-          type="button"
-          className={styles.actionButton}
-          aria-label={completed ? "Recreate match" : "Edit match"}
-          onClick={onAction}
-        >
-          {completed ? "↻" : "✎"}
-        </button>
+        {onAction && (
+          <button
+            type="button"
+            className={styles.actionButton}
+            aria-label={completed ? "Recreate match" : "Edit match"}
+            onClick={onAction}
+          >
+            {completed ? "↻" : "✎"}
+          </button>
+        )}
       </div>
 
       <div className={styles.rows}>

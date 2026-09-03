@@ -111,8 +111,11 @@ export default function CreateMatch() {
       },
       createdAt: Date.now(),
       updatedAt: Date.now(),
-      schemaVersion: 3,
+      schemaVersion: 4,
       syncStatus: "local",
+      liveScoring: {
+        scorerToken: crypto.randomUUID(),
+      },
     };
 
     await saveMatch(match);
