@@ -82,15 +82,30 @@
 .liveCardOpen {
     min-width: 0;
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: center;
-    gap: 8px;
-    padding: 11px 7px 11px 12px;
+    gap: 6px;
+    padding: 11px 12px;
     border: 0;
     background: transparent;
     color: inherit;
     text-align: left;
     cursor: pointer;
+}
+
+.liveNow {
+    color: var(--color-red-700);
+    font-size: 8px;
+    font-weight: 800;
+    letter-spacing: .05em;
+}
+
+.liveCurrentScore {
+    color: var(--color-slate-900);
+    font-weight: 700;
+}
+
+.emptyLiveScore {
+    min-width: 48px;
+    min-height: 1em;
 }
 
 .completedCard {
@@ -348,12 +363,6 @@
 }
 .remoteLiveCard {
     grid-template-columns: minmax(0, 1fr);
-    border-color: var(--color-indigo-100);
-}
-
-.watchPill {
-    background: var(--color-emerald-50, #ecfdf5);
-    color: var(--color-emerald-700, #047857);
 }
 
 .inlineError {

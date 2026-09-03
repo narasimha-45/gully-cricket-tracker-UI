@@ -7,6 +7,7 @@ import LiveViewerPanel from "../components/LiveViewerPanel";
 import MatchHero from "../components/MatchHero";
 import MatchPopup from "../components/MatchPopup";
 import MatchSummaryTab from "../components/MatchSummaryTab";
+import ViewerSquads from "../components/ViewerSquads";
 import OversTimeline from "../components/OversTimeline";
 import Scorecard from "../components/Scorecard";
 import { finalizeAndSyncMatch } from "../features/match/services/finalizeMatch";
@@ -187,6 +188,10 @@ function LiveMatchContent() {
           onAction={isScorer ? handleHeroAction : undefined}
         />
       </div>
+
+      {isViewer && match.status === "LIVE" && (
+        <ViewerSquads match={match} />
+      )}
 
       {match.status === "COMPLETED" && match.result?.manOfTheMatch && (
         <section className={styles.motmCard}>
