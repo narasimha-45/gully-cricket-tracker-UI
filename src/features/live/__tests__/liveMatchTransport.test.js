@@ -30,7 +30,7 @@ const baseMatch = () => ({
       dismissals: {},
       thisOver: [],
       ballByBall: [],
-      extras: { wides: 0, noBalls: 0 },
+      extras: { wides: 0, noBalls: 0, byes: 0 },
       completed: false,
     },
   ],
@@ -123,7 +123,7 @@ describe("live match transport", () => {
       dismissals: {},
       thisOver: [],
       ballByBall: [],
-      extras: { wides: 0, noBalls: 0 },
+      extras: { wides: 0, noBalls: 0, byes: 0 },
       completed: false,
     });
     previous.live.inningsIndex = 1;

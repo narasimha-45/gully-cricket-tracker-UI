@@ -5,6 +5,7 @@ import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
 import { useBattingLeaderboard, useBowlingLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import { normalizeSeasonFilter } from "../utils/statsFilterUtils";
 import styles from "./AnalyticsOverview.module.css";
 
 const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
@@ -144,13 +145,17 @@ function PerformancePanel({
 }
 
 export default function AnalyticsOverview() {
-  const { globalFilter = "all" } = useOutletContext() || {};
+  const { globalFilter } = useOutletContext() || {};
   const navigate = useNavigate();
-  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const seasonIds = normalizeSeasonFilter(globalFilter);
   const [matchType, setMatchType] = useState("OVERS");
 
-  const battingQuery = useBattingLeaderboard({ seasonId, matchType });
-  const bowlingQuery = useBowlingLeaderboard({ seasonId, matchType });
+  const leaderboardParams = {
+    seasonId: seasonIds.length ? seasonIds : undefined,
+    matchType,
+  };
+  const battingQuery = useBattingLeaderboard(leaderboardParams);
+  const bowlingQuery = useBowlingLeaderboard(leaderboardParams);
 
   const topBatters = useMemo(
     () =>

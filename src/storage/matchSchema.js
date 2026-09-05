@@ -1,6 +1,6 @@
 import { MATCH_TYPES, normalizeName } from "../utils/matchModel";
 
-export const CURRENT_MATCH_SCHEMA_VERSION = 4;
+export const CURRENT_MATCH_SCHEMA_VERSION = 5;
 
 const normalizeRules = (rules = {}) => ({
   wide: {
@@ -29,6 +29,7 @@ const normalizeInnings = (innings = {}, inningsNumber = 1) => ({
   extras: {
     wides: Number(innings.extras?.wides || 0),
     noBalls: Number(innings.extras?.noBalls || 0),
+    byes: Number(innings.extras?.byes || 0),
   },
   thisOverBowlerChanged: Boolean(innings.thisOverBowlerChanged),
   completed: Boolean(innings.completed),

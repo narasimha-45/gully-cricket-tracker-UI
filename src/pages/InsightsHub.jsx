@@ -47,7 +47,7 @@ if (typeof window !== "undefined" && "scrollRestoration" in window.history) {
 export default function InsightsHub() {
   const navigate = useNavigate();
   const location = useLocation();
-  const [filter, setFilter] = useState("all");
+  const [selectedSeasonIds, setSelectedSeasonIds] = useState([]);
   const [seasonOpen, setSeasonOpen] = useState(false);
   const seasonsQuery = useSeasons();
 
@@ -88,11 +88,26 @@ export default function InsightsHub() {
     [seasonsQuery.data],
   );
 
-  const effectiveFilter =
-    filter === "all" ||
-    seasonOptions.some((season) => String(season.id) === String(filter))
-      ? filter
-      : "all";
+  const effectiveSeasonIds = selectedSeasonIds.filter((selectedId) =>
+    seasonOptions.some((season) => String(season.id) === String(selectedId)),
+  );
+  const selectedSeasonLabel =
+    effectiveSeasonIds.length === 0
+      ? "All seasons · Overall"
+      : effectiveSeasonIds.length === 1
+        ? seasonOptions.find(
+            (season) => String(season.id) === String(effectiveSeasonIds[0]),
+          )?.name || "1 season selected"
+        : `${effectiveSeasonIds.length} seasons selected`;
+
+  const toggleSeason = (seasonId) => {
+    const id = String(seasonId);
+    setSelectedSeasonIds((current) =>
+      current.some((value) => String(value) === id)
+        ? current.filter((value) => String(value) !== id)
+        : [...current, id],
+    );
+  };
 
   return (
     <div className={styles.page}>
@@ -130,13 +145,7 @@ export default function InsightsHub() {
             aria-expanded={seasonOpen}
             aria-haspopup="listbox"
           >
-            <span>
-              {effectiveFilter === "all"
-                ? "All seasons · Overall"
-                : seasonOptions.find(
-                    (season) => String(season.id) === String(effectiveFilter),
-                  )?.name}
-            </span>
+            <span>{selectedSeasonLabel}</span>
             <ChevronDown
               size={15}
               className={seasonOpen ? styles.chevronOpen : ""}
@@ -147,42 +156,39 @@ export default function InsightsHub() {
               className={styles.seasonMenu}
               role="listbox"
               aria-label="Season"
+              aria-multiselectable="true"
             >
               <button
                 type="button"
                 role="option"
-                aria-selected={effectiveFilter === "all"}
+                aria-selected={effectiveSeasonIds.length === 0}
                 className={
-                  effectiveFilter === "all"
+                  effectiveSeasonIds.length === 0
                     ? styles.seasonOptionActive
                     : styles.seasonOption
                 }
-                onClick={() => {
-                  setFilter("all");
-                  setSeasonOpen(false);
-                }}
+                onClick={() => setSelectedSeasonIds([])}
               >
-                All seasons <span>Overall</span>
+                All seasons <span>{effectiveSeasonIds.length === 0 ? "✓" : "Overall"}</span>
               </button>
-              {seasonOptions.map((season) => (
-                <button
-                  type="button"
-                  role="option"
-                  aria-selected={String(effectiveFilter) === String(season.id)}
-                  className={
-                    String(effectiveFilter) === String(season.id)
-                      ? styles.seasonOptionActive
-                      : styles.seasonOption
-                  }
-                  key={season.id}
-                  onClick={() => {
-                    setFilter(String(season.id));
-                    setSeasonOpen(false);
-                  }}
-                >
-                  {season.name}
-                </button>
-              ))}
+              {seasonOptions.map((season) => {
+                const selected = effectiveSeasonIds.some(
+                  (value) => String(value) === String(season.id),
+                );
+                return (
+                  <button
+                    type="button"
+                    role="option"
+                    aria-selected={selected}
+                    className={selected ? styles.seasonOptionActive : styles.seasonOption}
+                    key={season.id}
+                    onClick={() => toggleSeason(season.id)}
+                  >
+                    {season.name}
+                    {selected && <span>✓</span>}
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>
@@ -218,7 +224,7 @@ export default function InsightsHub() {
         {seasonsQuery.isLoading ? (
           <LoadingState label="Loading seasons…" />
         ) : (
-          <Outlet context={{ globalFilter: effectiveFilter }} />
+          <Outlet context={{ globalFilter: effectiveSeasonIds }} />
         )}
       </main>
     </div>

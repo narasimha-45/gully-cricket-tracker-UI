@@ -7,6 +7,13 @@ import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import StatsFilterSheet from "../components/stats/StatsFilterSheet";
 import { usePartnerships, useTeamsForSeason } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import {
+  buildActiveFilterLabels,
+  normalizeSeasonFilter,
+  selectedMappedOrUndefined,
+  selectedNumbersOrUndefined,
+  selectedOrUndefined,
+} from "../utils/statsFilterUtils";
 import styles from "./Partnerships.module.css";
 
 const VIEWS = [
@@ -14,11 +21,17 @@ const VIEWS = [
   ["instances", "Highest Partnerships"],
 ];
 const DEFAULT_FILTERS = {
-  inningsNumber: "All",
-  result: "All",
-  partnershipNumber: "All",
-  teamId: "All",
-  opponentTeamId: "All",
+  inningsNumber: [],
+  result: [],
+  partnershipNumber: [],
+  teamId: [],
+  opponentTeamId: [],
+};
+const MATCH_RESULT = {
+  Won: "WIN",
+  Lost: "LOSS",
+  Tied: "TIE",
+  "No Result": "NO_RESULT",
 };
 
 const value = (item, ...keys) => keys.map((key) => item?.[key]).find((item) => item != null) ?? "—";
@@ -49,20 +62,29 @@ export default function Partnerships() {
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [filterOpen, setFilterOpen] = useState(false);
   const [sort, setSort] = useState({ key: "runs", direction: "desc" });
-  const { globalFilter = "all" } = useOutletContext() || {};
-  const seasonId = globalFilter !== "all" ? globalFilter : "ALL";
-  const teamsQuery = useTeamsForSeason(seasonId);
+  const { globalFilter } = useOutletContext() || {};
+  const seasonIds = normalizeSeasonFilter(globalFilter);
+  const teamsSeasonId = seasonIds.length === 1 ? seasonIds[0] : "ALL";
+  const teamsQuery = useTeamsForSeason(teamsSeasonId);
+
+  useEffect(() => {
+    setFilters((current) => ({
+      ...current,
+      teamId: [],
+      opponentTeamId: [],
+    }));
+  }, [teamsSeasonId]);
   const teamOptions = (teamsQuery.data || [])
     .map((team) => ({ value: team.teamId || team.id, label: team.teamName || team.name }))
     .filter((team) => team.value);
   const query = usePartnerships(view, {
-    seasonId: globalFilter !== "all" ? globalFilter : undefined,
+    seasonId: seasonIds.length ? seasonIds : undefined,
     matchType,
-    inningsNumber: filters.inningsNumber === "All" ? undefined : filters.inningsNumber,
-    result: filters.result === "All" ? undefined : filters.result === "Won" ? "WIN" : "LOSS",
-    partnershipNumber: filters.partnershipNumber === "All" ? undefined : filters.partnershipNumber,
-    teamId: filters.teamId === "All" ? undefined : filters.teamId,
-    opponentTeamId: filters.opponentTeamId === "All" ? undefined : filters.opponentTeamId,
+    inningsNumber: selectedNumbersOrUndefined(filters.inningsNumber),
+    result: selectedMappedOrUndefined(filters.result, MATCH_RESULT),
+    partnershipNumber: selectedNumbersOrUndefined(filters.partnershipNumber),
+    teamId: selectedOrUndefined(filters.teamId),
+    opponentTeamId: selectedOrUndefined(filters.opponentTeamId),
   });
   const data = [...(query.data || [])].sort((left, right) => {
     const getSortValue = (item) => {
@@ -79,21 +101,46 @@ export default function Partnerships() {
     const result = typeof leftValue === "string" ? leftValue.localeCompare(rightValue) : leftValue - rightValue;
     return sort.direction === "asc" ? result : -result;
   });
+  const inningsCount = matchType === "TEST" ? 4 : 2;
   const filterDefinitions = [
-    { key: "inningsNumber", label: "INN", options: ["All", "1", "2"] },
-    { key: "result", label: "Match result", options: ["All", "Won", "Lost"] },
-    { key: "partnershipNumber", label: "Partnership number", options: ["All", "1", "2", "3", "4", "5"] },
-    { key: "teamId", label: "Team", options: [{ value: "All", label: "All" }, ...teamOptions] },
-    { key: "opponentTeamId", label: "Opponent", options: [{ value: "All", label: "All" }, ...teamOptions] },
+    {
+      key: "inningsNumber",
+      label: "INN",
+      multiple: true,
+      options: [
+        { value: "All", label: "All" },
+        ...Array.from({ length: inningsCount }, (_, index) => ({
+          value: String(index + 1),
+          label: `Innings ${index + 1}`,
+        })),
+      ],
+    },
+    {
+      key: "result",
+      label: "Match result",
+      multiple: true,
+      options: ["All", "Won", "Lost", "Tied", "No Result"],
+    },
+    {
+      key: "partnershipNumber",
+      label: "Partnership number",
+      multiple: true,
+      options: ["All", "1", "2", "3", "4", "5"],
+    },
+    {
+      key: "teamId",
+      label: "Team",
+      multiple: true,
+      options: [{ value: "All", label: "All" }, ...teamOptions],
+    },
+    {
+      key: "opponentTeamId",
+      label: "Opponent",
+      multiple: true,
+      options: [{ value: "All", label: "All" }, ...teamOptions],
+    },
   ];
-  const activeFilters = filterDefinitions.flatMap((definition) => {
-    const selected = filters[definition.key];
-    if (!selected || selected === "All") return [];
-    const option = definition.options.find((item) =>
-      (typeof item === "string" ? item : item.value) === selected,
-    );
-    return [{ label: definition.label, value: typeof option === "string" ? option : option?.label || selected }];
-  });
+  const activeFilters = buildActiveFilterLabels(filterDefinitions, filters);
 
   return (
     <div className={styles.page}>

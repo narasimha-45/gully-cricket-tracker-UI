@@ -438,6 +438,48 @@ export function deriveInsights(match) {
     }))
     .sort((a, b) => b.balls - a.balls);
 
+  const teamSummaries = visibleInnings
+    .map((inn, inningsIdx) => {
+      const summary = {
+        inningsIdx,
+        team: inn.battingTeam,
+        runs: 0,
+        balls: 0,
+        dots: 0,
+        fours: 0,
+        sixes: 0,
+        wickets: 0,
+      };
+
+      for (const ball of inn.ballByBall ?? []) {
+        if (ball.type === "RETIRE" || !ball.striker) continue;
+
+        const isWide = ball.type === "WIDE";
+        const isNoBall = ball.type === "NO_BALL";
+        const batRuns = isWide
+          ? 0
+          : Number.isFinite(ball.battingRuns)
+            ? ball.battingRuns
+            : (ball.runs || 0) -
+              (isNoBall && match.rules?.noBall?.extraRun ? 1 : 0);
+
+        summary.runs += ball.runs || 0;
+
+        if (ball.isWicket) summary.wickets += 1;
+
+        if (isWide) continue;
+
+        summary.balls += 1;
+
+        if (batRuns === 0) summary.dots += 1;
+        if (batRuns === 4) summary.fours += 1;
+        if (batRuns === 6) summary.sixes += 1;
+      }
+
+      return summary;
+    })
+    .filter((summary) => summary.balls > 0);
+
   /* ============================================================
      INSIGHT CARD DATA
      ============================================================ */
@@ -636,6 +678,8 @@ export function deriveInsights(match) {
     oversByInnings,
 
     h2hList,
+
+    teamSummaries,
 
     batters,
 
