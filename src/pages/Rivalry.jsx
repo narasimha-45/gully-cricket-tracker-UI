@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ArrowDown, ArrowUp, Crosshair, Filter, Swords } from "lucide-react";
 import { useOutletContext } from "react-router-dom";
 import EmptyState from "../components/common/EmptyState";
@@ -12,6 +12,13 @@ import {
   useTeamsForSeason,
 } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import {
+  buildActiveFilterLabels,
+  normalizeSeasonFilter,
+  selectedMappedOrUndefined,
+  selectedNumbersOrUndefined,
+  selectedOrUndefined,
+} from "../utils/statsFilterUtils";
 import styles from "./Rivalry.module.css";
 
 const MODES = [
@@ -19,21 +26,21 @@ const MODES = [
   ["players", "Player vs player"],
 ];
 const RIVALRY_DEFAULT_FILTERS = {
-  inningsNumber: "All",
-  result: "All",
-  teamId: "All",
-  opponentTeamId: "All",
+  inningsNumber: [],
+  result: [],
+  teamId: [],
+  opponentTeamId: [],
   minBallsFaced: "All",
   minRuns: "All",
   minDismissals: "All",
 };
 const COMPARISON_DEFAULT_FILTERS = {
-  battingInningsNumber: "All",
-  battingPosition: "All",
-  bowlingInningsNumber: "All",
-  result: "All",
-  teamId: "All",
-  opponentTeamId: "All",
+  battingInningsNumber: [],
+  battingPosition: [],
+  bowlingInningsNumber: [],
+  result: [],
+  teamId: [],
+  opponentTeamId: [],
 };
 const MATCH_RESULT = {
   Won: "WIN",
@@ -41,15 +48,14 @@ const MATCH_RESULT = {
   Tied: "TIE",
   "No Result": "NO_RESULT",
 };
-const optional = (entry) => (entry && entry !== "All" ? entry : undefined);
 const value = (item, ...keys) =>
   keys.map((key) => item?.[key]).find((entry) => entry != null) ?? "—";
 const playerId = (player) =>
   player?.playerId || player?.id || player?._id || "";
 
 export default function Rivalry() {
-  const { globalFilter = "all" } = useOutletContext() || {};
-  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const { globalFilter } = useOutletContext() || {};
+  const seasonIds = normalizeSeasonFilter(globalFilter);
   const [matchType, setMatchType] = useState("OVERS");
   const [mode, setMode] = useState("rivalry");
   const [batter, setBatter] = useState(null);
@@ -61,23 +67,31 @@ export default function Rivalry() {
     COMPARISON_DEFAULT_FILTERS,
   );
   const [filterOpen, setFilterOpen] = useState(false);
-  const teamsQuery = useTeamsForSeason("ALL");
+  const teamsSeasonId = seasonIds.length === 1 ? seasonIds[0] : "ALL";
+  const teamsQuery = useTeamsForSeason(teamsSeasonId);
+
+  useEffect(() => {
+    setFilters((current) => ({
+      ...current,
+      teamId: [],
+      opponentTeamId: [],
+    }));
+    setComparisonFilters((current) => ({
+      ...current,
+      teamId: [],
+      opponentTeamId: [],
+    }));
+  }, [teamsSeasonId]);
+
   const rivalryFilters = {
-    seasonId,
+    seasonId: seasonIds.length ? seasonIds : undefined,
     matchType,
     batsmanId: playerId(batter) || undefined,
     bowlerId: playerId(bowler) || undefined,
-    inningsNumber:
-      filters.inningsNumber === "All" ? undefined : filters.inningsNumber,
-    matchResult:
-      filters.result === "All"
-        ? undefined
-        : filters.result === "Won"
-          ? "WIN"
-          : "LOSS",
-    teamId: filters.teamId === "All" ? undefined : filters.teamId,
-    opponentTeamId:
-      filters.opponentTeamId === "All" ? undefined : filters.opponentTeamId,
+    inningsNumber: selectedNumbersOrUndefined(filters.inningsNumber),
+    matchResult: selectedMappedOrUndefined(filters.result, MATCH_RESULT),
+    teamId: selectedOrUndefined(filters.teamId),
+    opponentTeamId: selectedOrUndefined(filters.opponentTeamId),
     minBallsFaced:
       filters.minBallsFaced === "All" ? undefined : filters.minBallsFaced,
     minRuns: filters.minRuns === "All" ? undefined : filters.minRuns,
@@ -86,22 +100,20 @@ export default function Rivalry() {
   };
   const rivalryQuery = useRivalries(rivalryFilters);
   const comparisonQuery = usePlayerComparison({
-    seasonId,
+    seasonId: seasonIds.length ? seasonIds : undefined,
     matchType,
     player1Id: playerId(playerOne) || undefined,
     player2Id: playerId(playerTwo) || undefined,
-    battingInningsNumber: optional(comparisonFilters.battingInningsNumber)
-      ? Number(comparisonFilters.battingInningsNumber)
-      : undefined,
-    battingPosition: optional(comparisonFilters.battingPosition)
-      ? Number(comparisonFilters.battingPosition)
-      : undefined,
-    bowlingInningsNumber: optional(comparisonFilters.bowlingInningsNumber)
-      ? Number(comparisonFilters.bowlingInningsNumber)
-      : undefined,
-    result: MATCH_RESULT[comparisonFilters.result],
-    teamId: optional(comparisonFilters.teamId),
-    opponentTeamId: optional(comparisonFilters.opponentTeamId),
+    battingInningsNumber: selectedNumbersOrUndefined(
+      comparisonFilters.battingInningsNumber,
+    ),
+    battingPosition: selectedNumbersOrUndefined(comparisonFilters.battingPosition),
+    bowlingInningsNumber: selectedNumbersOrUndefined(
+      comparisonFilters.bowlingInningsNumber,
+    ),
+    result: selectedMappedOrUndefined(comparisonFilters.result, MATCH_RESULT),
+    teamId: selectedOrUndefined(comparisonFilters.teamId),
+    opponentTeamId: selectedOrUndefined(comparisonFilters.opponentTeamId),
   });
   const teams = useMemo(
     () =>
@@ -136,16 +148,18 @@ export default function Rivalry() {
   );
 
   const filterDefinitions = [
-    { key: "inningsNumber", label: "INN", options: inningsOptions },
-    { key: "result", label: "Match result", options: ["All", "Won", "Lost"] },
+    { key: "inningsNumber", label: "INN", multiple: true, options: inningsOptions },
+    { key: "result", label: "Match result", multiple: true, options: ["All", "Won", "Lost", "Tied", "No Result"] },
     {
       key: "teamId",
       label: "Team",
+      multiple: true,
       options: [{ value: "All", label: "All" }, ...teams],
     },
     {
       key: "opponentTeamId",
       label: "Opponent",
+      multiple: true,
       options: [{ value: "All", label: "All" }, ...teams],
     },
     {
@@ -169,53 +183,43 @@ export default function Rivalry() {
     {
       key: "battingInningsNumber",
       label: "Batting INN",
+      multiple: true,
       options: inningsOptions,
     },
     {
       key: "battingPosition",
       label: "Batting position",
+      multiple: true,
       options: battingPositionOptions,
     },
     {
       key: "bowlingInningsNumber",
       label: "Bowling INN",
+      multiple: true,
       options: inningsOptions,
     },
     {
       key: "result",
       label: "Match result",
+      multiple: true,
       options: ["All", "Won", "Lost", "Tied", "No Result"],
     },
     {
       key: "teamId",
       label: "Team",
+      multiple: true,
       options: [{ value: "All", label: "All" }, ...teams],
     },
     {
       key: "opponentTeamId",
       label: "Opponent",
+      multiple: true,
       options: [{ value: "All", label: "All" }, ...teams],
     },
   ];
 
-  const buildActiveFilters = (definitions, selectedFilters) =>
-    definitions.flatMap((definition) => {
-      const selected = selectedFilters[definition.key];
-      if (!selected || selected === "All") return [];
-      const option = definition.options.find(
-        (item) => (typeof item === "string" ? item : item.value) === selected,
-      );
-      return [
-        {
-          label: definition.label,
-          value:
-            typeof option === "string" ? option : option?.label || selected,
-        },
-      ];
-    });
-
-  const activeFilters = buildActiveFilters(filterDefinitions, filters);
-  const comparisonActiveFilters = buildActiveFilters(
+  const activeFilters = buildActiveFilterLabels(filterDefinitions, filters);
+  const comparisonActiveFilters = buildActiveFilterLabels(
     comparisonFilterDefinitions,
     comparisonFilters,
   );

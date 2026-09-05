@@ -50,7 +50,7 @@ export const resetResolvedUi = (match) => {
 };
 
 export const isLegalDelivery = (match, type) => {
-  if (type === "RUN" || type === "WICKET") return true;
+  if (type === "RUN" || type === "WICKET" || type === "BYE") return true;
   if (type === "WIDE") return match.rules?.wide?.extraBall === false;
   if (type === "NO_BALL") return match.rules?.noBall?.extraBall === false;
   return false;
@@ -59,12 +59,14 @@ export const isLegalDelivery = (match, type) => {
 export const handleOverEnd = (match, live, innings) => {
   if (innings.balls <= 0 || innings.balls % 6 !== 0) return;
 
-  const isMaiden = (innings.thisOver || []).every(
-    (ball) =>
+  const isMaiden = (innings.thisOver || []).every((ball) => {
+    if (ball.type === "BYE") return true;
+    return (
       Number(ball.runs || 0) === 0 &&
       ball.type !== "WIDE" &&
-      ball.type !== "NO_BALL",
-  );
+      ball.type !== "NO_BALL"
+    );
+  });
 
   ensureBowler(innings, live.bowler);
   if (isMaiden && !innings.thisOverBowlerChanged && live.bowler) {

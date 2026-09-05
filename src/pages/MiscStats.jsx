@@ -13,13 +13,15 @@ import {
 } from "../features/stats/state/leaderboardReducer";
 import { useFieldingLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import { normalizeSeasonFilter } from "../utils/statsFilterUtils";
 import styles from "./MiscStats.module.css";
 
 const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 export default function MiscStats() {
   const navigate = useNavigate();
-  const { globalFilter = "all" } = useOutletContext() || {};
+  const { globalFilter } = useOutletContext() || {};
+  const seasonIds = normalizeSeasonFilter(globalFilter);
   const [matchType, setMatchType] = useState("OVERS");
   const [state, dispatch] = useReducer(
     leaderboardReducer,
@@ -27,7 +29,7 @@ export default function MiscStats() {
   );
 
   const query = useFieldingLeaderboard({
-    seasonId: globalFilter !== "all" ? globalFilter : undefined,
+    seasonId: seasonIds.length ? seasonIds : undefined,
     matchType,
   });
 

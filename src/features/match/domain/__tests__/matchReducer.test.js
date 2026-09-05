@@ -70,6 +70,25 @@ describe("matchSessionReducer", () => {
     expect(state.extraMode).toBe("NORMAL");
   });
 
+
+  it("records byes as team extras, a batter dot, and no bowler runs", () => {
+    let state = hydrate();
+    state = matchSessionReducer(state, { type: MATCH_ACTIONS.SET_EXTRA_MODE, payload: "BYE" });
+    state = matchSessionReducer(state, { type: MATCH_ACTIONS.SCORE_RUN, payload: { runs: 2 } });
+
+    const innings = state.match.innings[0];
+    expect(innings.totalRuns).toBe(2);
+    expect(innings.balls).toBe(1);
+    expect(innings.extras.byes).toBe(2);
+    expect(innings.battingStats.alice.runs).toBe(0);
+    expect(innings.battingStats.alice.balls).toBe(1);
+    expect(innings.bowlingStats.bob.runs).toBe(0);
+    expect(innings.bowlingStats.bob.balls).toBe(1);
+    expect(innings.ballByBall[0].type).toBe("BYE");
+    expect(innings.ballByBall[0].battingRuns).toBe(0);
+    expect(state.extraMode).toBe("NORMAL");
+  });
+
   it("keeps no-ball run-out as a NO_BALL event and does not credit the bowler", () => {
     let state = hydrate();
     state = matchSessionReducer(state, { type: MATCH_ACTIONS.SET_EXTRA_MODE, payload: "NO_BALL" });

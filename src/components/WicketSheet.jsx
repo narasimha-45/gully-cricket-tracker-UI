@@ -16,11 +16,13 @@ const WICKET_TYPES = [
 ];
 const ALLOWED_ON_NO_BALL = new Set(["RUN_OUT"]);
 const ALLOWED_ON_WIDE = new Set(["RUN_OUT", "STUMPED"]);
+const ALLOWED_ON_BYE = new Set(["RUN_OUT"]);
 
 const isAllowedForExtra = (wicketType, extraMode) => {
   if (!wicketType || extraMode === "NORMAL") return true;
   if (extraMode === "NO_BALL") return ALLOWED_ON_NO_BALL.has(wicketType);
   if (extraMode === "WIDE") return ALLOWED_ON_WIDE.has(wicketType);
+  if (extraMode === "BYE") return ALLOWED_ON_BYE.has(wicketType);
   return true;
 };
 

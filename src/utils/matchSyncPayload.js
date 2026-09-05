@@ -26,7 +26,7 @@ export const buildMatchSyncPayload = (match) => ({
     battingStats: inn.battingStats,
     bowlingStats: inn.bowlingStats,
 
-    extras: inn.extras || { wides: 0, noBalls: 0 },
+    extras: inn.extras || { wides: 0, noBalls: 0, byes: 0 },
     dismissals: inn.dismissals || {},
     ballByBall: inn.ballByBall || [],
     isSuperOver: inn.isSuperOver ?? false,
