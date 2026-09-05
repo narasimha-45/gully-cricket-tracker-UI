@@ -73,6 +73,7 @@ function smoothPath(pts) {
 
 export default function InsightsTab({ match }) {
   const data = deriveInsights(match);
+  const [selectedInnings, setSelectedInnings] = useState("all");
 
   if (!data) {
     return (
@@ -101,7 +102,7 @@ export default function InsightsTab({ match }) {
     );
   }
 
-  const { cards, oversByInnings, h2hList, totalOvers } = data;
+  const { cards, oversByInnings, h2hList, teamSummaries, totalOvers } = data;
 
   const battingCards = cards.filter((c) => c.group === "batting");
 
@@ -109,60 +110,86 @@ export default function InsightsTab({ match }) {
 
   const momentCard = cards.find((c) => c.group === "moment");
 
+  const selectedSummaries =
+    selectedInnings === "all"
+      ? teamSummaries
+      : teamSummaries.filter(
+          (summary) => summary.inningsIdx === Number(selectedInnings),
+        );
+
+  const selectedOvers =
+    selectedInnings === "all"
+      ? oversByInnings
+      : oversByInnings.filter(
+          (innings) => innings.inningsIdx === Number(selectedInnings),
+        );
+
   return (
     <div className={styles.wrapper}>
-      {/* Run Progression */}
-      <div className={styles.section}>
-        <div className={styles.sectionTitle}>
-          <span>Run Progression</span>
+      <TeamPulse
+        summaries={selectedSummaries}
+        selectedInnings={selectedInnings}
+        onSelectInnings={setSelectedInnings}
+        inningsCount={teamSummaries.length}
+      />
 
-          <div className={styles.graphLegend}>
-            {oversByInnings.map((inn, i) => (
-              <span key={inn.inningsIdx ?? i} className={styles.legendItem}>
-                <span
-                  className={styles.legendDot}
-                  style={{
-                    background: INN_COLORS[i % INN_COLORS.length],
-                    color: INN_COLORS[i % INN_COLORS.length],
-                  }}
-                />
-
-                {inn.battingTeam}
-              </span>
-            ))}
+      <div className={styles.analysisGrid}>
+        <section className={`${styles.section} ${styles.chartSection}`}>
+          <div className={styles.sectionTitle}>
+            <div>
+              <span className={styles.sectionKicker}>Momentum</span>
+              <strong>Run progression</strong>
+            </div>
+            <div className={styles.graphLegend}>
+              {selectedOvers.map((inn, i) => (
+                <span key={inn.inningsIdx ?? i} className={styles.legendItem}>
+                  <span className={styles.legendDot} style={{ background: INN_COLORS[i % INN_COLORS.length] }} />
+                  {inn.battingTeam}
+                </span>
+              ))}
+            </div>
           </div>
-        </div>
+          <LineGraph oversByInnings={selectedOvers} totalOvers={totalOvers} />
+        </section>
 
-        <LineGraph oversByInnings={oversByInnings} totalOvers={totalOvers} />
+        {selectedOvers.length === 2 && (
+          <div className={styles.battleColumn}>
+            <div className={styles.sideHeading}>Over by over</div>
+            <OverBattle oversByInnings={selectedOvers} />
+          </div>
+        )}
       </div>
-
-      {/* Over Battle */}
-      <OverBattle oversByInnings={oversByInnings} />
 
       {/* Batting */}
       {battingCards.length > 0 && (
-        <div className={styles.cardGroup}>
-          <div className={styles.groupLabel}>Batting</div>
+        <section className={styles.cardGroup}>
+          <div className={styles.groupHeading}>
+            <div><span className={styles.sectionKicker}>The bat</span><strong>Batting leaders</strong></div>
+            <span>{battingCards.length} signals</span>
+          </div>
 
           <div className={styles.cardsGrid}>
             {battingCards.map((card, i) => (
               <StatCard key={`${card.label}-${i}`} {...card} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Bowling */}
       {bowlingCards.length > 0 && (
-        <div className={styles.cardGroup}>
-          <div className={styles.groupLabel}>Bowling</div>
+        <section className={styles.cardGroup}>
+          <div className={styles.groupHeading}>
+            <div><span className={styles.sectionKicker}>The ball</span><strong>Bowling leaders</strong></div>
+            <span>{bowlingCards.length} signals</span>
+          </div>
 
           <div className={styles.cardsGrid}>
             {bowlingCards.map((card, i) => (
               <StatCard key={`${card.label}-${i}`} {...card} />
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Standout Moment */}
@@ -174,6 +201,93 @@ export default function InsightsTab({ match }) {
   );
 }
 
+function TeamPulse({ summaries, selectedInnings, onSelectInnings, inningsCount }) {
+  return (
+    <section className={styles.scoreboard}>
+      <div className={styles.scoreboardHead}>
+        <div>
+          <span className={styles.scoreboardKicker}>Innings snapshot</span>
+          <h2>Pressure &amp; power</h2>
+        </div>
+        <span className={styles.scoreboardCount}>{summaries.length} shown</span>
+      </div>
+      {inningsCount > 1 && (
+        <div className={styles.inningsSelector} role="tablist" aria-label="Choose innings">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={selectedInnings === "all"}
+            className={styles.inningsButton}
+            data-active={selectedInnings === "all"}
+            onClick={() => onSelectInnings("all")}
+          >
+            All innings
+          </button>
+          {Array.from({ length: inningsCount }, (_, index) => (
+            <button
+              key={index}
+              type="button"
+              role="tab"
+              aria-selected={selectedInnings === index}
+              className={styles.inningsButton}
+              data-active={selectedInnings === index}
+              onClick={() => onSelectInnings(index)}
+            >
+              Inn {index + 1}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className={styles.pulseGrid} data-count={summaries.length}>
+      {summaries.map((summary, index) => {
+        const boundaryRuns = summary.fours * 4 + summary.sixes * 6;
+        const dotPct = summary.balls
+          ? Math.round((summary.dots / summary.balls) * 100)
+          : 0;
+
+        return (
+          <article className={styles.pulseCard} key={summary.inningsIdx}>
+            <div className={styles.pulseHeader}>
+              <span
+                className={styles.pulseMarker}
+                style={{ background: INN_COLORS[index % INN_COLORS.length] }}
+              />
+              <span className={styles.pulseTeam}>{summary.team}</span>
+              <span className={styles.pulseScore}>
+                {summary.runs}/{summary.wickets}
+              </span>
+            </div>
+
+            <div className={styles.pulseStats}>
+              <div className={styles.pulseStat}>
+                <strong>{summary.dots}</strong>
+                <span>dot balls</span>
+              </div>
+              <div className={styles.pulseStat}>
+                <strong>{summary.fours + summary.sixes}</strong>
+                <span>boundaries</span>
+              </div>
+              <div className={styles.pulseStat}>
+                <strong>{boundaryRuns}</strong>
+                <span>boundary runs</span>
+              </div>
+            </div>
+
+            <div className={styles.pulseMeter} aria-label={`${dotPct}% dot balls`}>
+              <span style={{ width: `${dotPct}%` }} />
+            </div>
+            <div className={styles.pulseMeta}>
+              {dotPct}% dots <span>·</span> {summary.fours} fours <span>·</span>{" "}
+              {summary.sixes} sixes
+            </div>
+          </article>
+        );
+      })}
+      </div>
+    </section>
+  );
+}
+
 /* ============================================================
    RUN PROGRESSION GRAPH
    ============================================================ */
@@ -181,14 +295,14 @@ export default function InsightsTab({ match }) {
 function LineGraph({ oversByInnings, totalOvers }) {
   const [tooltip, setTooltip] = useState(null);
 
-  const W = 320;
-  const H = 170;
+  const W = 640;
+  const H = 250;
 
   const PAD = {
-    top: 12,
-    right: 16,
-    bottom: 32,
-    left: 34,
+    top: 22,
+    right: 58,
+    bottom: 38,
+    left: 42,
   };
 
   const chartW = W - PAD.left - PAD.right;
@@ -244,6 +358,8 @@ function LineGraph({ oversByInnings, totalOvers }) {
 
     return `${line} L ${last[0].toFixed(1)} ${chartH} L ${first[0].toFixed(1)} ${chartH} Z`;
   };
+
+  const latestPoint = (innings) => innings.points[innings.points.length - 1];
 
   const overLookup = oversByInnings.map((inn) => {
     const map = {};
@@ -323,6 +439,26 @@ function LineGraph({ oversByInnings, totalOvers }) {
 
   return (
     <div className={styles.graphWrap}>
+      <div className={styles.graphReadout}>
+        {oversByInnings.map((inn, index) => {
+          const point = latestPoint(inn);
+          const rate = point?.over
+            ? (point.cumulative / point.over).toFixed(1)
+            : "0.0";
+
+          return (
+            <div className={styles.graphReadoutItem} key={inn.inningsIdx ?? index}>
+              <span
+                className={styles.graphReadoutDot}
+                style={{ background: INN_COLORS[index % INN_COLORS.length] }}
+              />
+              <span>{inn.battingTeam}</span>
+              <strong>{point?.cumulative ?? 0}</strong>
+              <small>{rate} RPO</small>
+            </div>
+          );
+        })}
+      </div>
       <svg
         viewBox={`0 0 ${W} ${H}`}
         width="100%"
@@ -333,6 +469,21 @@ function LineGraph({ oversByInnings, totalOvers }) {
         onPointerMove={handlePointerMove}
         onPointerLeave={() => setTooltip(null)}
       >
+        <defs>
+          {oversByInnings.map((_, i) => (
+            <linearGradient
+              key={i}
+              id={`insight-area-${i}`}
+              x1="0"
+              x2="0"
+              y1="0"
+              y2="1"
+            >
+              <stop offset="0%" stopColor={INN_COLORS[i % INN_COLORS.length]} stopOpacity="0.2" />
+              <stop offset="100%" stopColor={INN_COLORS[i % INN_COLORS.length]} stopOpacity="0.01" />
+            </linearGradient>
+          ))}
+        </defs>
         <g transform={`translate(${PAD.left}, ${PAD.top})`}>
           {/* Grid */}
           {uniqueYTicks.map((tick) => (
@@ -342,7 +493,8 @@ function LineGraph({ oversByInnings, totalOvers }) {
                 y1={yScale(tick).toFixed(1)}
                 x2={chartW}
                 y2={yScale(tick).toFixed(1)}
-                stroke="var(--color-slate-200)"
+                stroke="#e8e8ef"
+                strokeDasharray="4 5"
                 strokeWidth="1"
               />
 
@@ -351,8 +503,8 @@ function LineGraph({ oversByInnings, totalOvers }) {
                 y={yScale(tick).toFixed(1)}
                 textAnchor="end"
                 dominantBaseline="middle"
-                fontSize="9"
-                fill="var(--color-slate-400)"
+                fontSize="11"
+                fill="#9698aa"
               >
                 {tick}
               </text>
@@ -366,8 +518,8 @@ function LineGraph({ oversByInnings, totalOvers }) {
               x={xScale(tick).toFixed(1)}
               y={chartH + 14}
               textAnchor="middle"
-              fontSize="9"
-              fill="var(--color-slate-400)"
+              fontSize="11"
+              fill="#9698aa"
             >
               {tick}
             </text>
@@ -381,16 +533,28 @@ function LineGraph({ oversByInnings, totalOvers }) {
 
             return (
               <g key={inn.inningsIdx ?? i}>
-                <path d={toArea(inn.points)} fill={color} fillOpacity="0.07" />
+                <path d={toArea(inn.points)} fill={`url(#insight-area-${i})`} />
 
                 <path
                   d={smoothPath(pts)}
                   fill="none"
                   stroke={color}
-                  strokeWidth="2.4"
+                  strokeWidth="3.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
+
+                {pts.slice(1).map((point, pointIndex) => (
+                  <circle
+                    key={pointIndex}
+                    cx={point[0].toFixed(1)}
+                    cy={point[1].toFixed(1)}
+                    r="2.5"
+                    fill="white"
+                    stroke={color}
+                    strokeWidth="2"
+                  />
+                ))}
 
                 {/* Latest point marker keeps the current score legible at a glance */}
                 {pts.length > 0 && (
@@ -402,6 +566,18 @@ function LineGraph({ oversByInnings, totalOvers }) {
                     stroke="white"
                     strokeWidth="1.5"
                   />
+                )}
+
+                {pts.length > 0 && (
+                  <text
+                    x={Math.min(pts[pts.length - 1][0] + 9, chartW + 8)}
+                    y={pts[pts.length - 1][1] - 8}
+                    fontSize="12"
+                    fontWeight="800"
+                    fill={color}
+                  >
+                    {latestPoint(inn).cumulative}/{latestPoint(inn).wickets ?? 0}
+                  </text>
                 )}
 
                 {inn.points
@@ -428,7 +604,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
               y1={0}
               x2={tooltip.x - PAD.left}
               y2={chartH}
-              stroke="var(--color-slate-500)"
+              stroke="#7b7d90"
               strokeWidth="1"
               strokeDasharray="3,3"
             />
@@ -440,7 +616,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
             y1={0}
             x2={0}
             y2={chartH}
-            stroke="var(--color-slate-200)"
+            stroke="#dfe0e9"
             strokeWidth="1"
           />
 
@@ -449,7 +625,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
             y1={chartH}
             x2={chartW}
             y2={chartH}
-            stroke="var(--color-slate-200)"
+            stroke="#dfe0e9"
             strokeWidth="1"
           />
         </g>
@@ -478,8 +654,8 @@ function LineGraph({ oversByInnings, totalOvers }) {
                   width={boxW}
                   height={boxH}
                   rx="8"
-                  fill="white"
-                  stroke="var(--color-slate-200)"
+                  fill="#17182d"
+                  stroke="#17182d"
                   strokeWidth="1"
                   style={{
                     filter: "drop-shadow(0 3px 8px rgba(15,23,42,0.14))",
@@ -491,7 +667,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
                   y={by + 13}
                   fontSize="9"
                   fontWeight="700"
-                  fill="var(--color-slate-600)"
+                  fill="#bfc1d1"
                 >
                   Over {tooltip.over}
                 </text>
@@ -510,7 +686,7 @@ function LineGraph({ oversByInnings, totalOvers }) {
                       y={by + 26 + idx * lineH}
                       fontSize="9"
                       fontWeight="600"
-                      fill="var(--color-slate-800)"
+                      fill="#ffffff"
                     >
                       {item.team}: {item.runs}/{item.wickets}
                     </text>
