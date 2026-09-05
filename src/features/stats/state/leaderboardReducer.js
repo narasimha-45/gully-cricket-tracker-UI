@@ -28,8 +28,8 @@ export function leaderboardReducer(state, action) {
         ...state,
         filters: {
           ...state.filters,
-          teamId: "All",
-          opponentTeamId: "All",
+          teamId: [],
+          opponentTeamId: [],
         },
       };
     case LEADERBOARD_ACTIONS.SORT:

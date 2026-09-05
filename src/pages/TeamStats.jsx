@@ -5,16 +5,20 @@ import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { useTeamLeaderboard } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import { normalizeSeasonFilter } from "../utils/statsFilterUtils";
 import styles from "./TeamStats.module.css";
 
 const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 export default function TeamStats() {
   const navigate = useNavigate();
-  const { globalFilter = "all" } = useOutletContext() || {};
-  const seasonId = globalFilter !== "all" ? globalFilter : undefined;
+  const { globalFilter } = useOutletContext() || {};
+  const seasonIds = normalizeSeasonFilter(globalFilter);
   const [matchType, setMatchType] = useState("OVERS");
-  const query = useTeamLeaderboard({ seasonId, matchType });
+  const query = useTeamLeaderboard({
+    seasonId: seasonIds.length ? seasonIds : undefined,
+    matchType,
+  });
 
   const standings = useMemo(
     () =>

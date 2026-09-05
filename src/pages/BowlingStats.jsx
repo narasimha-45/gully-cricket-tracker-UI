@@ -15,17 +15,27 @@ import {
 } from "../features/stats/state/leaderboardReducer";
 import { useBowlingLeaderboard, useTeamsForSeason } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import {
+  buildActiveFilterLabels,
+  normalizeSeasonFilter,
+  selectedMappedOrUndefined,
+  selectedNumbersOrUndefined,
+  selectedOrUndefined,
+} from "../utils/statsFilterUtils";
 import styles from "./Leaderboards.module.css";
 
 const DEFAULT_FILTERS = Object.freeze({
-  innings: "All",
-  result: "All",
-  opponentTeamId: "All",
-  teamId: "All",
+  innings: [],
+  result: [],
+  opponentTeamId: [],
+  teamId: [],
 });
-const INNINGS_NUMBER = { First: 1, Second: 2 };
-const MATCH_RESULT = { Won: "WIN", Lost: "LOSS" };
-const optional = (value) => (value && value !== "All" ? value : undefined);
+const MATCH_RESULT = {
+  Won: "WIN",
+  Lost: "LOSS",
+  Tied: "TIE",
+  "No Result": "NO_RESULT",
+};
 const number = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
 
 const formatOvers = (value) => {
@@ -38,17 +48,11 @@ export default function BowlingStats({ isOverall = false }) {
   const { seasonId } = useParams();
   const navigate = useNavigate();
   const outletContext = useOutletContext();
-  const globalFilter = isOverall ? outletContext?.globalFilter || "all" : "all";
-  const statsSeasonId = !isOverall
-    ? seasonId
-    : globalFilter !== "all"
-      ? globalFilter
-      : undefined;
-  const teamsSeasonId = !isOverall
-    ? seasonId || "ALL"
-    : globalFilter !== "all"
-      ? globalFilter
-      : "ALL";
+  const globalFilter = isOverall ? outletContext?.globalFilter : undefined;
+  const statsSeasonIds = !isOverall
+    ? seasonId ? [seasonId] : []
+    : normalizeSeasonFilter(globalFilter);
+  const teamsSeasonId = statsSeasonIds.length === 1 ? statsSeasonIds[0] : "ALL";
 
   const [matchType, setMatchType] = useState("OVERS");
 
@@ -75,47 +79,56 @@ export default function BowlingStats({ isOverall = false }) {
 
   const apiFilters = useMemo(
     () => ({
-      seasonId: statsSeasonId,
+      seasonId: statsSeasonIds.length ? statsSeasonIds : undefined,
       matchType,
-      inningsNumber: INNINGS_NUMBER[state.filters.innings],
-      result: MATCH_RESULT[state.filters.result],
-      teamId: optional(state.filters.teamId),
-      opponentTeamId: optional(state.filters.opponentTeamId),
+      inningsNumber: selectedNumbersOrUndefined(state.filters.innings),
+      result: selectedMappedOrUndefined(state.filters.result, MATCH_RESULT),
+      teamId: selectedOrUndefined(state.filters.teamId),
+      opponentTeamId: selectedOrUndefined(state.filters.opponentTeamId),
     }),
-    [statsSeasonId, matchType, state.filters],
+    [statsSeasonIds, matchType, state.filters],
   );
 
   const statsQuery = useBowlingLeaderboard(apiFilters);
 
-  const filterDefinitions = useMemo(
-    () => [
-      { key: "innings", label: "INN", options: ["All", "First", "Second"] },
-      { key: "result", label: "Match Result", options: ["All", "Won", "Lost"] },
+  const filterDefinitions = useMemo(() => {
+    const inningsCount = matchType === "TEST" ? 4 : 2;
+    return [
+      {
+        key: "innings",
+        label: "INN",
+        multiple: true,
+        options: [
+          { value: "All", label: "All" },
+          ...Array.from({ length: inningsCount }, (_, index) => ({
+            value: String(index + 1),
+            label: `Innings ${index + 1}`,
+          })),
+        ],
+      },
+      {
+        key: "result",
+        label: "Match Result",
+        multiple: true,
+        options: ["All", "Won", "Lost", "Tied", "No Result"],
+      },
       {
         key: "opponentTeamId",
         label: "Opponent",
+        multiple: true,
         options: [{ value: "All", label: "All" }, ...teams],
       },
       {
         key: "teamId",
         label: "Team",
+        multiple: true,
         options: [{ value: "All", label: "All" }, ...teams],
       },
-    ],
-    [teams],
-  );
+    ];
+  }, [matchType, teams]);
 
   const activeLabels = useMemo(
-    () =>
-      Object.entries(state.filters).flatMap(([key, value]) => {
-        if (value === "All") return [];
-        const definition = filterDefinitions.find((item) => item.key === key);
-        const option = definition?.options.find(
-          (item) => (typeof item === "string" ? item : item.value) === value,
-        );
-        const label = typeof option === "string" ? option : option?.label || value;
-        return [`${definition?.label || key}: ${label}`];
-      }),
+    () => buildActiveFilterLabels(filterDefinitions, state.filters).map((item) => item.text),
     [filterDefinitions, state.filters],
   );
 

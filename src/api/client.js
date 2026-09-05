@@ -42,8 +42,11 @@ function buildUrl(path, params) {
   const url = new URL(`${base}${normalizedPath}`);
 
   Object.entries(params || {}).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === "" || value === "All") return;
-    url.searchParams.append(key, String(value));
+    const values = Array.isArray(value) ? value : [value];
+    values.forEach((entry) => {
+      if (entry === undefined || entry === null || entry === "" || entry === "All") return;
+      url.searchParams.append(key, String(entry));
+    });
   });
   return url.toString();
 }

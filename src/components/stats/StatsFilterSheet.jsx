@@ -6,6 +6,14 @@ import { useDialogA11y } from "../../hooks/useDialogA11y";
 import styles from "./StatsFilterSheet.module.css";
 
 const ALL_VALUE = "All";
+const optionValue = (option) =>
+  typeof option === "string" ? option : option.value;
+const optionLabel = (option) =>
+  typeof option === "string" ? option : option.label;
+const asArray = (value) => {
+  if (Array.isArray(value)) return value.filter((entry) => entry && entry !== ALL_VALUE);
+  return value && value !== ALL_VALUE ? [value] : [];
+};
 
 export default function StatsFilterSheet(props) {
   if (!props.open || typeof document === "undefined") return null;
@@ -31,21 +39,43 @@ function StatsFilterDialog({
     () =>
       filters.reduce((count, filter) => {
         const value = draftFilters?.[filter.key];
-        return value && value !== ALL_VALUE ? count + 1 : count;
+        if (filter.multiple) {
+          return count + (asArray(value).length > 0 ? 1 : 0);
+        }
+        return count + (value && value !== ALL_VALUE ? 1 : 0);
       }, 0),
     [draftFilters, filters],
   );
 
-  const handleSelect = (key, value) => {
-    setDraftFilters((previous) => ({
-      ...previous,
-      [key]: value,
-    }));
+  const handleSelect = (filter, value) => {
+    if (!filter.multiple) {
+      setDraftFilters((previous) => ({
+        ...previous,
+        [filter.key]: value,
+      }));
+      setOpenField(null);
+      return;
+    }
+
+    setDraftFilters((previous) => {
+      const selected = asArray(previous?.[filter.key]);
+      if (value === ALL_VALUE) {
+        return { ...previous, [filter.key]: [] };
+      }
+
+      const exists = selected.some((entry) => String(entry) === String(value));
+      return {
+        ...previous,
+        [filter.key]: exists
+          ? selected.filter((entry) => String(entry) !== String(value))
+          : [...selected, value],
+      };
+    });
   };
 
   const resetFilters = () => {
     const reset = filters.reduce((result, filter) => {
-      result[filter.key] = ALL_VALUE;
+      result[filter.key] = filter.multiple ? [] : ALL_VALUE;
       return result;
     }, {});
 
@@ -105,48 +135,89 @@ function StatsFilterDialog({
         <div className={styles.filtersGrid}>
           {filters.map((filter) => {
             const selectId = `${titleId}-${filter.key}`;
-            const selectedValue = draftFilters[filter.key] ?? ALL_VALUE;
-            const selectedOption = filter.options.find((option) =>
-              (typeof option === "string" ? option : option.value) === selectedValue,
-            );
-            const selectedLabel = selectedOption
-              ? typeof selectedOption === "string" ? selectedOption : selectedOption.label
-              : selectedValue;
+            const selectedValue = draftFilters[filter.key] ?? (filter.multiple ? [] : ALL_VALUE);
+            const selectedValues = filter.multiple ? asArray(selectedValue) : [];
+
+            let selectedLabel = ALL_VALUE;
+            if (filter.multiple && selectedValues.length > 0) {
+              const labels = selectedValues.map((value) => {
+                const option = filter.options.find(
+                  (entry) => String(optionValue(entry)) === String(value),
+                );
+                return option ? optionLabel(option) : String(value);
+              });
+              selectedLabel = labels.length <= 2 ? labels.join(", ") : `${labels.length} selected`;
+            } else if (!filter.multiple) {
+              const selectedOption = filter.options.find(
+                (option) => optionValue(option) === selectedValue,
+              );
+              selectedLabel = selectedOption ? optionLabel(selectedOption) : selectedValue;
+            }
 
             return (
-              <div key={filter.key} className={`${styles.field} ${openField === filter.key ? styles.fieldOpen : ""}`}>
+              <div
+                key={filter.key}
+                className={`${styles.field} ${openField === filter.key ? styles.fieldOpen : ""}`}
+              >
                 <label className={styles.label} htmlFor={selectId}>
                   {filter.label}
                 </label>
 
-                <div className={`${styles.selectWrap} ${openField === filter.key ? styles.selectWrapOpen : ""}`}>
+                <div
+                  className={`${styles.selectWrap} ${openField === filter.key ? styles.selectWrapOpen : ""}`}
+                >
                   <button
                     id={selectId}
                     type="button"
                     className={styles.select}
                     aria-haspopup="listbox"
                     aria-expanded={openField === filter.key}
-                    onClick={() => setOpenField((current) => current === filter.key ? null : filter.key)}
+                    onClick={() =>
+                      setOpenField((current) =>
+                        current === filter.key ? null : filter.key,
+                      )
+                    }
                   >
                     <span>{selectedLabel}</span>
-                    <ChevronDown className={styles.selectIcon} size={17} strokeWidth={2.25} aria-hidden="true" />
+                    <ChevronDown
+                      className={styles.selectIcon}
+                      size={17}
+                      strokeWidth={2.25}
+                      aria-hidden="true"
+                    />
                   </button>
+
                   {openField === filter.key && (
-                    <div className={styles.optionMenu} role="listbox" aria-label={filter.label}>
+                    <div
+                      className={styles.optionMenu}
+                      role="listbox"
+                      aria-label={filter.label}
+                      aria-multiselectable={filter.multiple || undefined}
+                    >
                       {filter.options.map((option) => {
-                        const value = typeof option === "string" ? option : option.value;
-                        const label = typeof option === "string" ? option : option.label;
+                        const value = optionValue(option);
+                        const label = optionLabel(option);
+                        const selected = filter.multiple
+                          ? value === ALL_VALUE
+                            ? selectedValues.length === 0
+                            : selectedValues.some(
+                                (entry) => String(entry) === String(value),
+                              )
+                          : selectedValue === value;
+
                         return (
                           <button
                             key={value}
                             type="button"
                             role="option"
-                            aria-selected={selectedValue === value}
-                            className={selectedValue === value ? styles.optionActive : styles.option}
-                            onClick={() => { handleSelect(filter.key, value); setOpenField(null); }}
+                            aria-selected={selected}
+                            className={selected ? styles.optionActive : styles.option}
+                            onClick={() => handleSelect(filter, value)}
                           >
                             <span>{label}</span>
-                            {selectedValue === value && <span className={styles.optionCheck}>✓</span>}
+                            {selected && (
+                              <span className={styles.optionCheck}>✓</span>
+                            )}
                           </button>
                         );
                       })}
