@@ -70,6 +70,7 @@ export const createEmptyInnings = ({
   extras: {
     wides: 0,
     noBalls: 0,
+    byes: 0,
   },
   thisOverBowlerChanged: false,
   completed: false,

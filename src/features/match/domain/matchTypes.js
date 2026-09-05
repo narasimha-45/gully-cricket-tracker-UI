@@ -45,9 +45,9 @@
  * @property {string} [nonStriker]
  * @property {string} [bowler]
  * @property {number} runs - Total runs added to the team score for this delivery (includes automatic extras).
- * @property {number} [battingRuns] - Runs credited to the batter's own tally (excludes wide byes).
- * @property {"RUN"|"WIDE"|"NO_BALL"|"WICKET"|"RETIRE"} type
- * @property {string} [extra] - Extra mode active when this ball was bowled ("WIDE" | "NO_BALL" | "NORMAL").
+ * @property {number} [battingRuns] - Runs credited to the batter's own tally (excludes wides, byes, and automatic no-ball extras).
+ * @property {"RUN"|"WIDE"|"NO_BALL"|"BYE"|"WICKET"|"RETIRE"} type
+ * @property {string} [extra] - Extra mode active when this ball was bowled ("WIDE" | "NO_BALL" | "BYE" | "NORMAL").
  * @property {boolean} [isWicket]
  * @property {{type: string, outBatsman: string, helper: string|null}} [wicket]
  * @property {number} timestamp
@@ -57,6 +57,7 @@
  * @typedef {Object} Extras
  * @property {number} wides
  * @property {number} noBalls
+ * @property {number} byes
  */
 
 /**

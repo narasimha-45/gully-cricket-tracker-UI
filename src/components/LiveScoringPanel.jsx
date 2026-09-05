@@ -213,7 +213,7 @@ export default function LiveScoringPanel() {
             key={run}
             type="button"
             className={styles.keyButton}
-            disabled={!canScore}
+            disabled={!canScore || (extraMode === "BYE" && run === 0)}
             onClick={() =>
               dispatch({
                 type: MATCH_ACTIONS.SCORE_RUN,
@@ -242,6 +242,17 @@ export default function LiveScoringPanel() {
           aria-pressed={extraMode === "NO_BALL"}
         >
           Nb
+        </button>
+        <button
+          type="button"
+          className={`${styles.keyButton} ${styles.byeButton} ${extraMode === "BYE" ? styles.byeActive : ""}`}
+          disabled={!canScore}
+          onClick={() => toggleExtra("BYE")}
+          aria-pressed={extraMode === "BYE"}
+          aria-label="Byes"
+          title="Byes: team runs only; dot ball to batter"
+        >
+          Bye
         </button>
         <button
           type="button"

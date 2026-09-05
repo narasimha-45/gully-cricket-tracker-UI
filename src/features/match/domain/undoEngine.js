@@ -34,7 +34,7 @@ const restoreFromSnapshot = (match, previous) => {
         0,
         Number(previous.ballByBallLength ?? 0),
       );
-  innings.extras = deepCopy(previous.extras || { wides: 0, noBalls: 0 });
+  innings.extras = deepCopy(previous.extras || { wides: 0, noBalls: 0, byes: 0 });
   return previous.extraMode || "NORMAL";
 };
 

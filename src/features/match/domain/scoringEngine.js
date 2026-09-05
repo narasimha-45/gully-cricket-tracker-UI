@@ -14,7 +14,13 @@ import { evaluateMatchState } from "./matchResolution";
 /** @typedef {import("./matchTypes").Match} Match */
 
 const deliveryTypeFor = (extraMode) =>
-  extraMode === "WIDE" ? "WIDE" : extraMode === "NO_BALL" ? "NO_BALL" : "RUN";
+  extraMode === "WIDE"
+    ? "WIDE"
+    : extraMode === "NO_BALL"
+      ? "NO_BALL"
+      : extraMode === "BYE"
+        ? "BYE"
+        : "RUN";
 
 const automaticExtraFor = (match, type) =>
   (type === "WIDE" && match.rules?.wide?.extraRun) ||
@@ -22,12 +28,19 @@ const automaticExtraFor = (match, type) =>
     ? 1
     : 0;
 
+const ensureExtras = (innings) => {
+  innings.extras ||= {};
+  innings.extras.wides = Number(innings.extras.wides || 0);
+  innings.extras.noBalls = Number(innings.extras.noBalls || 0);
+  innings.extras.byes = Number(innings.extras.byes || 0);
+};
+
 /**
  * Records one legal or extra delivery scored as runs (not a wicket).
  * Returns the same `match` reference, unmutated, if scoring isn't possible
  * yet (innings complete, or striker/non-striker/bowler not all selected).
  * @param {Match} match
- * @param {{runs: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"}} payload
+ * @param {{runs: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"|"BYE"}} payload
  * @returns {Match}
  */
 export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
@@ -44,15 +57,16 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
 
   innings.thisOver ||= [];
   innings.ballByBall ||= [];
-  innings.extras ||= { wides: 0, noBalls: 0 };
+  ensureExtras(innings);
 
   const isWide = type === "WIDE";
   const isNoBall = type === "NO_BALL";
+  const isBye = type === "BYE";
   const legal = isLegalDelivery(updated, type);
   const automaticExtra = automaticExtraFor(updated, type);
   const selectedRuns = Math.max(0, Number(runs || 0));
   const totalRuns = selectedRuns + automaticExtra;
-  const battingRuns = isWide ? 0 : selectedRuns;
+  const battingRuns = isWide || isBye ? 0 : selectedRuns;
 
   ensureBatter(innings, live.striker);
   ensureBowler(innings, live.bowler);
@@ -73,11 +87,11 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
   });
 
   innings.totalRuns += totalRuns;
-  innings.bowlingStats[live.bowler].runs += totalRuns;
+  if (!isBye) innings.bowlingStats[live.bowler].runs += totalRuns;
 
   const battingBallFaced = !isWide;
 
-  if (!isWide) {
+  if (!isWide && !isBye) {
     const batter = innings.battingStats[live.striker];
     batter.runs += battingRuns;
     if (battingRuns === 4) batter.fours += 1;
@@ -95,6 +109,7 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
 
   if (isWide) innings.extras.wides += totalRuns;
   if (isNoBall) innings.extras.noBalls += automaticExtra;
+  if (isBye) innings.extras.byes += totalRuns;
 
   const resolved = evaluateMatchState(updated);
   if (!resolved && updated.status !== "COMPLETED") {
@@ -115,7 +130,7 @@ export const scoreRun = (match, { runs, extraMode = "NORMAL" }) => {
  * count against the bowler's figures; non-bowler dismissals (run out,
  * retired out, etc.) still fall the wicket but don't credit the bowler.
  * @param {Match} match
- * @param {{wicketType: string, outBatsman: string, helper?: string|null, runs?: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"}} payload
+ * @param {{wicketType: string, outBatsman: string, helper?: string|null, runs?: number, extraMode?: "NORMAL"|"WIDE"|"NO_BALL"|"BYE"}} payload
  * @returns {Match}
  */
 export const takeWicket = (
@@ -133,11 +148,18 @@ export const takeWicket = (
   innings.thisOver ||= [];
   innings.ballByBall ||= [];
   innings.dismissals ||= {};
-  innings.extras ||= { wides: 0, noBalls: 0 };
+  ensureExtras(innings);
 
   const isWide = extraMode === "WIDE";
   const isNoBall = extraMode === "NO_BALL";
-  const deliveryType = isWide ? "WIDE" : isNoBall ? "NO_BALL" : "WICKET";
+  const isBye = extraMode === "BYE";
+  const deliveryType = isWide
+    ? "WIDE"
+    : isNoBall
+      ? "NO_BALL"
+      : isBye
+        ? "BYE"
+        : "WICKET";
   const legal = isLegalDelivery(updated, deliveryType);
   const automaticExtra = automaticExtraFor(updated, deliveryType);
   const completedRuns = Math.max(0, Number(runs || 0));
@@ -168,7 +190,7 @@ export const takeWicket = (
     nonStriker: live.nonStriker,
     bowler: live.bowler,
     runs: totalRuns,
-    battingRuns: isWide ? 0 : completedRuns,
+    battingRuns: isWide || isBye ? 0 : completedRuns,
     type: deliveryType,
     extra: extraMode,
     wicket: { type: wicketType, outBatsman, helper },
@@ -177,8 +199,8 @@ export const takeWicket = (
   });
 
   innings.totalRuns += totalRuns;
-  innings.bowlingStats[live.bowler].runs += totalRuns;
-  if (!isWide) innings.battingStats[live.striker].runs += completedRuns;
+  if (!isBye) innings.bowlingStats[live.bowler].runs += totalRuns;
+  if (!isWide && !isBye) innings.battingStats[live.striker].runs += completedRuns;
 
   const battingBallFaced = !isWide;
 
@@ -192,7 +214,8 @@ export const takeWicket = (
   }
   if (isWide) innings.extras.wides += totalRuns;
   if (isNoBall) innings.extras.noBalls += automaticExtra;
-  if (BOWLER_WICKETS.has(wicketType) && !isNoBall) {
+  if (isBye) innings.extras.byes += totalRuns;
+  if (BOWLER_WICKETS.has(wicketType) && !isNoBall && !isBye) {
     innings.bowlingStats[live.bowler].wickets += 1;
   }
 

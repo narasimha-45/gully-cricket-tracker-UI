@@ -83,12 +83,13 @@ export function derivePartnerships(innings) {
 
     const isNoBall = type === "NO_BALL" || ball.extra === "NO_BALL";
     const isWide = type === "WIDE" || ball.extra === "WIDE";
+    const isBye = type === "BYE" || ball.extra === "BYE";
     // A no-ball is still faced by the batter (it just doesn't count toward
     // the innings/over tally) — only a wide isn't a ball faced.
     const battingBallFaced = !isWide;
     const battingRuns = Number.isFinite(ball.battingRuns)
       ? ball.battingRuns
-      : isWide
+      : isWide || isBye
         ? 0
         : Math.max(0, runs - (isNoBall ? 1 : 0));
 

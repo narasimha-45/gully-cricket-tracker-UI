@@ -215,6 +215,13 @@ export function getBallPresentation(ball, match) {
         kind: "wicket",
       };
     }
+    if (ball.type === "BYE" || ball.extra === "BYE") {
+      const byes = Number(ball.runs || 0);
+      return {
+        label: byes > 1 ? `${byes}B+W` : "B+W",
+        kind: "wicket",
+      };
+    }
     return {
       label: ball.runs > 0 ? `W+${ball.runs}` : "W",
       kind: "wicket",
@@ -236,6 +243,11 @@ export function getBallPresentation(ball, match) {
       label: battingRuns > 0 ? `Nb+${battingRuns}` : "Nb",
       kind: "noBall",
     };
+  }
+
+  if (ball.type === "BYE") {
+    const byes = Number(ball.runs || 0);
+    return { label: byes > 1 ? `${byes}B` : "B", kind: "bye" };
   }
 
   if (ball.runs === 4) return { label: "4", kind: "four" };
