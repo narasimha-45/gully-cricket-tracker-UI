@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Filter, Handshake } from "lucide-react";
 import { StatsSkeleton } from "../features/stats/components/LeaderboardView";
 import EmptyState from "../components/common/EmptyState";
