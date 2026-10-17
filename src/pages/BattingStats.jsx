@@ -155,6 +155,8 @@ export default function BattingStats({ isOverall = false }) {
           return number(player.strikeRate);
         case "highest":
           return number(player.highestScore);
+        case "ducks":
+          return number(player.ducks);
         default:
           return 0;
       }
