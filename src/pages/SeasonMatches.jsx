@@ -9,6 +9,7 @@ import { useLocalSeasonMatches } from "../features/matches/hooks/useLocalSeasonM
 import { useLiveSeasonMatches, useSeasonMatches } from "../hooks/queries";
 import { deleteMatch as deleteLocalMatch } from "../storage/matchDB";
 import { formatName } from "../utils/helpers";
+import { formatDateInIST } from "../utils/dateTime";
 import { isTestMatch, sameName } from "../utils/matchModel";
 import styles from "./SeasonMatches.module.css";
 
@@ -46,18 +47,6 @@ function filterReducer(state, action) {
 
 const ballsToOvers = (balls = 0) =>
   `${Math.floor(Number(balls || 0) / 6)}.${Number(balls || 0) % 6}`;
-
-const formatDateTime = (value) =>
-  value
-    ? new Intl.DateTimeFormat("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      }).format(new Date(value))
-    : "";
 
 const scoreLine = (innings) =>
   innings
@@ -721,7 +710,14 @@ export default function SeasonMatches() {
                   >
                     <span className={styles.dateRow}>
                       <span className={styles.date}>
-                        {formatDateTime(match.completedAt || match.createdAt)}
+                        {formatDateInIST(match.completedAt || match.createdAt, {
+                          day: "2-digit",
+                          month: "short",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </span>
 
                       <span className={styles.formatBadge}>
