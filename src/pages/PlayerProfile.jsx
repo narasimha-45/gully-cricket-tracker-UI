@@ -16,6 +16,7 @@ import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
 import { usePlayerProfile, useSeasons } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
+import { formatDateInIST } from "../utils/dateTime";
 import styles from "./Profile.module.css";
 
 const n = (value) => (Number.isFinite(Number(value)) ? Number(value) : 0);
@@ -23,10 +24,7 @@ const d = (value, digits = 1) =>
   value === null || value === undefined ? "—" : n(value).toFixed(digits);
 
 const formatDate = (iso) => {
-  if (!iso) return "";
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toLocaleDateString(undefined, { day: "numeric", month: "short" });
+  return formatDateInIST(iso, { day: "numeric", month: "short" });
 };
 
 // Proportional width for a single bar (0–100), guarding against div-by-zero.
