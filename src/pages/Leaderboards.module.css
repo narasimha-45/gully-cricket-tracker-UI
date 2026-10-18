@@ -56,9 +56,12 @@
   gap: 2px;
 }
 
-.battingGrid,
 .bowlingGrid {
   grid-template-columns: minmax(94px, 2.2fr) repeat(6, minmax(30px, .72fr));
+}
+
+.battingGrid {
+  grid-template-columns: minmax(94px, 2.2fr) repeat(7, minmax(30px, .72fr));
 }
 
 .header {
@@ -137,9 +140,12 @@
 
 @media (max-width: 360px) {
 
-  .battingGrid,
   .bowlingGrid {
     grid-template-columns: minmax(82px, 2fr) repeat(6, minmax(27px, .7fr));
+  }
+
+  .battingGrid {
+    grid-template-columns: minmax(82px, 2fr) repeat(7, minmax(27px, .7fr));
   }
 
   .header,

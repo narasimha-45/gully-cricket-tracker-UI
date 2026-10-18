@@ -147,6 +147,8 @@ export default function BattingStats({ isOverall = false }) {
           return number(player.inningsPlayed);
         case "runs":
           return number(player.totalRuns);
+        case "fours":
+          return number(player.totalFours);
         case "balls":
           return number(player.totalBallsFaced);
         case "average":
@@ -222,6 +224,14 @@ export default function BattingStats({ isOverall = false }) {
               ariaLabel="Sort by runs"
             />
             <SortButton
+              label="4s"
+              column="fours"
+              activeColumn={state.sortKey}
+              direction={state.sortDir}
+              onSort={onSort}
+              ariaLabel="Sort by fours"
+            />
+            <SortButton
               label="Avg"
               column="average"
               activeColumn={state.sortKey}
@@ -276,6 +286,7 @@ export default function BattingStats({ isOverall = false }) {
               <span className={`${styles.stat} ${styles.primaryStat}`}>
                 {number(player.totalRuns)}
               </span>
+              <span className={styles.stat}>{number(player.totalFours)}</span>
               <span className={styles.stat}>
                 {player.average == null
                   ? number(player.totalRuns)
