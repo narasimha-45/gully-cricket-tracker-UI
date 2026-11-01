@@ -86,7 +86,6 @@ export default function BattingStats({ isOverall = false }) {
   );
 
   const statsQuery = useBattingLeaderboard(apiFilters);
-
   const filterDefinitions = useMemo(() => {
     const inningsCount = matchType === "TEST" ? 4 : 2;
     return [

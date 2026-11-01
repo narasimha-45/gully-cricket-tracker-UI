@@ -4,6 +4,12 @@ export const statsApi = {
   getPlayerProfile: (playerId, filters = {}, options) =>
     apiClient.get(`/stats/player/${encodeURIComponent(playerId)}`, filters, options),
 
+  getRunOutLeaderboard: (filters = {}, options) =>
+    apiClient.get(`/stats/leaderboard/batting-runouts`, filters, options),
+
+  getBattingRunOutStats: (playerId, filters = {}, options) =>
+    apiClient.get(`/stats/player/${encodeURIComponent(playerId)}/batting-runouts`, filters, options),
+
   comparePlayers: (filters = {}, options) =>
     apiClient.get(`/stats/player/compare`, filters, options),
 

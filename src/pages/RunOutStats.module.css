@@ -1,0 +1,385 @@
+.page {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    min-width: 0;
+    font-family: inherit;
+}
+
+/* Heading */
+
+.pageHeader {
+    padding: 0 1px;
+}
+
+.title {
+    margin: 0;
+    color: var(--color-slate-900, #172033);
+    font-size: 20px;
+    font-weight: 750;
+    line-height: 1.3;
+    letter-spacing: -0.02em;
+}
+
+/* Inner tabs */
+
+.viewTabs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--color-border, #e3e5ef);
+    border-radius: 11px;
+    background: var(--color-slate-100, #f3f4f8);
+}
+
+.viewTab {
+    min-height: 36px;
+    padding: 7px 10px;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--color-slate-600, #596479);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 650;
+    cursor: pointer;
+}
+
+.viewTabActive {
+    background: var(--color-white, #fff);
+    color: var(--color-indigo-700, #4338ca);
+    box-shadow: 0 1px 3px rgb(15 23 42 / 6%);
+}
+
+/* Table wrapper */
+
+.content {
+    min-width: 0;
+}
+
+.tableContainer {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid var(--color-border, #e3e5ef);
+    border-radius: 10px;
+    background: var(--color-white, #fff);
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Shared table */
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 0;
+    table-layout: auto;
+    font-family: inherit;
+    font-size: 12.5px;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Player table
+   Name takes less width; numbers stay closer */
+
+.playersTable {
+    min-width: 0;
+}
+
+.playersTable th:first-child,
+.playersTable td:first-child {
+    width: 30%;
+}
+
+.playersTable th:nth-child(2),
+.playersTable td:nth-child(2) {
+    width: 23%;
+}
+
+.playersTable th:nth-child(3),
+.playersTable td:nth-child(3) {
+    width: 22%;
+}
+
+.playersTable th:nth-child(4),
+.playersTable td:nth-child(4) {
+    width: 25%;
+}
+
+/* Partnership table */
+
+.partnershipsTable {
+    min-width: 490px;
+}
+
+.partnershipsTable th:first-child,
+.partnershipsTable td:first-child {
+    width: 34%;
+}
+
+.partnershipsTable th:nth-child(2),
+.partnershipsTable td:nth-child(2) {
+    width: 20%;
+}
+
+.partnershipsTable th:nth-child(3),
+.partnershipsTable td:nth-child(3) {
+    width: 15%;
+}
+
+.partnershipsTable th:nth-child(4),
+.partnershipsTable td:nth-child(4) {
+    width: 31%;
+}
+
+/* Header cells */
+
+.table thead {
+    background: var(--color-slate-100, #f3f4f8);
+}
+
+.table th {
+    height: 34px;
+    padding: 7px 7px;
+    border-bottom: 1px solid var(--color-border, #e3e5ef);
+    color: var(--color-slate-600, #596479);
+    font-size: 10px;
+    font-weight: 750;
+    line-height: 1.2;
+    letter-spacing: 0.01em;
+    text-align: center;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+
+.table th:first-child {
+    text-align: left;
+}
+
+/* Body cells */
+
+.table td {
+    height: 37px;
+    padding: 7px 7px;
+    border-bottom: 1px solid var(--color-border, #e3e5ef);
+    color: var(--color-slate-800, #263249);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.table tbody tr:hover {
+    background: var(--color-slate-50, #fafaff);
+}
+
+/* Sorting buttons */
+
+.sortButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    width: 100%;
+    padding: 0;
+    margin: 0;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    line-height: inherit;
+    letter-spacing: inherit;
+    text-transform: inherit;
+    white-space: nowrap;
+    cursor: pointer;
+}
+
+.table th:first-child .sortButton {
+    justify-content: flex-start;
+}
+
+.sortButton:hover,
+.sortActive {
+    color: var(--color-indigo-700, #4338ca);
+}
+
+/* Names */
+
+.table td.nameColumn {
+    text-align: left;
+}
+
+.playerLink {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: var(--color-indigo-700, #4338ca);
+    font-family: inherit;
+    font-size: 12.5px;
+    font-weight: 700;
+    text-align: left;
+    cursor: pointer;
+}
+
+.playerLink:hover {
+    text-decoration: underline;
+}
+
+/* Values */
+
+.table td.numericCell {
+    text-align: center;
+}
+
+.table td.primaryValue {
+    color: var(--color-indigo-700, #4338ca);
+    font-weight: 750;
+}
+
+/* Partnership names */
+
+.pairName {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 4px;
+    color: var(--color-slate-900, #172033);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.pairSeparator {
+    color: var(--color-slate-400, #94a3b8);
+    font-weight: 500;
+}
+
+/* Dismissal breakdown */
+
+.table td.breakdownColumn {
+    text-align: left;
+}
+
+.dismissalBreakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    width: 100%;
+}
+
+.dismissalItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    line-height: 1.35;
+    color: var(--color-slate-600, #596479);
+}
+
+.dismissalName {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dismissalItem strong {
+    color: var(--color-slate-900, #172033);
+    font-weight: 750;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Loading / empty state */
+
+.message {
+    padding: 22px 14px;
+    border: 1px solid var(--color-border, #e3e5ef);
+    border-radius: 10px;
+    background: var(--color-white, #fff);
+    color: var(--color-slate-600, #596479);
+    font-size: 12.5px;
+    text-align: center;
+}
+
+.message p {
+    margin: 0 0 10px;
+}
+
+.retryButton {
+    padding: 7px 12px;
+    border: 1px solid var(--color-border, #e3e5ef);
+    border-radius: 7px;
+    background: var(--color-slate-50, #fafaff);
+    color: var(--color-indigo-700, #4338ca);
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+/* Focus states */
+
+.sortButton:focus-visible,
+.viewTab:focus-visible,
+.playerLink:focus-visible,
+.retryButton:focus-visible {
+    outline: 2px solid var(--color-indigo-600, #4f46e5);
+    outline-offset: 2px;
+}
+
+/* Mobile */
+
+@media (max-width: 600px) {
+    .page {
+        gap: 9px;
+    }
+
+    .title {
+        font-size: 19px;
+    }
+
+    .viewTab {
+        font-size: 12px;
+        min-height: 35px;
+    }
+
+    .playersTable {
+        min-width: 390px;
+    }
+
+    .partnershipsTable {
+        min-width: 490px;
+    }
+
+    .table th {
+        padding: 6px;
+        font-size: 10px;
+    }
+
+    .table td {
+        padding: 7px 6px;
+        font-size: 12px;
+    }
+
+    .playerLink {
+        font-size: 12px;
+    }
+
+    .pairName {
+        font-size: 11.5px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .viewTab {
+        transition: none;
+    }
+}
