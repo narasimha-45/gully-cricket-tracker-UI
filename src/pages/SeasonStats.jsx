@@ -10,6 +10,7 @@ const TABS = [
   ["bowling", "Bowling"],
   ["teams", "Teams"],
   ["misc", "Fielding"],
+  ["runouts", "Run-outs"],
   ["partnerships", "Partnerships"],
   ["rivalry", "Rivalry"],
 ];

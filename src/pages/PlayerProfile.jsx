@@ -14,7 +14,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import LoadingState from "../components/common/LoadingState";
 import MatchTypeTabs from "../components/stats/MatchTypeTabs";
 import { LeaderboardState } from "../features/stats/components/LeaderboardView";
-import { usePlayerProfile, useSeasons } from "../hooks/queries";
+import { usePlayerProfile, useBattingRunOutStats, useSeasons } from "../hooks/queries";
 import { formatName } from "../utils/helpers";
 import { formatDateInIST } from "../utils/dateTime";
 import styles from "./Profile.module.css";
@@ -54,6 +54,7 @@ export default function PlayerProfile() {
   const [matchType, setMatchType] = useState("OVERS");
   const profileQuery = usePlayerProfile(id, seasonId || undefined, matchType);
   const seasonsQuery = useSeasons();
+  const runOutQuery = useBattingRunOutStats(id, seasonId || undefined, matchType);
   const profile = profileQuery.data;
 
   const seasonOptions = useMemo(
@@ -189,6 +190,40 @@ export default function PlayerProfile() {
                 value={n(profile.overallBatting?.notOuts)}
               />
             </div>
+          </section>
+
+          <section className={styles.section}>
+            <SectionHeader title="Batting run-outs" icon={Users} />
+            {runOutQuery.isLoading ? <p>Loading run-out statistics…</p> : runOutQuery.isError ? (
+              <p>Could not load run-out statistics.</p>
+            ) : (
+              <>
+                <div className={styles.statGrid}>
+                  <StatTile label="Run-outs involved" value={n(runOutQuery.data?.involved)} />
+                  <StatTile label="Personally run out" value={n(runOutQuery.data?.personallyOut)} />
+                  <StatTile label="Partner run out" value={n(runOutQuery.data?.partnerOut)} />
+                </div>
+                {n(runOutQuery.data?.unknownPartnerships) > 0 && (
+                  <p>Historical coverage incomplete: {runOutQuery.data.unknownPartnerships} partnership(s) have no known dismissal type. Totals are confirmed minimums.</p>
+                )}
+                <h3>Run-outs by batting partner</h3>
+                {runOutQuery.data?.partners?.length ? (
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", textAlign: "left", borderSpacing: "0 10px" }}>
+                      <thead><tr><th>Partner</th><th>Run-outs</th><th>You out</th><th>Partner out</th><th>Rate</th></tr></thead>
+                      <tbody>{runOutQuery.data.partners.map((partner) => (
+                        <tr key={partner.playerId}>
+                          <td>{formatName(partner.playerName)}</td>
+                          <td>{partner.runOuts}</td><td>{partner.playerOut}</td><td>{partner.partnerOut}</td>
+                          <td>{partner.runOutRate == null ? "—" : `${partner.runOutRate}%`}{partner.unknownPartnerships > 0 ? " *" : ""}</td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                    {runOutQuery.data.partners.some((p) => p.unknownPartnerships > 0) && <p>* Rate calculated from partnerships with known dismissal types.</p>}
+                  </div>
+                ) : <p>No recorded partnerships yet.</p>}
+              </>
+            )}
           </section>
 
           <section className={styles.section}>
