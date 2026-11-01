@@ -140,6 +140,23 @@ export function usePlayerProfile(playerId, seasonId, matchType) {
   });
 }
 
+export function useRunOutLeaderboard(filters = {}) {
+  return useQuery({
+    queryKey: ["batting-runout-leaderboard", filters],
+    queryFn: async ({ signal }) => asArray(await api.stats.getRunOutLeaderboard(filters, { signal })),
+    ...leaderboardOptions,
+  });
+}
+
+export function useBattingRunOutStats(playerId, seasonId, matchType) {
+  return useQuery({
+    queryKey: ["batting-runouts", playerId, seasonId, matchType],
+    queryFn: ({ signal }) => api.stats.getBattingRunOutStats(playerId, { seasonId, matchType }, { signal }),
+    enabled: Boolean(playerId),
+    staleTime: 30_000,
+  });
+}
+
 export function useTeamProfile(teamId, seasonId, matchType) {
   return useQuery({
     queryKey: queryKeys.teamProfile(teamId, seasonId, matchType),

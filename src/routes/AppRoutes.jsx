@@ -10,6 +10,7 @@ const SeasonLayout = lazy(() => import("../pages/SeasonLayout"));
 const SeasonMatches = lazy(() => import("../pages/SeasonMatches"));
 const SeasonStats = lazy(() => import("../pages/SeasonStats"));
 const BattingStats = lazy(() => import("../pages/BattingStats"));
+const RunOutStats = lazy(() => import("../pages/RunOutStats"));
 const BowlingStats = lazy(() => import("../pages/BowlingStats"));
 const MiscStats = lazy(() => import("../pages/MiscStats"));
 const InsightsHub = lazy(() => import("../pages/InsightsHub"));
@@ -74,6 +75,7 @@ export default function AppRoutes() {
             <Route index element={<Navigate to="overview" replace />} />
             <Route path="overview" element={<AnalyticsOverview />} />
             <Route path="batting" element={<BattingStats isOverall />} />
+            <Route path="runouts" element={<RunOutStats isOverall />} />
             <Route path="bowling" element={<BowlingStats isOverall />} />
             <Route path="teams" element={<TeamStats />} />
             <Route path="misc" element={<MiscStats isOverall />} />
@@ -115,6 +117,7 @@ export default function AppRoutes() {
                 <Route path="overview" element={<AnalyticsOverview />} />
 
                 <Route path="batting" element={<BattingStats />} />
+                <Route path="runouts" element={<RunOutStats />} />
 
                 <Route path="bowling" element={<BowlingStats />} />
 
